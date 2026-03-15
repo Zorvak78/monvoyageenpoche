@@ -1,0 +1,93 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  ogType?: string;
+}
+
+const { title, description = "Mon Voyage en Poche — Guides de voyage, itinéraires et bons plans pour explorer le monde autrement.", ogImage = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=630&fit=crop", ogType = "website" } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalURL} />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:url" content={canonicalURL} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:site_name" content="Mon Voyage en Poche" />
+  <meta property="og:locale" content="fr_FR" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImage} />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <title>{title}</title>
+</head>
+<body class="font-sans text-charcoal bg-warm-white antialiased">
+  <slot />
+
+  <script>
+    // Fade in on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Header scroll behavior
+    const header = document.getElementById('main-header');
+    if (header) {
+      let lastScroll = 0;
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.scrollY;
+        if (currentScroll > 80) {
+          header.classList.add('bg-white', 'shadow-sm');
+          header.classList.remove('bg-transparent');
+          header.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('text-white');
+            l.classList.add('text-charcoal');
+          });
+          const logo = header.querySelector('.logo-text');
+          if (logo) {
+            logo.classList.remove('text-white');
+            logo.classList.add('text-deep-teal');
+          }
+        } else {
+          header.classList.remove('bg-white', 'shadow-sm');
+          header.classList.add('bg-transparent');
+          header.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.add('text-white');
+            l.classList.remove('text-charcoal');
+          });
+          const logo = header.querySelector('.logo-text');
+          if (logo) {
+            logo.classList.add('text-white');
+            logo.classList.remove('text-deep-teal');
+          }
+        }
+        lastScroll = currentScroll;
+      });
+    }
+  </script>
+</body>
+</html>

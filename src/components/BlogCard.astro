@@ -1,0 +1,42 @@
+---
+interface Props {
+  title: string;
+  slug: string;
+  heroImage: string;
+  description: string;
+  publishDate: Date;
+  tags: string[];
+  author: string;
+}
+
+const { title, slug, heroImage, description, publishDate, tags, author } = Astro.props;
+const formattedDate = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).format(publishDate);
+---
+
+<a href={`/blog/${slug}`} class="group block">
+  <article class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1">
+    <div class="relative h-52 overflow-hidden">
+      <img
+        src={heroImage}
+        alt={title}
+        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        loading="lazy"
+      />
+    </div>
+    <div class="p-5">
+      <div class="flex flex-wrap gap-2 mb-3">
+        {tags.slice(0, 2).map(tag => (
+          <span class="text-xs bg-cream text-sage px-2.5 py-1 rounded-full">{tag}</span>
+        ))}
+      </div>
+      <h3 class="font-display text-lg font-bold text-deep-teal mb-2 group-hover:text-amber transition-colors line-clamp-2">
+        {title}
+      </h3>
+      <p class="text-slate text-sm leading-relaxed line-clamp-2 mb-4">{description}</p>
+      <div class="flex items-center justify-between text-xs text-slate">
+        <span>{author}</span>
+        <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+      </div>
+    </div>
+  </article>
+</a>
