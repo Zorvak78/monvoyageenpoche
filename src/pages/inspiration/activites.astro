@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import InspirationCard from '../../components/InspirationCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { getCollection } from 'astro:content';
+
+const items = (await getCollection('inspiration')).filter(item => item.data.category === 'activites');
+---
+
+<BaseLayout title="Activités insolites — Inspiration — Mon Voyage en Poche" description="Safari, plongée, survol en avion, art immersif : les expériences les plus marquantes de nos destinations.">
+  <Header />
+
+  <!-- Hero -->
+  <section class="relative pt-32 pb-20 bg-deep-teal">
+    <div class="absolute inset-0 opacity-20">
+      <img
+        src="https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=1920&q=80"
+        alt="Activités insolites"
+        class="w-full h-full object-cover"
+      />
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <span class="text-5xl mb-4 block">🎯</span>
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white mb-4">Activités insolites</h1>
+      <p class="text-white/80 text-lg max-w-2xl mx-auto">
+        Les expériences qui transforment un voyage en aventure inoubliable. À faire au moins une fois.
+      </p>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <section class="bg-white border-b border-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <nav class="text-sm text-slate">
+        <a href="/inspiration" class="hover:text-deep-teal transition-colors">Inspiration</a>
+        <span class="mx-2">/</span>
+        <span class="text-deep-teal font-medium">Activités insolites</span>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Grid -->
+  <section class="py-16 bg-warm-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {items.map(item => (
+          <div class="fade-in">
+            <InspirationCard
+              title={item.data.title}
+              location={item.data.location}
+              type={item.data.type}
+              image={item.data.image}
+              description={item.data.description}
+              destinationLink={item.data.destinationLink}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Newsletter />
+  <Footer />
+</BaseLayout>

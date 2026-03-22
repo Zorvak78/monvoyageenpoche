@@ -36,4 +36,18 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { destinations, blog };
+const inspiration = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/inspiration' }),
+  schema: z.object({
+    title: z.string(),
+    location: z.string(),
+    country: z.string(),
+    category: z.string(),
+    type: z.string(),
+    image: z.string(),
+    description: z.string(),
+    destinationLink: z.string(),
+  }),
+});
+
+export const collections = { destinations, blog, inspiration };

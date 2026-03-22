@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import InspirationCard from '../../components/InspirationCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { getCollection } from 'astro:content';
+
+const allItems = await getCollection('inspiration');
+
+const categories = [
+  { slug: 'nature', label: 'Merveilles naturelles', description: 'Volcans, dunes, cascades et forêts qui rappellent la beauté brute de notre planète.', icon: '🌿' },
+  { slug: 'monuments', label: 'Monuments et sites historiques', description: 'Temples, pyramides et cités perdues qui racontent l\'histoire de l\'humanité.', icon: '🏛️' },
+  { slug: 'activites', label: 'Activités insolites', description: 'Expériences uniques qui transforment un voyage en aventure inoubliable.', icon: '🎯' },
+];
+---
+
+<BaseLayout title="Inspiration — Mon Voyage en Poche" description="Découvrez les lieux, monuments et activités qui nous inspirent à travers le monde.">
+  <Header />
+
+  <!-- Hero -->
+  <section class="relative pt-32 pb-20 bg-deep-teal">
+    <div class="absolute inset-0 opacity-20">
+      <img
+        src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=80"
+        alt="Inspiration voyage"
+        class="w-full h-full object-cover"
+      />
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white mb-4">Inspiration</h1>
+      <p class="text-white/80 text-lg max-w-2xl mx-auto">
+        Les lieux, monuments et expériences qui nous font rêver. De quoi nourrir votre prochaine envie d'ailleurs.
+      </p>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  {categories.map(cat => {
+    const items = allItems.filter(item => item.data.category === cat.slug).slice(0, 3);
+    return (
+      <section class="py-16 even:bg-cream odd:bg-warm-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between mb-10">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-3xl">{cat.icon}</span>
+                <h2 class="font-display text-3xl font-bold text-deep-teal">{cat.label}</h2>
+              </div>
+              <p class="text-slate max-w-xl">{cat.description}</p>
+            </div>
+            <a href={`/inspiration/${cat.slug}`} class="hidden sm:flex items-center gap-2 text-deep-teal font-medium hover:text-amber transition-colors">
+              Tout voir
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {items.map(item => (
+              <div class="fade-in">
+                <InspirationCard
+                  title={item.data.title}
+                  location={item.data.location}
+                  type={item.data.type}
+                  image={item.data.image}
+                  description={item.data.description}
+                  destinationLink={item.data.destinationLink}
+                />
+              </div>
+            ))}
+          </div>
+          <div class="mt-8 text-center sm:hidden">
+            <a href={`/inspiration/${cat.slug}`} class="inline-flex items-center gap-2 text-deep-teal font-medium hover:text-amber transition-colors">
+              Voir tout
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  })}
+
+  <Newsletter />
+  <Footer />
+</BaseLayout>
