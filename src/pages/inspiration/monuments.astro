@@ -53,7 +53,7 @@ const items = (await getCollection('inspiration')).filter(item => item.data.cate
               type={item.data.type}
               image={item.data.image}
               description={item.data.description}
-              destinationLink={item.data.destinationLink}
+              slug={item.id}
             />
           </div>
         ))}

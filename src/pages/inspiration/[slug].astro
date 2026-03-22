@@ -1,0 +1,126 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const items = await getCollection('inspiration');
+  return items.map(item => ({
+    params: { slug: item.id },
+    props: { item },
+  }));
+}
+
+const { item } = Astro.props;
+const { Content } = await render(item);
+
+const categoryLabels: Record<string, string> = {
+  nature: 'Merveilles naturelles',
+  monuments: 'Monuments historiques',
+  activites: 'Activités insolites',
+};
+
+const infoPratiques = [
+  { label: 'Meilleure période', value: item.data.bestPeriod, icon: '📅' },
+  { label: 'Durée de visite', value: item.data.duration, icon: '⏱️' },
+  { label: 'Prix d\'entrée', value: item.data.price, icon: '💰' },
+  { label: 'Type', value: item.data.type, icon: '📍' },
+].filter(i => i.value);
+---
+
+<BaseLayout
+  title={`${item.data.title} — Inspiration — Mon Voyage en Poche`}
+  description={item.data.description}
+  ogImage={item.data.image}
+  ogType="article"
+>
+  <Header transparent />
+
+  <!-- Hero -->
+  <section class="relative h-[60vh] min-h-[450px] flex items-end">
+    <div class="absolute inset-0">
+      <img
+        src={item.data.image}
+        alt={item.data.title}
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+    </div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 w-full">
+      <span class="bg-amber/90 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 inline-block">
+        {item.data.type}
+      </span>
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white mb-2">
+        {item.data.title}
+      </h1>
+      <p class="text-white/80 text-lg">{item.data.location}</p>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <nav class="bg-white border-b border-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <ol class="flex items-center gap-2 text-sm text-slate">
+        <li><a href="/" class="hover:text-deep-teal transition-colors">Accueil</a></li>
+        <li class="text-slate/50">/</li>
+        <li><a href="/inspiration" class="hover:text-deep-teal transition-colors">Inspiration</a></li>
+        <li class="text-slate/50">/</li>
+        <li><a href={`/inspiration/${item.data.category}`} class="hover:text-deep-teal transition-colors">{categoryLabels[item.data.category] || item.data.category}</a></li>
+        <li class="text-slate/50">/</li>
+        <li class="text-deep-teal font-medium">{item.data.title}</li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- Infos pratiques -->
+  {infoPratiques.length > 0 && (
+    <section class="bg-warm-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {infoPratiques.map(info => (
+            <div class="text-center">
+              <div class="text-2xl mb-2">{info.icon}</div>
+              <div class="text-xs text-slate uppercase tracking-wider mb-1">{info.label}</div>
+              <div class="font-semibold text-deep-teal text-sm">{info.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Content -->
+  <section class="py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="prose max-w-none">
+        <Content />
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA vers l'itinéraire -->
+  <section class="py-12 bg-cream">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="font-display text-2xl sm:text-3xl font-bold text-deep-teal mb-4">
+        Envie de découvrir {item.data.title} ?
+      </h2>
+      <p class="text-slate text-lg mb-8 max-w-xl mx-auto">
+        Retrouvez ce lieu dans notre itinéraire complet, avec hébergements, transports et activités jour par jour.
+      </p>
+      <a
+        href={item.data.destinationLink}
+        class="inline-flex items-center gap-2 px-8 py-4 bg-amber hover:bg-gold text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
+      >
+        Voir l'itinéraire complet
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <Newsletter />
+  <Footer />
+</BaseLayout>

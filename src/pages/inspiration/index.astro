@@ -2,16 +2,15 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import InspirationCard from '../../components/InspirationCard.astro';
 import Newsletter from '../../components/Newsletter.astro';
 import { getCollection } from 'astro:content';
 
 const allItems = await getCollection('inspiration');
 
 const categories = [
-  { slug: 'nature', label: 'Merveilles naturelles', description: 'Volcans, dunes, cascades et forêts qui rappellent la beauté brute de notre planète.', icon: '🌿' },
-  { slug: 'monuments', label: 'Monuments et sites historiques', description: 'Temples, pyramides et cités perdues qui racontent l\'histoire de l\'humanité.', icon: '🏛️' },
-  { slug: 'activites', label: 'Activités insolites', description: 'Expériences uniques qui transforment un voyage en aventure inoubliable.', icon: '🎯' },
+  { slug: 'nature', label: 'Merveilles naturelles', icon: '🌿' },
+  { slug: 'monuments', label: 'Monuments historiques', icon: '🏛️' },
+  { slug: 'activites', label: 'Activités insolites', icon: '🎯' },
 ];
 ---
 
@@ -19,7 +18,7 @@ const categories = [
   <Header />
 
   <!-- Hero -->
-  <section class="relative pt-32 pb-20 bg-deep-teal">
+  <section class="relative pt-32 pb-16 bg-deep-teal">
     <div class="absolute inset-0 opacity-20">
       <img
         src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=80"
@@ -35,54 +34,109 @@ const categories = [
     </div>
   </section>
 
-  <!-- Categories -->
-  {categories.map(cat => {
-    const items = allItems.filter(item => item.data.category === cat.slug).slice(0, 3);
-    return (
-      <section class="py-16 even:bg-cream odd:bg-warm-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between mb-10">
-            <div>
-              <div class="flex items-center gap-3 mb-2">
-                <span class="text-3xl">{cat.icon}</span>
-                <h2 class="font-display text-3xl font-bold text-deep-teal">{cat.label}</h2>
-              </div>
-              <p class="text-slate max-w-xl">{cat.description}</p>
+  <!-- Tabs -->
+  <section class="bg-white border-b border-cream sticky top-20 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-center gap-2 sm:gap-8" id="tabs">
+        {categories.map((cat, i) => (
+          <button
+            data-tab={cat.slug}
+            class:list={[
+              'tab-btn flex items-center gap-2 px-4 py-4 text-sm sm:text-base font-medium transition-all duration-300 border-b-3 whitespace-nowrap',
+              i === 0 ? 'border-amber text-deep-teal' : 'border-transparent text-slate hover:text-deep-teal'
+            ]}
+          >
+            <span class="hidden sm:inline">{cat.icon}</span>
+            {cat.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Content panels -->
+  <section class="py-16 bg-warm-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {categories.map((cat, i) => {
+        const items = allItems.filter(item => item.data.category === cat.slug);
+        return (
+          <div
+            data-panel={cat.slug}
+            class:list={['tab-panel transition-opacity duration-300', i === 0 ? 'block opacity-100' : 'hidden opacity-0']}
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {items.map(item => (
+                <a href={`/inspiration/${item.id}`} class="group block">
+                  <article class="relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1">
+                    <div class="relative h-72 overflow-hidden">
+                      <img
+                        src={item.data.image}
+                        alt={item.data.title}
+                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <div class="absolute top-4 left-4">
+                        <span class="bg-amber/90 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                          {item.data.type}
+                        </span>
+                      </div>
+                      <div class="absolute bottom-4 left-4 right-4">
+                        <h3 class="text-white font-display text-xl font-bold mb-1 group-hover:text-amber transition-colors">
+                          {item.data.title}
+                        </h3>
+                        <p class="text-white/80 text-sm">{item.data.location}</p>
+                      </div>
+                    </div>
+                    <div class="p-5">
+                      <p class="text-slate text-sm leading-relaxed line-clamp-3">{item.data.description}</p>
+                      <div class="mt-3 flex items-center text-deep-teal text-sm font-medium group-hover:text-amber transition-colors">
+                        Découvrir ce lieu
+                        <svg class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </article>
+                </a>
+              ))}
             </div>
-            <a href={`/inspiration/${cat.slug}`} class="hidden sm:flex items-center gap-2 text-deep-teal font-medium hover:text-amber transition-colors">
-              Tout voir
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {items.map(item => (
-              <div class="fade-in">
-                <InspirationCard
-                  title={item.data.title}
-                  location={item.data.location}
-                  type={item.data.type}
-                  image={item.data.image}
-                  description={item.data.description}
-                  destinationLink={item.data.destinationLink}
-                />
-              </div>
-            ))}
-          </div>
-          <div class="mt-8 text-center sm:hidden">
-            <a href={`/inspiration/${cat.slug}`} class="inline-flex items-center gap-2 text-deep-teal font-medium hover:text-amber transition-colors">
-              Voir tout
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
-          </div>
-        </div>
-      </section>
-    );
-  })}
+        );
+      })}
+    </div>
+  </section>
 
   <Newsletter />
   <Footer />
 </BaseLayout>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+
+      // Update tabs
+      tabs.forEach(t => {
+        t.classList.remove('border-amber', 'text-deep-teal');
+        t.classList.add('border-transparent', 'text-slate');
+      });
+      tab.classList.remove('border-transparent', 'text-slate');
+      tab.classList.add('border-amber', 'text-deep-teal');
+
+      // Update panels
+      panels.forEach(panel => {
+        if (panel.getAttribute('data-panel') === target) {
+          panel.classList.remove('hidden', 'opacity-0');
+          panel.classList.add('block', 'opacity-100');
+        } else {
+          panel.classList.add('hidden', 'opacity-0');
+          panel.classList.remove('block', 'opacity-100');
+        }
+      });
+    });
+  });
+</script>
