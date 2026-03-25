@@ -42,12 +42,30 @@ const inspiration = defineCollection({
     title: z.string(),
     location: z.string(),
     country: z.string(),
+    continent: z.string().optional(),
     category: z.string(),
     type: z.string(),
     image: z.string(),
     description: z.string(),
-    destinationLink: z.string(),
+    slug: z.string().optional(),
+    destinationLink: z.string().optional(),
   }),
 });
 
-export const collections = { destinations, blog, inspiration };
+const itineraires = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/itineraires' }),
+  schema: z.object({
+    title: z.string(),
+    country: z.string(),
+    countryName: z.string(),
+    duration: z.string(),
+    durationLabel: z.string(),
+    days: z.number(),
+    heroImage: z.string(),
+    budget: z.string(),
+    bestPeriod: z.string(),
+    description: z.string(),
+  }),
+});
+
+export const collections = { destinations, blog, inspiration, itineraires };

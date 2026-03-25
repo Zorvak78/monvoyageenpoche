@@ -7,103 +7,113 @@ import { getCollection } from 'astro:content';
 
 const allItems = await getCollection('inspiration');
 
-const categories = [
-  { slug: 'nature', label: 'Merveilles naturelles', icon: '🌿' },
-  { slug: 'monuments', label: 'Monuments historiques', icon: '🏛️' },
-  { slug: 'activites', label: 'Activités insolites', icon: '🎯' },
-];
+function getCardHeight(index: number): string {
+  if (index % 3 === 0) return 'h-80';
+  if (index % 3 === 1) return 'h-64';
+  return 'h-52';
+}
 ---
 
-<BaseLayout title="Inspiration — Mon Voyage en Poche" description="Découvrez les lieux, monuments et activités qui nous inspirent à travers le monde.">
+<BaseLayout title="Inspiration — Mon Voyage en Poche" description="Trouvez votre prochaine aventure parmi nos lieux, monuments et activités à travers le monde.">
   <Header />
 
   <!-- Hero -->
   <section class="relative pt-32 pb-16 bg-deep-teal">
-    <div class="absolute inset-0 opacity-20">
+    <div class="absolute inset-0">
       <img
         src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1920&q=80"
         alt="Inspiration voyage"
-        class="w-full h-full object-cover"
+        class="w-full h-full object-cover opacity-30"
       />
+      <div class="absolute inset-0 bg-gradient-to-b from-deep-teal/60 via-deep-teal/40 to-deep-teal"></div>
     </div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white mb-4">Inspiration</h1>
+    <div class="relative max-w-7xl mx-auto px-4 text-center">
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white mb-4">
+        Trouvez votre prochaine aventure
+      </h1>
       <p class="text-white/80 text-lg max-w-2xl mx-auto">
-        Les lieux, monuments et expériences qui nous font rêver. De quoi nourrir votre prochaine envie d'ailleurs.
+        Explorez les plus beaux lieux du monde. Cliquez, découvrez, et partez.
       </p>
     </div>
   </section>
 
-  <!-- Tabs -->
-  <section class="bg-white border-b border-cream sticky top-20 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-center gap-2 sm:gap-8" id="tabs">
-        {categories.map((cat, i) => (
-          <button
-            data-tab={cat.slug}
-            class:list={[
-              'tab-btn flex items-center gap-2 px-4 py-4 text-sm sm:text-base font-medium transition-all duration-300 border-b-3 whitespace-nowrap',
-              i === 0 ? 'border-amber text-deep-teal' : 'border-transparent text-slate hover:text-deep-teal'
-            ]}
-          >
-            <span class="hidden sm:inline">{cat.icon}</span>
-            {cat.label}
-          </button>
-        ))}
+  <!-- Sticky Filter Bar -->
+  <section class="bg-white/95 backdrop-blur-sm border-b border-cream sticky top-20 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center gap-3 overflow-x-auto filter-scroll" style="scrollbar-width: none; -ms-overflow-style: none;">
+        <!-- All button -->
+        <button
+          data-filter-type="all"
+          data-filter-value="all"
+          class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-amber text-white"
+        >
+          Tout
+        </button>
+
+        <!-- Separator -->
+        <span class="shrink-0 w-px h-6 bg-charcoal/20"></span>
+
+        <!-- Country filters -->
+        <button data-filter-type="country" data-filter-value="perou" class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-cream text-charcoal hover:bg-amber/20">Pérou</button>
+        <button data-filter-type="country" data-filter-value="italie" class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-cream text-charcoal hover:bg-amber/20">Italie</button>
+        <button data-filter-type="country" data-filter-value="namibie" class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-cream text-charcoal hover:bg-amber/20">Namibie</button>
+
+        <!-- Separator -->
+        <span class="shrink-0 w-px h-6 bg-charcoal/20"></span>
+
+        <!-- Category filters -->
+        <button data-filter-type="category" data-filter-value="nature" class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-cream text-charcoal hover:bg-amber/20">Nature</button>
+        <button data-filter-type="category" data-filter-value="monuments" class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-cream text-charcoal hover:bg-amber/20">Monuments</button>
+        <button data-filter-type="category" data-filter-value="activites" class="filter-btn shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 bg-cream text-charcoal hover:bg-amber/20">Activités</button>
       </div>
     </div>
   </section>
 
-  <!-- Content panels -->
-  <section class="py-16 bg-warm-white">
+  <!-- Mosaic Grid -->
+  <section class="py-12 bg-warm-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {categories.map((cat, i) => {
-        const items = allItems.filter(item => item.data.category === cat.slug);
-        return (
+      <div class="columns-2 md:columns-3 lg:columns-4 gap-4">
+        {allItems.map((item, index) => (
           <div
-            data-panel={cat.slug}
-            class:list={['tab-panel transition-opacity duration-300', i === 0 ? 'block opacity-100' : 'hidden opacity-0']}
+            class="flip-card break-inside-avoid mb-4"
+            data-country={item.data.country}
+            data-category={item.data.category}
           >
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {items.map(item => (
-                <a href={`/inspiration/${item.id}`} class="group block">
-                  <article class="relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1">
-                    <div class="relative h-72 overflow-hidden">
-                      <img
-                        src={item.data.image}
-                        alt={item.data.title}
-                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                      <div class="absolute top-4 left-4">
-                        <span class="bg-amber/90 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                          {item.data.type}
-                        </span>
-                      </div>
-                      <div class="absolute bottom-4 left-4 right-4">
-                        <h3 class="text-white font-display text-xl font-bold mb-1 group-hover:text-amber transition-colors">
-                          {item.data.title}
-                        </h3>
-                        <p class="text-white/80 text-sm">{item.data.location}</p>
-                      </div>
-                    </div>
-                    <div class="p-5">
-                      <p class="text-slate text-sm leading-relaxed line-clamp-3">{item.data.description}</p>
-                      <div class="mt-3 flex items-center text-deep-teal text-sm font-medium group-hover:text-amber transition-colors">
-                        Découvrir ce lieu
-                        <svg class="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </article>
+            <div class={`flip-card-inner ${getCardHeight(index)}`}>
+              <!-- FACE AVANT -->
+              <div class="flip-card-front rounded-2xl overflow-hidden">
+                <img
+                  src={item.data.image}
+                  alt={item.data.title}
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-2xl"></div>
+                <div class="absolute bottom-4 left-4 right-4 z-10">
+                  <span class="text-amber text-xs font-semibold uppercase tracking-wider">{item.data.type}</span>
+                  <h3 class="font-display text-lg font-bold text-white mt-1">{item.data.title}</h3>
+                  <p class="text-white/70 text-sm">{item.data.location}</p>
+                </div>
+              </div>
+              <!-- FACE ARRIÈRE -->
+              <div class="flip-card-back bg-deep-teal rounded-2xl p-6 flex flex-col justify-between">
+                <div>
+                  <span class="text-amber text-xs font-semibold uppercase tracking-wider">{item.data.type}</span>
+                  <h3 class="font-display text-xl font-bold text-white mt-2 mb-1">{item.data.title}</h3>
+                  <p class="text-white/70 text-sm mb-2">{item.data.location}</p>
+                  <p class="text-white/80 text-sm leading-relaxed">{item.data.description}</p>
+                </div>
+                <a href={`/voyager/${item.data.country}`} class="mt-4 inline-flex items-center justify-center gap-2 px-6 py-3 bg-amber hover:bg-gold text-white font-semibold rounded-xl transition-colors text-sm">
+                  Voyager vers ce lieu
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
                 </a>
-              ))}
+              </div>
             </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   </section>
 
@@ -111,30 +121,105 @@ const categories = [
   <Footer />
 </BaseLayout>
 
+<style>
+  .filter-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .flip-card {
+    perspective: 1000px;
+    cursor: pointer;
+  }
+
+  .flip-card-inner {
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+
+  .flip-card.flipped .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .flip-card-front,
+  .flip-card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .flip-card-front {
+    z-index: 2;
+  }
+
+  .flip-card-back {
+    transform: rotateY(180deg);
+    z-index: 1;
+  }
+</style>
+
 <script>
-  const tabs = document.querySelectorAll('.tab-btn');
-  const panels = document.querySelectorAll('.tab-panel');
+  // Flip cards - toggle on click
+  document.querySelectorAll('.flip-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) return;
+      card.classList.toggle('flipped');
+    });
+  });
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      const target = tab.getAttribute('data-tab');
+  // Filtering
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+  const cards = document.querySelectorAll<HTMLElement>('.flip-card');
+  let activeCountry: string | null = null;
+  let activeCategory: string | null = null;
 
-      // Update tabs
-      tabs.forEach(t => {
-        t.classList.remove('border-amber', 'text-deep-teal');
-        t.classList.add('border-transparent', 'text-slate');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.filterType!;
+      const value = btn.dataset.filterValue!;
+
+      if (value === 'all') {
+        activeCountry = null;
+        activeCategory = null;
+      } else if (type === 'country') {
+        activeCountry = activeCountry === value ? null : value;
+      } else if (type === 'category') {
+        activeCategory = activeCategory === value ? null : value;
+      }
+
+      // Update button states
+      filterBtns.forEach(b => {
+        const bType = b.dataset.filterType!;
+        const bValue = b.dataset.filterValue!;
+        let isActive = false;
+        if (bValue === 'all' && !activeCountry && !activeCategory) isActive = true;
+        if (bType === 'country' && bValue === activeCountry) isActive = true;
+        if (bType === 'category' && bValue === activeCategory) isActive = true;
+
+        b.classList.toggle('bg-amber', isActive);
+        b.classList.toggle('text-white', isActive);
+        b.classList.toggle('bg-cream', !isActive);
+        b.classList.toggle('text-charcoal', !isActive);
       });
-      tab.classList.remove('border-transparent', 'text-slate');
-      tab.classList.add('border-amber', 'text-deep-teal');
 
-      // Update panels
-      panels.forEach(panel => {
-        if (panel.getAttribute('data-panel') === target) {
-          panel.classList.remove('hidden', 'opacity-0');
-          panel.classList.add('block', 'opacity-100');
+      // Filter cards
+      cards.forEach(card => {
+        const country = card.dataset.country;
+        const category = card.dataset.category;
+        const matchCountry = !activeCountry || country === activeCountry;
+        const matchCategory = !activeCategory || category === activeCategory;
+
+        if (matchCountry && matchCategory) {
+          card.style.display = '';
+          requestAnimationFrame(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+          });
         } else {
-          panel.classList.add('hidden', 'opacity-0');
-          panel.classList.remove('block', 'opacity-100');
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.95)';
+          setTimeout(() => { card.style.display = 'none'; }, 300);
         }
       });
     });

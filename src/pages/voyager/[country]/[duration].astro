@@ -1,0 +1,155 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import Newsletter from '../../../components/Newsletter.astro';
+import { getCollection, render } from 'astro:content';
+
+const allItineraires = await getCollection('itineraires');
+
+export async function getStaticPaths() {
+  const { getCollection } = await import('astro:content');
+  const allItineraires = await getCollection('itineraires');
+
+  return allItineraires.map((item) => ({
+    params: {
+      country: item.data.country,
+      duration: item.data.duration,
+    },
+    props: {
+      itineraire: item,
+    },
+  }));
+}
+
+const { itineraire } = Astro.props;
+const { country, duration } = Astro.params;
+const { Content } = await render(itineraire);
+
+const countryNames: Record<string, string> = {
+  perou: 'Pérou',
+  italie: 'Italie du Sud',
+  namibie: 'Namibie',
+};
+
+// Other durations for this country
+const otherDurations = allItineraires.filter(
+  (i) => i.data.country === country && i.data.duration !== duration
+);
+---
+
+<BaseLayout
+  title={`${itineraire.data.title} — Mon Voyage en Poche`}
+  description={itineraire.data.description}
+  ogImage={itineraire.data.heroImage}
+>
+  <Header />
+
+  <!-- Hero -->
+  <section class="relative pt-32 pb-20 bg-deep-teal overflow-hidden">
+    <div class="absolute inset-0">
+      <img
+        src={itineraire.data.heroImage}
+        alt={itineraire.data.title}
+        class="w-full h-full object-cover opacity-30"
+      />
+      <div class="absolute inset-0 bg-gradient-to-b from-deep-teal/60 via-deep-teal/40 to-deep-teal"></div>
+    </div>
+    <div class="relative max-w-4xl mx-auto px-4 text-center">
+      <h1 class="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+        {itineraire.data.title}
+      </h1>
+      <p class="text-white/80 text-lg max-w-2xl mx-auto">
+        {itineraire.data.description}
+      </p>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <nav class="bg-warm-white border-b border-cream">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <ol class="flex items-center gap-2 text-sm text-slate flex-wrap">
+        <li><a href="/" class="hover:text-deep-teal transition-colors">Accueil</a></li>
+        <li class="text-charcoal/30">/</li>
+        <li><a href="/inspiration" class="hover:text-deep-teal transition-colors">Inspiration</a></li>
+        <li class="text-charcoal/30">/</li>
+        <li><a href={`/voyager/${country}`} class="hover:text-deep-teal transition-colors">{countryNames[country!] || country}</a></li>
+        <li class="text-charcoal/30">/</li>
+        <li class="text-deep-teal font-medium">{itineraire.data.durationLabel}</li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- Info bar -->
+  <section class="bg-white border-b border-cream">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <p class="text-xs text-slate uppercase tracking-wider mb-1">Durée</p>
+          <p class="font-display font-bold text-deep-teal">{itineraire.data.days} jours</p>
+        </div>
+        <div>
+          <p class="text-xs text-slate uppercase tracking-wider mb-1">Budget</p>
+          <p class="font-display font-bold text-deep-teal">{itineraire.data.budget}</p>
+        </div>
+        <div>
+          <p class="text-xs text-slate uppercase tracking-wider mb-1">Meilleure période</p>
+          <p class="font-display font-bold text-deep-teal">{itineraire.data.bestPeriod}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <article class="py-12 bg-warm-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="prose prose-lg max-w-none
+        prose-headings:font-display prose-headings:text-deep-teal
+        prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:border-b prose-h2:border-cream prose-h2:pb-3
+        prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
+        prose-p:text-charcoal prose-p:leading-relaxed
+        prose-a:text-amber prose-a:no-underline hover:prose-a:text-gold
+        prose-strong:text-deep-teal
+        prose-img:rounded-2xl prose-img:shadow-lg prose-img:my-8
+        prose-table:text-sm
+        prose-th:bg-deep-teal prose-th:text-white prose-th:px-4 prose-th:py-2
+        prose-td:px-4 prose-td:py-2 prose-td:border-cream
+        prose-li:text-charcoal
+        prose-blockquote:border-amber prose-blockquote:text-slate
+      ">
+        <Content />
+      </div>
+    </div>
+  </article>
+
+  <!-- Other durations -->
+  {otherDurations.length > 0 && (
+    <section class="py-12 bg-cream/50">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="font-display text-2xl font-bold text-deep-teal mb-2">
+          Vous préférez un séjour {otherDurations.some(d => d.data.days < itineraire.data.days) ? 'plus court' : ''}{otherDurations.some(d => d.data.days < itineraire.data.days) && otherDurations.some(d => d.data.days > itineraire.data.days) ? ' ou ' : ''}{otherDurations.some(d => d.data.days > itineraire.data.days) ? 'plus long' : ''} ?
+        </h2>
+        <p class="text-slate mb-8">Découvrez nos autres itinéraires pour {countryNames[country!] || country}.</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          {otherDurations.map((other) => (
+            <a
+              href={`/voyager/${country}/${other.data.duration}`}
+              class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white rounded-xl shadow-sm hover:shadow-md border border-cream hover:border-amber/30 transition-all group"
+            >
+              <span class="font-display font-bold text-deep-teal group-hover:text-amber transition-colors">
+                {other.data.durationLabel}
+              </span>
+              <span class="text-slate text-sm">({other.data.days} jours)</span>
+              <svg class="w-4 h-4 text-slate group-hover:text-amber transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <Newsletter />
+  <Footer />
+</BaseLayout>

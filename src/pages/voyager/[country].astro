@@ -1,0 +1,149 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+export async function getStaticPaths() {
+  return [
+    {
+      params: { country: 'perou' },
+      props: {
+        name: 'Pérou',
+        continent: 'amerique-du-sud',
+        heroImage: 'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=1920&q=80',
+        description: 'Des sommets andins aux forêts amazoniennes, le Pérou offre une diversité de paysages et de cultures à couper le souffle.',
+      },
+    },
+    {
+      params: { country: 'italie' },
+      props: {
+        name: 'Italie du Sud',
+        continent: 'europe',
+        heroImage: 'https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=1920&q=80',
+        description: 'Côtes spectaculaires, vestiges antiques et gastronomie incomparable : le sud de l\'Italie est un voyage pour tous les sens.',
+      },
+    },
+    {
+      params: { country: 'namibie' },
+      props: {
+        name: 'Namibie',
+        continent: 'afrique',
+        heroImage: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1920&q=80',
+        description: 'Dunes géantes, faune sauvage et grands espaces désertiques : la Namibie est l\'aventure africaine par excellence.',
+      },
+    },
+  ];
+}
+
+const { country } = Astro.params;
+const { name, continent, heroImage, description } = Astro.props;
+
+interface DurationOption {
+  slug: string;
+  label: string;
+  days: string;
+  icon: string;
+  description: string;
+}
+
+const durations: DurationOption[] = [];
+
+if (continent === 'europe') {
+  durations.push({
+    slug: 'week-end',
+    label: 'Week-end',
+    days: '3 jours',
+    icon: '⚡',
+    description: 'L\'essentiel en un long week-end. Idéal pour une escapade rapide.',
+  });
+}
+
+durations.push({
+  slug: '1-semaine',
+  label: '1 semaine',
+  days: '7 jours',
+  icon: '🗺️',
+  description: 'Le bon compromis pour découvrir les incontournables sans se presser.',
+});
+
+durations.push({
+  slug: '2-semaines',
+  label: '2 semaines',
+  days: '14 jours',
+  icon: '🌍',
+  description: 'Le voyage complet pour s\'immerger et explorer en profondeur.',
+});
+---
+
+<BaseLayout title={`Voyagez en ${name} — Mon Voyage en Poche`} description={description}>
+  <Header />
+
+  <!-- Hero -->
+  <section class="relative pt-32 pb-20 bg-deep-teal overflow-hidden">
+    <div class="absolute inset-0">
+      <img
+        src={heroImage}
+        alt={name}
+        class="w-full h-full object-cover opacity-30"
+      />
+      <div class="absolute inset-0 bg-gradient-to-b from-deep-teal/60 via-deep-teal/40 to-deep-teal"></div>
+    </div>
+    <div class="relative max-w-4xl mx-auto px-4 text-center">
+      <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+        Voyagez en {name}
+      </h1>
+      <p class="text-white/80 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
+        {description}
+      </p>
+    </div>
+  </section>
+
+  <!-- Breadcrumb -->
+  <nav class="bg-warm-white border-b border-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <ol class="flex items-center gap-2 text-sm text-slate">
+        <li><a href="/" class="hover:text-deep-teal transition-colors">Accueil</a></li>
+        <li class="text-charcoal/30">/</li>
+        <li><a href="/inspiration" class="hover:text-deep-teal transition-colors">Inspiration</a></li>
+        <li class="text-charcoal/30">/</li>
+        <li class="text-deep-teal font-medium">{name}</li>
+      </ol>
+    </div>
+  </nav>
+
+  <!-- Duration choices -->
+  <section class="py-16 bg-warm-white">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="font-display text-2xl sm:text-3xl font-bold text-deep-teal text-center mb-4">
+        Combien de temps partez-vous ?
+      </h2>
+      <p class="text-slate text-center mb-12 max-w-xl mx-auto">
+        Choisissez la durée qui vous convient et découvrez un itinéraire jour par jour avec hébergements, activités et bons plans.
+      </p>
+
+      <div class={`grid gap-6 ${durations.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 max-w-3xl mx-auto'}`}>
+        {durations.map((d) => (
+          <a
+            href={`/voyager/${country}/${d.slug}`}
+            class="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-lg border border-cream hover:border-amber/30 transition-all duration-300 flex flex-col items-center text-center"
+          >
+            <span class="text-4xl mb-4">{d.icon}</span>
+            <h3 class="font-display text-xl font-bold text-deep-teal group-hover:text-amber transition-colors mb-1">
+              {d.label}
+            </h3>
+            <span class="text-amber font-semibold text-sm mb-3">{d.days}</span>
+            <p class="text-slate text-sm leading-relaxed">{d.description}</p>
+            <span class="mt-6 inline-flex items-center gap-2 text-deep-teal group-hover:text-amber font-medium text-sm transition-colors">
+              Voir l'itinéraire
+              <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
