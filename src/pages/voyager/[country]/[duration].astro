@@ -100,8 +100,31 @@ const otherDurations = allItineraires.filter(
     </div>
   </section>
 
+  <!-- Email Overlay -->
+  <div id="email-overlay" class="relative z-30">
+    <div class="absolute inset-x-0 top-0 min-h-screen bg-white/80 backdrop-blur-sm flex items-start justify-center pt-24 sm:pt-32">
+      <div class="max-w-md mx-auto p-8 bg-white rounded-2xl shadow-2xl text-center">
+        <h2 class="font-display text-2xl font-bold text-deep-teal mb-2">Accédez à votre itinéraire gratuit</h2>
+        <p class="text-slate text-sm mb-6">Entrez votre email pour débloquer l'itinéraire complet.</p>
+        <form id="email-form" class="space-y-4">
+          <input
+            id="email-input"
+            type="email"
+            required
+            placeholder="votre@email.com"
+            class="w-full px-4 py-3 border border-cream rounded-xl text-charcoal placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-amber/50 focus:border-amber transition-colors"
+          />
+          <button type="submit" class="w-full px-6 py-3 bg-amber hover:bg-gold text-white font-semibold rounded-xl transition-colors">
+            Découvrir l'itinéraire
+          </button>
+        </form>
+        <p class="text-xs text-slate/60 mt-4">Pas de spam, promis. Vous pouvez vous désinscrire à tout moment.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Content -->
-  <article class="py-12 bg-warm-white">
+  <article id="itinerary-content" class="py-12 bg-warm-white blur-sm pointer-events-none select-none">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="prose prose-lg max-w-none
         prose-headings:font-display prose-headings:text-deep-teal
@@ -153,3 +176,25 @@ const otherDurations = allItineraires.filter(
   <Newsletter />
   <Footer />
 </BaseLayout>
+
+<script>
+  const emailGiven = localStorage.getItem('mvep_email');
+  const overlay = document.getElementById('email-overlay');
+  const content = document.getElementById('itinerary-content');
+
+  if (emailGiven) {
+    overlay?.remove();
+    content?.classList.remove('blur-sm', 'pointer-events-none', 'select-none');
+  }
+
+  document.getElementById('email-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = (document.getElementById('email-input') as HTMLInputElement)?.value;
+    if (email) {
+      localStorage.setItem('mvep_email', email);
+      overlay?.classList.add('opacity-0', 'pointer-events-none');
+      content?.classList.remove('blur-sm', 'pointer-events-none', 'select-none');
+      setTimeout(() => overlay?.remove(), 500);
+    }
+  });
+</script>

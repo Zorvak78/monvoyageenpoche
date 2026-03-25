@@ -6,6 +6,7 @@ continent: "afrique"
 category: "nature"
 type: "Dunes"
 image: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&q=80"
-description: "Les plus hautes dunes de sable du monde, certaines dépassant 300 mètres. Au lever du soleil, leurs crêtes rouge orangé se découpent sur un ciel d'un bleu intense."
+description: "Les plus hautes dunes du monde, jusqu'à 380 mètres. Un océan de sable rouge qui change de couleur au fil de la journée."
 slug: "sossusvlei"
+destinationLink: "/voyager/namibie"
 ---
