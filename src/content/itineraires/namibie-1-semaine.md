@@ -18,7 +18,7 @@ En sept jours, cet itinéraire vous emmène du cœur brûlant du Namib aux rives
 
 Ce circuit en boucle au départ de Windhoek est conçu pour un 4x4 avec tente de toit, le mode de voyage le plus libre et le plus authentique du pays. Les distances sont longues, les pistes parfois exigeantes, mais chaque étape réserve son lot de moments gravés dans la mémoire : un lever de soleil sur Deadvlei, des otaries par centaines à Walvis Bay, un rhinocéros noir venu boire sous les étoiles à Etosha. Sept jours qui valent une vie de souvenirs.
 
-![Carte de l'itinéraire — Namibie 1 semaine](/images/itineraires/namibie-1-semaine-carte.jpg)
+
 
 ## La Namibie en bref
 
