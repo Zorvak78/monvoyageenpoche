@@ -6,232 +6,133 @@ duration: "1-semaine"
 durationLabel: "1 semaine"
 days: 7
 heroImage: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1920&q=80"
-budget: "1 200 – 2 000 €"
-bestPeriod: "Mai – Octobre"
-description: "L'essentiel de la Namibie : Sossusvlei, Swakopmund, Damaraland et Etosha en 7 jours."
+budget: "1 500 – 2 500 €"
+bestPeriod: "Mai-Octobre"
+description: "L'essentiel de la Namibie en 7 jours : Sossusvlei, Swakopmund, Damaraland et Etosha. Un road trip concentré à travers les plus beaux paysages d'Afrique."
+mapImage: "/images/itineraires/namibie-1-semaine-carte.jpg"
 ---
 
-## L'essentiel de la Namibie en 7 jours
+Imaginez une route droite à perte de vue, bordée de plaines ocre où les springboks bondissent entre les touffes d'herbe sèche. À l'horizon, des dunes d'un rouge incandescent se découpent sur un ciel d'un bleu presque irréel. Bienvenue en Namibie — un pays où chaque kilomètre parcouru ressemble à une scène de film, où le silence du désert n'est brisé que par le vent et le crissement du gravier sous vos pneus.
 
-Sept jours pour découvrir les paysages les plus spectaculaires de Namibie : les dunes géantes de Sossusvlei, la ville balnéaire de Swakopmund entre océan et désert, le Damaraland lunaire et la faune sauvage d'Etosha. Un condensé d'Afrique australe qui marquera vos rétines à jamais.
+En sept jours, cet itinéraire vous emmène du cœur brûlant du Namib aux rives brumeuses de l'Atlantique, des dunes les plus hautes du monde aux plaines grouillantes de vie sauvage d'Etosha. C'est un road trip intense, pensé pour ne rien manquer de l'essentiel tout en gardant le temps de respirer, de s'arrêter, de contempler. La Namibie ne se visite pas — elle se vit, au rythme du soleil et des pistes.
 
-La Namibie se vit en self-drive. Les pistes de gravier sont bien entretenues, le trafic quasi inexistant, et chaque kilomètre est un spectacle. Location de 4x4 avec tente de toit recommandée pour l'autonomie et la flexibilité.
+Ce circuit en boucle au départ de Windhoek est conçu pour un 4x4 avec tente de toit, le mode de voyage le plus libre et le plus authentique du pays. Les distances sont longues, les pistes parfois exigeantes, mais chaque étape réserve son lot de moments gravés dans la mémoire : un lever de soleil sur Deadvlei, des otaries par centaines à Walvis Bay, un rhinocéros noir venu boire sous les étoiles à Etosha. Sept jours qui valent une vie de souvenirs.
 
----
+![Carte de l'itinéraire — Namibie 1 semaine](/images/itineraires/namibie-1-semaine-carte.jpg)
+
+## La Namibie en bref
+
+La Namibie occupe une place à part sur la carte africaine. Coincée entre l'Angola au nord, le Botswana à l'est, l'Afrique du Sud au sud et l'océan Atlantique à l'ouest, elle offre une diversité de paysages stupéfiante pour un pays de 2,5 millions d'habitants. Le **désert du Namib**, le plus vieux du monde (80 millions d'années), longe la côte atlantique sur plus de 1 500 km. À l'intérieur, un **plateau central** semi-aride culmine entre 1 000 et 2 000 mètres, tandis que le nord-est verdoyant contraste avec l'aridité du reste du pays.
+
+Le climat est sec et ensoleillé la majorité de l'année. La **saison sèche** (mai à octobre) est la période idéale pour visiter : journées agréables (20-28°C), nuits fraîches dans le désert (pouvant descendre sous 5°C en juillet-août), quasiment aucune pluie. C'est aussi la meilleure saison pour observer la **faune** — les animaux se concentrent autour des rares points d'eau, rendant les safaris particulièrement productifs.
+
+Côté faune justement, la Namibie ne déçoit pas. Le **parc national d'Etosha** abrite lions, éléphants, léopards, rhinocéros noirs et buffles — les fameux Big Five, ou presque. Le Damaraland cache des **éléphants du désert** adaptés à l'aridité, tandis que la **Skeleton Coast** et Walvis Bay accueillent d'immenses colonies d'otaries à fourrure du Cap et des flamants roses par milliers.
+
+Côté pratique : pas de visa pour les ressortissants européens (séjour < 90 jours), passeport valide 6 mois après retour. La monnaie est le **dollar namibien** (NAD), indexé 1:1 sur le rand sud-africain (ZAR) — les deux sont acceptés partout. Décalage horaire : UTC+2 (même fuseau que Paris en été, +1h en hiver). Le pays est sûr pour les voyageurs, avec un taux de criminalité faible hors des grandes villes. La conduite se fait à gauche, sur des pistes de gravier bien entretenues.
 
 ## Jour 1 — Arrivée à Windhoek
 
-### Matin et après-midi
+Votre avion se pose à l'aéroport international **Hosea Kutako**, à 45 km à l'est de Windhoek. Pas de choc culturel ici : l'aéroport est petit, organisé, et les formalités rapides. Récupérez votre **4x4 avec tente de toit** directement à l'aéroport — les loueurs principaux (Asco Car Hire, Britz, Caprivi Car Hire) ont tous des comptoirs sur place. Prenez le temps de vérifier l'état du véhicule avec l'agent : pneus (deux roues de secours minimum), cric, compresseur, kit de réparation. Notez chaque rayure sur le formulaire. En Namibie, un 4x4 bien préparé, c'est votre maison, votre cuisine et votre liberté.
 
-Atterrissage à l'aéroport international Hosea Kutako. Récupération du véhicule de location — un 4x4 avec tente de toit est le choix idéal. Prenez le temps de vérifier l'état du véhicule, les pneus de secours et le kit de réparation.
+Direction Windhoek pour le **ravitaillement**. Arrêt obligatoire au Superspar ou Checkers du centre-ville : eau (minimum 10 litres par personne pour les premiers jours), viande pour le braai, fruits, snacks, crème solaire indice 50, lampe frontale. Prévoyez large — les épiceries sont rares une fois sorti de la capitale. Profitez-en pour retirer des **dollars namibiens** au distributeur (Nedbank, FNB, Standard Bank — tous acceptent les cartes européennes).
 
-Direction le centre-ville de Windhoek pour le ravitaillement. Arrêt au **Superspar** ou **Checkers** : faites le plein d'eau (minimum 10 litres par personne), snacks, viande pour braai, fruits et crème solaire. La Namibie est un pays où l'on prévoit large — les épiceries sont rares hors des villes.
+L'après-midi, explorez brièvement Windhoek. La ville est petite mais attachante : la **Christuskirche** (église luthérienne de 1907) domine le centre, l'**Alte Feste** (vieux fort transformé en musée) raconte l'histoire coloniale allemande, et la **Independence Memorial Museum** offre la perspective namibienne. Windhoek n'est pas une destination en soi, mais une mise en bouche agréable.
 
-### Soirée
-
-Profitez de votre première soirée pour découvrir la capitale namibienne. Promenade dans le quartier de la Christuskirche, l'église luthérienne emblématique, et le vieux fort Alte Feste. La ville est petite mais agréable, avec une ambiance détendue typiquement namibienne.
-
-**Dîner :** Le <a href="#" data-affiliate="booking">**Joe's Beerhouse**</a> est une institution — décor excentrique, viande de gibier (oryx, springbok, koudou) grillée à la perfection. Comptez 15-25 € par personne.
-
-**Hébergement :** <a href="#" data-affiliate="booking">**Chameleon Backpackers & Guesthouse**</a> pour les budgets serrés, ou <a href="#" data-affiliate="booking">**The Olive Exclusive**</a> pour un début luxueux.
-
-> **Tip du jour :** Changez vos euros en dollars namibiens (NAD) à l'aéroport. Le rand sud-africain (ZAR) est accepté partout à parité 1:1.
-
----
+Pour le dîner, direction [Joe's Beerhouse](# ){data-affiliate="booking"} — une institution. Décor excentrique, ambiance chaleureuse, et viande de gibier grillée à la perfection : oryx, springbok, koudou. Comptez 15-25 € par personne pour un repas complet avec bière locale (Windhoek Lager, évidemment). Nuit au [Chameleon Backpackers & Guesthouse](# ){data-affiliate="booking"} pour les petits budgets, ou au [The Olive Exclusive](# ){data-affiliate="booking"} pour commencer le voyage sur une note luxueuse.
 
 ## Jour 2 — Windhoek → Sossusvlei
 
-### Route
+Départ tôt le matin pour la route vers le sud-ouest. Windhoek → Sesriem, c'est environ **4h30 de route** via la B1 puis la C24. Les premiers kilomètres de goudron laissent rapidement place aux pistes de gravier — et c'est là que le voyage commence vraiment. La savane plate et monotone se transforme progressivement : les collines roses du **massif du Naukluft** apparaissent, les plaines s'élargissent, les couleurs virent du vert poussiéreux à l'ocre intense.
 
-Windhoek → Sesriem : environ 4h30 via la B1 puis la C24. Les premiers paysages de savane laissent progressivement place aux montagnes roses du Naukluft et aux plaines infinies. Arrêtez-vous au col de **Spreetshoogte Pass** pour une vue à couper le souffle sur la vallée du Namib — un des plus beaux panoramas de la route.
+Arrêt recommandé au **Spreetshoogte Pass** — un col spectaculaire avec une vue plongeante sur la vallée du Namib qui s'étend à l'infini. C'est le genre de panorama qui vous fait couper le moteur, ouvrir la portière, et rester planté là cinq minutes sans rien dire. Reprenez la route en douceur — les pistes sont bonnes mais sinueuses dans cette section.
 
-### Après-midi
+Arrivée en début d'après-midi à **Sesriem**. Si vous avez réservé le camping NWR à l'intérieur du parc (et vous devriez), installez votre campement et profitez de l'ombre en attendant que la chaleur retombe. En fin d'après-midi, balade au **Sesriem Canyon** — une gorge de 30 mètres de profondeur creusée dans le conglomérat, accessible en 30 minutes de marche facile. Les parois stratifiées racontent des millions d'années de géologie.
 
-Arrivée dans la zone de Sesriem. Installation au camping (les places à l'intérieur du parc sont prisées — réservez via NWR bien à l'avance). Balade au **Sesriem Canyon**, une gorge de 30 mètres de profondeur creusée dans le conglomérat. Comptez 30 minutes de marche facile.
+Grimpez ensuite la **Dune Elim**, accessible à pied depuis le camping, pour votre premier coucher de soleil namibien. Les dunes passent du rouge vif au violet profond, les ombres s'allongent, et le silence est total. Premier **braai** sous un ciel étoilé d'une netteté irréelle — la Voie lactée semble à portée de main. Nuit au [Sossus Dune Lodge](# ){data-affiliate="booking"} (seul lodge dans le parc) ou camping NWR Sesriem.
 
-### Coucher de soleil
+> Réservez le camping NWR de Sesriem dès que possible — c'est le seul hébergement à l'intérieur du parc, et dormir ici vous permet d'accéder aux dunes avant le lever du soleil, quand la lumière est magique.
 
-Montez sur la **Dune Elim**, accessible depuis le camping, pour admirer le coucher de soleil sur la mer de dunes. Les couleurs passent du rouge vif au violet profond — un avant-goût de ce qui vous attend le lendemain.
+## Jour 3 — Sossusvlei et Deadvlei
 
-**Braai** sous un ciel étoilé sans pollution lumineuse. La Voie lactée est si nette qu'elle semble à portée de main.
+C'est LE jour de votre voyage. Réveil à **5h30**, dans l'obscurité. Le portail du parc ouvre au lever du soleil pour les résidents internes — vous avez une heure d'avance sur les visiteurs extérieurs. La route de 65 km jusqu'aux dunes est goudronnée et se fait dans une lumière rasante spectaculaire.
 
-**Hébergement :** <a href="#" data-affiliate="booking">**Sossus Dune Lodge**</a> (seul lodge à l'intérieur du parc) ou camping NWR Sesriem.
+Premier arrêt : la **Dune 45**, au kilomètre 45 de la route (d'où son nom). C'est la dune la plus accessible et la plus photogénique. La montée prend 15-20 minutes dans le sable mou — chaque pas enfonce, mais la récompense au sommet est absolue : le lever du soleil embrase les crêtes de sable rouge tandis que les vallées restent plongées dans l'ombre bleue. Aucune photo ne rend justice à ce moment. Redescendez en courant dans le sable — pur bonheur.
 
-> **Tip du jour :** Être logé à l'intérieur du parc vous donne accès aux dunes dès le lever du soleil, 1h avant les visiteurs extérieurs. Crucial pour les photos.
+Continuez jusqu'au parking de Sossusvlei (les 5 derniers km nécessitent un 4x4 ou la navette du parc). De là, marche de 1 km jusqu'à **Deadvlei** — la cuvette d'argile blanche parsemée d'arbres morts vieux de 900 ans, encadrée par des dunes orange géantes dont **Big Daddy** (325 mètres). C'est l'un des paysages les plus photographiés d'Afrique, et il surpasse toutes les attentes. Les arbres noirs, le sol blanc craquelé, le ciel bleu intense et les dunes incandescentes créent un tableau surréaliste, presque extraterrestre.
 
-![Coucher de soleil sur les dunes de Sossusvlei](https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=1200&q=80)
+Les plus courageux grimperont **Big Daddy** — comptez 1h30 d'ascension épuisante dans le sable profond. La vue depuis le sommet embrasse tout le désert du Namib, un océan de dunes jusqu'à l'horizon. La descente en bondissant dans le sable est un moment de joie pure qui vaut chaque goutte de sueur.
 
----
+Retour en fin de matinée. Route vers l'ouest direction Swakopmund via Solitaire. Arrêt obligatoire à **Solitaire** — un hameau perdu dans le désert avec une station-service (faites le plein, c'est la dernière avant longtemps) et une boulangerie célèbre pour son **Apfelstrudel** improbable. La route C14 puis C28 traverse ensuite le **Kuiseb Canyon** et des plaines de gravier lunaires avant d'atteindre la brume atlantique. Arrivée en fin de journée à Swakopmund ou Walvis Bay. Nuit au [Beach Lodge Swakopmund](# ){data-affiliate="booking"}.
 
-## Jour 3 — Sossusvlei, Deadvlei et Sesriem Canyon
+> Emportez au minimum 3 litres d'eau par personne pour la matinée Sossusvlei/Deadvlei. La chaleur est traîtresse même en hiver, et il n'y a aucun point d'eau sur le parcours.
 
-### Lever de soleil — Dune 45
+## Jour 4 — Swakopmund
 
-Départ à 5h30 dans l'obscurité. La **Dune 45** (ainsi nommée car elle se trouve au km 45 de la route) est la star du parc : accessible à pied, montée de 15-20 minutes, et un lever de soleil qui vaut chaque goutte de sueur. La lumière dorée sur le sable rouge est un spectacle qu'aucune photo ne peut vraiment capturer.
+Journée de respiration dans cette ville improbable, coincée entre l'océan Atlantique glacial et les dunes du Namib. **Swakopmund** est un vestige colonial allemand où l'architecture Art nouveau côtoie les surf shops, où l'on mange des Bratwurst face au Pacifique, et où la brume matinale donne à tout un air de ville fantôme.
 
-### Matin — Sossusvlei et Deadvlei
+Le matin, partez pour l'activité star : le **kayak avec les otaries** à Walvis Bay (demi-journée, environ 50 €). Vous pagayez au milieu de centaines d'otaries à fourrure du Cap, curieuses et joueuses, avec pélicans, flamants roses et parfois des dauphins en bonus. C'est une expérience magique, à réserver tôt le matin quand la mer est calme et les animaux les plus actifs. Alternative adrénaline : **quad dans les dunes** (60 €, 2h) ou **sandboarding** (40 €) sur les dunes côtières face à l'océan.
 
-Poursuivez jusqu'au parking de Sossusvlei (les 5 derniers km nécessitent un 4x4 ou la navette). De là, marchez 1 km jusqu'à **Deadvlei** — la fameuse cuvette d'argile blanche parsemée d'arbres morts vieux de 900 ans. Encadrée par les dunes orange géantes dont **Big Daddy** (325 m), c'est l'un des paysages les plus photographiés d'Afrique.
+L'après-midi, explorez Swakopmund à pied. La **Mole** (jetée historique) offre une vue sur l'océan déchaîné. Promenez-vous dans la Bismarck Strasse et ses façades coloniales, visitez le **Swakopmund Museum** pour comprendre l'histoire complexe du pays, et terminez par une bière artisanale au **Swakopmund Brauhaus**. Si vous avez le budget et l'envie, le **Sandwich Harbour** (excursion 4x4 guidée, demi-journée) est une merveille : les dunes du Namib plongent littéralement dans l'océan, un paysage unique au monde.
 
-Les plus courageux grimperont Big Daddy — comptez 1h30 d'ascension dans le sable mou. La descente en courant dans le sable est un pur moment de joie.
+Coucher de soleil depuis la plage — Swakopmund a un microclimat frais et brumeux, prévoyez une veste même en plein été. Dîner au [The Tug](# ){data-affiliate="booking"}, restaurant emblématique installé dans un ancien remorqueur, fruits de mer excellents avec vue sur l'océan. Nuit au [The Delight Swakopmund](# ){data-affiliate="booking"}.
 
-### Après-midi
+## Jour 5 — Swakopmund → Damaraland
 
-Retour au camp pour se reposer aux heures chaudes. En fin d'après-midi, explorez le **Sesriem Canyon** plus en profondeur ou offrez-vous un vol en montgolfière (à réserver longtemps à l'avance, environ 250 €).
+Route vers le nord, environ **4-5 heures** jusqu'au cœur du Damaraland. Mais la journée commence par un détour qui vaut de l'or : la **Spitzkoppe**, accessible depuis la B2 avant de bifurquer vers le nord. Ces inselbergs de granit surgissent de la plaine comme des cathédrales de pierre, et l'arrêt de 1 à 2 heures pour explorer les arches naturelles (notamment le **Rock Arch**) est un moment fort du voyage. La lumière du matin ou du soir y est spectaculaire.
 
-**Hébergement :** Même que la veille.
+Reprenez la route vers le Damaraland proprement dit. Le paysage change encore : plaines rocheuses rouges, montagnes tabulaires, vallées sèches où se cachent les fameux **éléphants du désert** — une population adaptée à l'aridité qui parcourt de vastes distances entre les rares sources d'eau. Les croiser sur la piste est un privilège rare et émouvant.
 
-> **Tip du jour :** Emportez au minimum 3 litres d'eau par personne pour la matinée Sossusvlei/Deadvlei. La chaleur est traîtresse, même en hiver.
+En fin d'après-midi, visite du site de **Twyfelfontein** (Ui-//aes en langue damara), classé au patrimoine mondial UNESCO. Plus de 2 500 **gravures rupestres** vieilles de 2 000 à 6 000 ans ornent les dalles de grès rouge : girafes, rhinocéros, autruches, empreintes d'animaux. Un guide local (obligatoire) vous explique la signification de ces œuvres laissées par les chasseurs-cueilleurs San. Comptez 1h30 pour la visite. Nuit au [Twyfelfontein Country Lodge](# ){data-affiliate="booking"} ou au camping de Aba-Huab.
 
----
+> La Spitzkoppe est surnommée le "Cervin de Namibie". L'arrêt vaut largement 1-2 heures : les arches naturelles de granit au coucher du soleil sont spectaculaires, et le camping y est mémorable pour ceux qui ont le temps.
 
-## Jour 4 — Sossusvlei → Swakopmund
+## Jour 6 — Damaraland → Etosha
 
-### Route
+Journée de transition vers le grand nord et le joyau animalier de la Namibie. Route de **4-5 heures** à travers le Damaraland puis les plaines de mopane vers le **parc national d'Etosha**. Entrée par **Anderson Gate**, la porte sud du parc, en début d'après-midi.
 
-Sesriem → Swakopmund : environ 5h via la C14 et la C28. Cette route est un spectacle en soi. Vous traverserez le **Kuiseb Canyon**, gorge spectaculaire où deux géologues allemands se sont cachés pendant la Seconde Guerre mondiale (leur histoire est racontée dans le livre *The Sheltering Desert*).
+Etosha est immense : 22 270 km² centrés autour d'un gigantesque **pan** (lac asséché) blanc visible depuis l'espace. La stratégie ici est simple — se poster aux **points d'eau** et attendre. Les animaux viennent à vous. Premier game drive en fin d'après-midi sur la route entre Anderson Gate et Okaukuejo : guettez les springboks, oryx, girafes, zèbres de Burchell et gnous bleus qui se déplacent en troupeaux sur les plaines bordant le pan.
 
-Le paysage change radicalement : des dunes rouges, vous passez aux plaines de gravier lunaires, puis au brouillard atlantique qui enveloppe la côte.
+Installation au camp d'**Okaukuejo**, le plus mythique d'Etosha. Son point d'eau éclairé la nuit est légendaire. Dès la tombée de la nuit, installez-vous sur les gradins de pierre et observez le ballet : éléphants venant boire par familles entières, rhinocéros noirs solitaires et méfiants, hyènes en maraude, parfois un lion en embuscade. Le silence n'est brisé que par les bruits d'eau et les feulements lointains. C'est un spectacle hypnotique qui peut durer des heures — amenez une couverture et de la patience. Nuit au [Okaukuejo Resort](# ){data-affiliate="booking"} (NWR).
 
-### Détour — Walvis Bay
+> Au waterhole d'Okaukuejo la nuit, restez patient. Les rhinocéros noirs viennent souvent boire entre 21h et minuit. C'est l'un des rares endroits au monde où on peut observer ces animaux à quelques mètres, éclairés par des projecteurs, depuis une simple tribune.
 
-Avant Swakopmund, arrêtez-vous à **Walvis Bay** pour le lagon aux flamants roses. Des milliers de flamants se nourrissent dans les eaux peu profondes — un spectacle rose surréaliste avec les dunes en arrière-plan. Le **Walvis Bay Waterfront** offre de bons restaurants de fruits de mer pour le déjeuner.
+## Jour 7 — Etosha → Windhoek
 
-### Soirée à Swakopmund
+Dernier jour, et pas des moindres. Réveil avant l'aube pour un **game drive matinal** — les premières heures de lumière sont les plus actives. Parcourez la route d'Okaukuejo vers **Halali** en vous arrêtant à chaque point d'eau signalé. Les lions en chasse au petit matin, les troupeaux de springboks dans la brume dorée, les girafes se découpant sur le pan blanc, un guépard à l'affût dans les herbes rases — Etosha est l'un des meilleurs parcs d'Afrique pour le safari en autonomie.
 
-Installation dans cette ville surprenante à l'architecture coloniale allemande coincée entre océan et désert. Promenez-vous sur le **Mole** (jetée historique) et découvrez les façades Art nouveau de la Bismarck Strasse.
+Pause à **Halali**, camp intermédiaire dont le point d'eau niché entre les rochers est moins fréquenté qu'Okaukuejo et réserve souvent de belles surprises. Tentez le **Fischer's Pan**, une extension du pan principal accessible par une boucle — c'est un bon spot pour les rapaces et les autruches.
 
-**Dîner :** <a href="#" data-affiliate="booking">**The Tug**</a>, restaurant emblématique dans un ancien remorqueur, fruits de mer excellents avec vue sur l'océan.
+En fin de matinée, prenez la route du retour vers Windhoek : environ **4h30 via la B1**, entièrement goudronnée. Route rapide et directe à travers les plaines centrales. Arrivée en début d'après-midi — le temps de rendre le 4x4 (pensez à le faire nettoyer pour éviter les frais), faire quelques achats de souvenirs au **Namibia Craft Centre** (artisanat local de qualité), et profiter d'une dernière douche chaude sans limite de temps.
 
-**Hébergement :** <a href="#" data-affiliate="booking">**Beach Lodge Swakopmund**</a> ou <a href="#" data-affiliate="booking">**The Delight Swakopmund**</a>.
+Dernière soirée au [Stellenbosch Wine Bar & Bistro](# ){data-affiliate="booking"} pour une cuisine raffinée et un verre de vin sud-africain, ou retour au Joe's Beerhouse pour boucler la boucle. Si votre vol est le lendemain matin, nuit au [Hotel Heinitzburg](# ){data-affiliate="booking"} — un château colonial perché sur une colline avec vue panoramique sur Windhoek, pour terminer le voyage en beauté.
 
-> **Tip du jour :** Faites le plein d'essence à Solitaire (unique station entre Sesriem et Swakopmund) et goûtez la fameuse **Apfelstrudel** de la boulangerie — un must.
+## Budget estimé
 
-![Flamants roses à Walvis Bay](https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1200&q=80)
-
----
-
-## Jour 5 — Swakopmund
-
-### Matin — Activités sensations
-
-Journée dédiée aux activités de Swakopmund. Au choix :
-
-- **Kayak avec les otaries** à Walvis Bay (demi-journée, ~50 €) — vous pagayez au milieu de centaines d'otaries à fourrure, avec des pélicans et flamants en bonus. Possibilité de croiser des dauphins.
-- **Quad dans les dunes** du Namib (~60 €, 2h) — adrénaline garantie sur les dunes géantes face à l'océan.
-- **Sandboarding** (surf des sables) sur les dunes côtières (~40 €).
-- **Parachutisme** au-dessus du désert qui rencontre l'océan (~200 €) — une des plus belles zones de saut au monde.
-
-### Après-midi
-
-Visite du **Swakopmund Museum** pour comprendre l'histoire coloniale allemande et la culture des peuples San et Damara. Promenade dans le centre-ville : boutiques d'artisanat, galeries d'art, et l'incontournable **Swakopmund Brauhaus** pour une bière artisanale.
-
-Le **National Marine Aquarium** vaut le détour si vous voyagez avec des enfants.
-
-### Soirée
-
-Coucher de soleil depuis la plage. Swakopmund a un microclimat frais et brumeux — prévoyez une veste même en été.
-
-**Dîner :** **Kücki's Pub** pour des burgers copieux et une ambiance locale.
-
-**Hébergement :** Même que la veille.
-
-> **Tip du jour :** Réservez le kayak pour le matin tôt — les otaries sont plus actives et la mer plus calme.
-
----
-
-## Jour 6 — Swakopmund → Etosha via Damaraland
-
-### Route
-
-Swakopmund → Etosha (Okaukuejo) : environ 6h via la B2 et la C35. Longue journée de route, mais les paysages du Damaraland sont extraordinaires — plaines rocheuses rouges, montagnes tabulaires et formations géologiques surprenantes.
-
-### Arrêt — Twyfelfontein (si le temps le permet)
-
-Si vous partez tôt, un détour par **Twyfelfontein** est possible. Ce site UNESCO abrite plus de 2 500 gravures rupestres vieilles de 6 000 ans sur du grès rouge. Les guides locaux (obligatoires) expliquent la signification des gravures laissées par les chasseurs-cueilleurs San. Comptez 1h30 pour la visite.
-
-### Arrivée à Etosha
-
-Installation au camp d'**Okaukuejo**, le plus célèbre d'Etosha. Son point d'eau éclairé la nuit est légendaire : éléphants, rhinocéros noirs, lions — tous viennent boire à quelques mètres de vous. Installez-vous sur les bancs et observez le ballet nocturne.
-
-**Dîner :** Restaurant du camp Okaukuejo ou braai au camping.
-
-**Hébergement :** <a href="#" data-affiliate="booking">**Okaukuejo Resort**</a> (NWR, à l'intérieur du parc).
-
-> **Tip du jour :** Réservez vos camps Etosha (NWR) des mois à l'avance — ils affichent complet très vite, surtout en haute saison (juin-octobre).
-
-![Éléphants au point d'eau d'Etosha](https://images.unsplash.com/photo-1549366021-9f761d450615?w=1200&q=80)
-
----
-
-## Jour 7 — Safari Etosha et retour Windhoek
-
-### Safari matinal
-
-Levez-vous avant l'aube pour un game drive autour du **pan d'Etosha**. Les premières heures sont les plus actives : lions en chasse, troupeaux de springboks, girafes au petit matin, zèbres et gnous.
-
-Parcourez la route entre Okaukuejo et **Halali**, en vous arrêtant à chaque point d'eau signalé. La patience est récompensée — un éléphant solitaire, un guépard à l'affût, un rhinocéros noir sortant des broussailles. Etosha est l'un des meilleurs parcs d'Afrique pour l'observation en self-drive.
-
-### Midi
-
-Pause déjeuner au camp de Halali. Son point d'eau, niché entre les rochers, est souvent moins fréquenté qu'Okaukuejo et réserve de belles surprises.
-
-### Après-midi — Retour Windhoek
-
-Route Etosha → Windhoek : environ 4h30 via la B1. Route goudronnée, rapide et directe. Arrivée en fin d'après-midi.
-
-Dernière soirée à Windhoek : dîner au <a href="#" data-affiliate="booking">**Stellenbosch Wine Bar & Bistro**</a> pour une cuisine raffinée et un verre de vin sud-africain.
-
-**Hébergement :** <a href="#" data-affiliate="booking">**Hotel Heinitzburg**</a> — un château colonial avec vue sur la ville pour finir en beauté.
-
-> **Tip du jour :** Rendez le 4x4 propre (intérieur et extérieur) pour éviter les frais de nettoyage. Vérifiez l'heure de votre vol retour.
-
----
-
-## Budget détaillé (7 jours, par personne, base 2 voyageurs)
-
-| Poste | Budget serré | Budget confort |
-|---|---|---|
-| Vol A/R Europe → Windhoek | 500 – 700 € | 600 – 900 € |
-| Location 4x4 tente de toit (7 jours) | 250 € | 350 € |
-| Carburant | 100 € | 120 € |
-| Hébergement (camping/lodges) | 120 € | 400 € |
-| Nourriture et restaurants | 100 € | 200 € |
-| Activités (kayak, quad, etc.) | 80 € | 200 € |
-| Entrées parcs (Sossusvlei, Etosha) | 30 € | 30 € |
-| **Total (hors vol)** | **680 €** | **1 300 €** |
-| **Total (avec vol)** | **1 200 €** | **2 000 €** |
-
----
-
-## Meilleure période
-
-La **saison sèche** (mai à octobre) est idéale :
-
-- **Mai-juin :** Températures douces, végétation encore verte après les pluies. Moins de touristes.
-- **Juillet-août :** Haute saison. Nuits froides dans le désert (proche de 0°C), journées agréables (20-25°C). Faune très concentrée aux points d'eau.
-- **Septembre-octobre :** Les plus chauds de la saison sèche. Animaux très faciles à observer car la végétation est rase et l'eau rare.
-
-Évitez novembre à mars : chaleur extrême (40°C+), pluies dans le nord et l'est, certaines routes impraticables.
-
----
+| Poste | Budget |
+|-------|--------|
+| Vols A/R depuis Paris | 600 – 900 € |
+| Location 4x4 équipé (7 jours) | 400 – 700 € |
+| Carburant (~1 500 km) | 100 – 150 € |
+| Hébergements/camping (6 nuits) | 200 – 400 € |
+| Repas et courses | 100 – 200 € |
+| Entrées parcs (Etosha, Sesriem) | 30 – 50 € |
+| Activités (quad, kayak) | 80 – 150 € |
+| **Total par personne** | **1 510 – 2 550 €** |
 
 ## Conseils pratiques
 
-### Visa
-Pas de visa pour les ressortissants français, belges et suisses (séjour < 90 jours). Passeport valide 6 mois après la date de retour, avec au moins 2 pages vierges.
+### Le 4x4
 
-### Véhicule et routes
-Un 4x4 est indispensable pour Sossusvlei (5 derniers km) et fortement recommandé partout. Les pistes de gravier (C-roads) sont bien entretenues mais nécessitent une vitesse adaptée (80 km/h max). Ne roulez jamais de nuit — animaux sur la route.
+La **location d'un 4x4 avec tente de toit** est le choix par défaut en Namibie. Les loueurs principaux (Asco, Britz, Caprivi) proposent des véhicules bien équipés : tente de toit, réfrigérateur, ustensiles de cuisine, table et chaises de camping. Vérifiez impérativement l'**assurance** — optez pour la couverture complète incluant pneus, pare-brise et dessous de caisse. La conduite se fait à **gauche** (véhicule à droite), ce qui surprend les premiers kilomètres mais devient naturel rapidement. Sur les pistes de gravier, maintenez une vitesse de **80 km/h maximum** — les dérapages à haute vitesse sont la première cause d'accident. Emportez deux roues de secours et un compresseur. Ne roulez **jamais de nuit** : animaux sur la route, pas d'éclairage, pistes mal balisées.
 
-### Eau et carburant
-Emportez toujours au minimum 10 litres d'eau par personne. Faites le plein à chaque station-service — les distances entre stations peuvent dépasser 200 km. La plupart acceptent uniquement le cash.
+### Eau et ravitaillement
 
-### Faune
-Restez dans votre véhicule dans les parcs nationaux. Distance minimum avec les animaux : 50 mètres. Les éléphants du désert et les rhinocéros noirs sont imprévisibles — prudence.
+Règle d'or : **minimum 10 litres d'eau par personne** dans le véhicule à tout moment. Les distances entre les points de ravitaillement peuvent dépasser 200 km (notamment entre Sesriem et Solitaire, puis entre Solitaire et Swakopmund). Faites le plein de carburant **à chaque station-service** croisée, même si le réservoir est à moitié plein. Les stations acceptent souvent uniquement le cash. Prévoyez vos courses alimentaires principales à Windhoek et Swakopmund — les épiceries ailleurs sont rares et chères.
 
-### Pourboires
-10-15 % dans les restaurants. Pour les guides : 50-100 NAD par personne par activité. Pour le personnel des lodges : 20-50 NAD par jour dans la boîte à pourboires commune.
+### Argent
 
-### Santé
-Aucune vaccination obligatoire. Antipaludéens recommandés pour Etosha et le nord du pays (consultez votre médecin). Crème solaire indice 50+ indispensable.
+Le **dollar namibien** (NAD) est indexé à parité 1:1 sur le rand sud-africain (ZAR) — les deux monnaies sont acceptées partout. Les distributeurs automatiques fonctionnent bien à Windhoek, Swakopmund et dans les grandes villes. Retirez du **cash** en quantité suffisante : les stations-service, petits commerces, marchés et campings en brousse n'acceptent souvent que les espèces. Les cartes Visa et Mastercard passent dans les lodges, restaurants et supermarchés urbains. Taux de change indicatif : 1 € ≈ 19-20 NAD.
+
+### Santé et sécurité
+
+La **crème solaire indice 50+** est non négociable — l'altitude du plateau central (1 000-1 500 m) et l'air sec intensifient les UV. Chapeau, lunettes et manches longues aux heures chaudes. Pas de **paludisme** dans le centre et le sud du pays (Windhoek, Sossusvlei, Swakopmund) — en revanche, le risque existe à Etosha et dans le nord : consultez votre médecin pour un traitement prophylactique si votre voyage tombe en saison des pluies. Aucun vaccin obligatoire. Côté faune : restez dans votre véhicule dans les parcs nationaux, gardez une distance de 50 mètres minimum avec les animaux, et ne sortez jamais du 4x4 en présence d'éléphants — ils chargent sans prévenir. Le pays est **globalement sûr**, avec des précautions classiques dans les centres urbains (pas d'objets de valeur visibles, éviter de marcher seul la nuit).
