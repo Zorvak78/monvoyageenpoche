@@ -193,8 +193,8 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
             </div>
           </div>
         `, {
-          maxWidth: 300,
-          minWidth: 280,
+          maxWidth: 240,
+          minWidth: 220,
           autoPan: true,
           autoPanPadding: L.point(20, 60),
           closeButton: true,
@@ -367,12 +367,10 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
 
     .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; width: 100% !important; }
-    .popup-mini { display: flex; flex-direction: column; width: 280px; }
+    .popup-mini { display: flex; flex-direction: column; width: 220px; }
     .popup-img {
       width: 100%;
-      height: 90px;
-      object-fit: cover;
-      object-position: center;
+      height: auto;
       display: block;
     }
     .popup-body { padding: 14px 16px 16px; }
