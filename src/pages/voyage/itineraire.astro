@@ -182,21 +182,18 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       }
 
       lieuxVisible.forEach(lieu => {
-        const sel = isInItinerary(lieu.slug);
-        const m = L.marker([lieu.lat, lieu.lng], { icon: makeIcon(sel, orderOf(lieu.slug)) });
+        const m = L.marker([lieu.lat, lieu.lng], { icon: makeIcon(isInItinerary(lieu.slug), orderOf(lieu.slug)) });
         m.bindPopup(`
-          <div class="popup-mini">
+          <div class="popup-mini" data-slug="${lieu.slug}">
             <img src="${lieu.image}" alt="${lieu.title}" class="popup-img" />
             <div class="popup-body">
               <h3 class="popup-title">${lieu.title}</h3>
-              <button class="popup-btn" data-slug="${lieu.slug}">
-                ${sel ? '✓ Retirer' : '+ Ajouter à mon voyage'}
-              </button>
+              <button class="popup-btn" data-slug="${lieu.slug}"></button>
             </div>
           </div>
         `, {
-          maxWidth: 240,
-          minWidth: 220,
+          maxWidth: 300,
+          minWidth: 280,
           autoPan: true,
           autoPanPadding: L.point(20, 60),
           closeButton: true,
@@ -205,12 +202,15 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         cluster.addLayer(m);
       });
 
-      // Popup click handler
+      // Popup click handler — recalcule l'état à chaque ouverture
       map.on('popupopen', (e) => {
         const btn = (e.popup.getElement() as HTMLElement | null)?.querySelector<HTMLButtonElement>('.popup-btn');
         if (!btn) return;
+        const slug = btn.dataset.slug!;
+        const sel = isInItinerary(slug);
+        btn.textContent = sel ? '✓ Retirer de mon voyage' : '+ Ajouter à mon voyage';
+        btn.classList.toggle('removing', sel);
         btn.onclick = () => {
-          const slug = btn.dataset.slug!;
           toggle(slug);
           map.closePopup();
         };
@@ -360,19 +360,27 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
 
     .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; width: 100% !important; }
-    .popup-mini { display: flex; flex-direction: column; }
-    .popup-img { width: 100%; height: 120px; object-fit: cover; display: block; }
-    .popup-body { padding: 12px 14px 14px; }
+    .popup-mini { display: flex; flex-direction: column; width: 280px; }
+    .popup-img {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    .popup-body { padding: 14px 16px 16px; }
     .popup-title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 17px; font-weight: 700; color: #0F4C5C;
-      margin: 0 0 10px; line-height: 1.2; text-align: center;
+      font-size: 18px; font-weight: 700; color: #0F4C5C;
+      margin: 0 0 12px; line-height: 1.2; text-align: center;
     }
     .popup-btn {
       width: 100%; padding: 10px 12px; border-radius: 999px;
       background: #0F4C5C; color: white; font-weight: 700; font-size: 12px;
-      border: none; cursor: pointer; transition: background 0.2s;
+      border: none; cursor: pointer; transition: all 0.2s;
     }
     .popup-btn:hover { background: #D4A03C; color: #2D2D2D; }
+    .popup-btn.removing { background: #ffffff; color: #B91C1C; border: 2px solid #FCA5A5; }
+    .popup-btn.removing:hover { background: #FEE2E2; color: #991B1B; border-color: #B91C1C; }
   </style>
 </FunnelLayout>
