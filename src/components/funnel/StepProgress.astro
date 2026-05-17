@@ -1,0 +1,56 @@
+---
+interface Props {
+  current: 1 | 2 | 3 | 4 | 5 | 6;
+}
+const { current } = Astro.props;
+
+const steps = [
+  { n: 1, label: 'Destination', href: '/voyage/destination' },
+  { n: 2, label: 'Itinéraire', href: '/voyage/itineraire' },
+  { n: 3, label: 'Logements', href: '/voyage/logements' },
+  { n: 4, label: 'Voiture', href: '/voyage/voiture' },
+  { n: 5, label: 'Transport', href: '/voyage/transport' },
+  { n: 6, label: 'Récap', href: '/voyage/recap' },
+];
+---
+
+<nav class="bg-white border-b border-cream sticky top-20 z-40" aria-label="Étapes du voyage">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <ol class="flex items-center justify-between gap-2 overflow-x-auto">
+      {steps.map(s => {
+        const done = s.n < current;
+        const active = s.n === current;
+        const clickable = done;
+        return (
+          <li class="flex-1 min-w-[88px]">
+            <a
+              href={clickable ? s.href : '#'}
+              class:list={[
+                'flex flex-col items-center gap-1.5 group',
+                !clickable && 'pointer-events-none',
+              ]}
+              aria-current={active ? 'step' : undefined}
+            >
+              <span class:list={[
+                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors',
+                active && 'bg-amber text-charcoal',
+                done && 'bg-deep-teal text-white group-hover:bg-amber group-hover:text-charcoal',
+                !active && !done && 'bg-cream text-slate'
+              ]}>
+                {done ? (
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                ) : s.n}
+              </span>
+              <span class:list={[
+                'text-xs font-medium tracking-wide uppercase whitespace-nowrap',
+                active ? 'text-deep-teal' : 'text-slate'
+              ]}>
+                {s.label}
+              </span>
+            </a>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+</nav>

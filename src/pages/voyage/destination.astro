@@ -1,0 +1,225 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+
+const countries = [
+  { slug: 'namibie', name: 'Namibie', image: '/images/inspiration/deadvlei.jpg', available: true, tagline: '14 lieux · 1 à 3 semaines' },
+  { slug: 'italie', name: 'Italie', image: '/images/inspiration/sossusvlei.jpg', available: false, tagline: 'Bientôt' },
+  { slug: 'perou', name: 'Pérou', image: '/images/inspiration/etosha.jpg', available: false, tagline: 'Bientôt' },
+  { slug: 'japon', name: 'Japon', image: '/images/inspiration/spitzkoppe.jpg', available: false, tagline: 'Bientôt' },
+];
+
+const compositions = [
+  { value: 'couple', label: 'En couple', emoji: '💕' },
+  { value: 'famille', label: 'En famille', emoji: '👨‍👩‍👧' },
+  { value: 'amis', label: 'Entre amis', emoji: '🥂' },
+  { value: 'solo', label: 'Solo', emoji: '🎒' },
+];
+
+const interests = [
+  { value: 'nature', label: 'Nature & paysages' },
+  { value: 'aventure', label: 'Aventure & outdoor' },
+  { value: 'culture', label: 'Culture & histoire' },
+  { value: 'gastronomie', label: 'Gastronomie' },
+  { value: 'detente', label: 'Détente' },
+];
+---
+
+<FunnelLayout
+  title="Étape 1 — Trouver ta destination | Mon Voyage en Poche"
+  description="Choisis ton pays, avec qui tu pars, ton rythme et tes envies."
+  step={1}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <header class="mb-10">
+      <p class="font-display italic text-amber mb-2">Étape 1 sur 6</p>
+      <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-3">Trouver ta destination</h1>
+      <p class="text-slate text-lg">Parle-nous de ton voyage idéal. On utilise ces infos pour personnaliser les étapes suivantes.</p>
+    </header>
+
+    <form id="destination-form" class="space-y-12">
+      <!-- Pays -->
+      <section>
+        <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Quel pays&nbsp;?</h2>
+        <p class="text-sm text-slate mb-4">D'autres pays arrivent bientôt.</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {countries.map(c => (
+            <label class:list={[
+              'relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer group',
+              !c.available && 'opacity-50 cursor-not-allowed'
+            ]}>
+              <input
+                type="radio"
+                name="country"
+                value={c.slug}
+                disabled={!c.available}
+                class="peer sr-only"
+                required
+              />
+              <img src={c.image} alt={c.name} class="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105" />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-black/20"></div>
+              <div class="absolute inset-0 border-4 border-transparent peer-checked:border-amber rounded-2xl transition-colors"></div>
+              <div class="absolute bottom-0 left-0 right-0 p-4 text-white">
+                <div class="font-display text-lg font-bold">{c.name}</div>
+                <div class="text-xs text-white/80">{c.tagline}</div>
+              </div>
+              <div class="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
+                <svg class="w-4 h-4 text-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+              </div>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <!-- Composition -->
+      <section>
+        <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Avec qui pars-tu&nbsp;?</h2>
+        <p class="text-sm text-slate mb-4">Pour adapter les logements et activités suggérés.</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {compositions.map(c => (
+            <label class="relative cursor-pointer">
+              <input type="radio" name="composition" value={c.value} class="peer sr-only" required />
+              <div class="p-4 rounded-xl border-2 border-cream bg-white text-center transition-all peer-checked:border-amber peer-checked:bg-amber/5 hover:border-amber/50">
+                <div class="text-2xl mb-1">{c.emoji}</div>
+                <div class="text-sm font-semibold text-charcoal">{c.label}</div>
+              </div>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <!-- Rythme -->
+      <section>
+        <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Quel rythme&nbsp;?</h2>
+        <p class="text-sm text-slate mb-4">Préférez-vous bouger souvent ou poser vos valises&nbsp;?</p>
+        <div class="bg-white border border-cream rounded-2xl p-6">
+          <input
+            type="range"
+            id="rythme"
+            name="rythme"
+            min="0"
+            max="2"
+            step="1"
+            value="1"
+            class="w-full accent-amber"
+          />
+          <div class="flex justify-between text-xs text-slate mt-3 px-1">
+            <span><strong class="block text-charcoal">Poser ses valises</strong>Peu de déplacements, séjours longs</span>
+            <span class="text-center"><strong class="block text-charcoal">Équilibré</strong>Le mix idéal</span>
+            <span class="text-right"><strong class="block text-charcoal">Beaucoup bouger</strong>Road trip, étapes courtes</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Intérêts -->
+      <section>
+        <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Tes intérêts&nbsp;?</h2>
+        <p class="text-sm text-slate mb-4">Plusieurs choix possibles. On filtrera les lieux selon tes envies.</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {interests.map(i => (
+            <label class="relative cursor-pointer">
+              <input type="checkbox" name="interests" value={i.value} class="peer sr-only" />
+              <div class="px-4 py-3 rounded-xl border-2 border-cream bg-white text-center text-sm font-semibold text-charcoal transition-all peer-checked:border-amber peer-checked:bg-amber/10 hover:border-amber/50">
+                {i.label}
+              </div>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <!-- Durée + Ville départ -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section>
+          <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Combien de jours&nbsp;?</h2>
+          <p class="text-sm text-slate mb-4">Durée totale de ton voyage.</p>
+          <input
+            type="number"
+            id="days"
+            name="days"
+            min="2"
+            max="60"
+            placeholder="14"
+            class="w-full px-4 py-3 rounded-xl border-2 border-cream bg-white text-charcoal focus:border-amber focus:outline-none transition-colors"
+            required
+          />
+        </section>
+
+        <section>
+          <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Ville de départ</h2>
+          <p class="text-sm text-slate mb-4">Pour trouver ton vol à l'étape 5.</p>
+          <input
+            type="text"
+            id="departureCity"
+            name="departureCity"
+            placeholder="Paris, Lyon, Bruxelles…"
+            class="w-full px-4 py-3 rounded-xl border-2 border-cream bg-white text-charcoal focus:border-amber focus:outline-none transition-colors"
+            required
+          />
+        </section>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end pt-4">
+        <button
+          type="submit"
+          class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-deep-teal text-white font-bold tracking-wide hover:bg-amber hover:text-charcoal transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Construire mon itinéraire
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    import { loadTrip, saveTrip } from '../../lib/tripState';
+
+    const form = document.getElementById('destination-form') as HTMLFormElement;
+    if (form) {
+      // Hydrate depuis localStorage
+      const trip = loadTrip();
+      if (trip.country) {
+        const radio = form.querySelector<HTMLInputElement>(`input[name="country"][value="${trip.country}"]`);
+        if (radio && !radio.disabled) radio.checked = true;
+      }
+      if (trip.composition) {
+        const radio = form.querySelector<HTMLInputElement>(`input[name="composition"][value="${trip.composition}"]`);
+        if (radio) radio.checked = true;
+      }
+      const rythmeMap = { lent: '0', modere: '1', intense: '2' };
+      const rythmeInput = form.querySelector<HTMLInputElement>('#rythme');
+      if (rythmeInput) rythmeInput.value = rythmeMap[trip.rythme] ?? '1';
+
+      trip.interests.forEach(i => {
+        const cb = form.querySelector<HTMLInputElement>(`input[name="interests"][value="${i}"]`);
+        if (cb) cb.checked = true;
+      });
+
+      const daysInput = form.querySelector<HTMLInputElement>('#days');
+      if (daysInput && trip.days) daysInput.value = String(trip.days);
+
+      const cityInput = form.querySelector<HTMLInputElement>('#departureCity');
+      if (cityInput && trip.departureCity) cityInput.value = trip.departureCity;
+
+      // Submit
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const rythmeValues = ['lent', 'modere', 'intense'] as const;
+        const rythmeIdx = Number(fd.get('rythme') ?? 1);
+
+        saveTrip({
+          country: String(fd.get('country') ?? ''),
+          composition: fd.get('composition') as any,
+          rythme: rythmeValues[rythmeIdx] ?? 'modere',
+          interests: fd.getAll('interests') as any[],
+          days: Number(fd.get('days')),
+          departureCity: String(fd.get('departureCity') ?? ''),
+        });
+
+        window.location.href = '/voyage/itineraire';
+      });
+    }
+  </script>
+</FunnelLayout>

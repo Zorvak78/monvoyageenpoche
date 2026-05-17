@@ -2,157 +2,127 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import DestinationCard from '../components/DestinationCard.astro';
-import BlogCard from '../components/BlogCard.astro';
-import Newsletter from '../components/Newsletter.astro';
-import { getCollection } from 'astro:content';
-
-const destinations = (await getCollection('destinations')).sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
-const blogPosts = (await getCollection('blog')).sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()).slice(0, 3);
-
-const categories = [
-  { name: 'Aventure', icon: '🏔️', desc: 'Treks, randonnées et sensations fortes' },
-  { name: 'Culture', icon: '🏛️', desc: 'Temples, musées et traditions' },
-  { name: 'Détente', icon: '🏖️', desc: 'Plages, spas et farniente' },
-  { name: 'Nature', icon: '🌿', desc: 'Parcs, safaris et grands espaces' },
-  { name: 'Road Trip', icon: '🚗', desc: 'Routes mythiques et liberté' },
-  { name: 'Gastronomie', icon: '🍜', desc: 'Saveurs locales et street food' },
-];
 ---
 
-<BaseLayout title="Mon Voyage en Poche — Guides de voyage et itinéraires">
+<BaseLayout
+  title="Mon Voyage en Poche — Construis ton voyage de A à Z en autonomie"
+  description="L'outil tout-en-un pour planifier ton voyage : destination, itinéraire, logements, voiture, vol. Tout au même endroit, gratuitement."
+>
   <Header transparent />
 
   <!-- Hero -->
-  <section class="relative h-screen min-h-[600px] flex items-center justify-center">
-    <div class="absolute inset-0">
+  <section class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 z-0">
       <img
-        src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1920&q=80"
-        alt="Plage tropicale avec eau turquoise"
+        src="/images/inspiration/deadvlei.jpg"
+        alt="Désert de Namibie"
         class="w-full h-full object-cover"
       />
-      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60" />
+      <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60"></div>
     </div>
-    <div class="relative text-center px-4 max-w-4xl">
-      <h1 class="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-        Mon Voyage en Poche
+
+    <div class="relative z-10 text-center text-white px-4 max-w-4xl">
+      <p class="font-display italic text-amber text-lg sm:text-xl mb-4 tracking-wide">Le voyage commence ici</p>
+      <h1 class="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-tight mb-6">
+        Construis ton voyage<br/>
+        <span class="text-amber">de A à Z</span>
       </h1>
-      <p class="text-white/90 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-        Des itinéraires détaillés, des bons plans testés et des guides authentiques pour voyager en toute sérénité.
+      <p class="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Destination, itinéraire, logements, voiture, vol&nbsp;:
+        tout au même endroit, en six étapes, gratuitement.
       </p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="/destinations" class="px-8 py-4 bg-amber hover:bg-gold text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105">
-          Explorer les destinations
-        </a>
-        <a href="/blog" class="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/30 text-white font-semibold rounded-xl hover:bg-white/20 transition-all duration-300">
-          Lire le blog
-        </a>
-      </div>
-    </div>
-    <!-- Scroll indicator -->
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-      <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-      </svg>
+      <a
+        href="/voyage/destination"
+        class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-amber text-charcoal text-base font-bold tracking-wide hover:bg-white transition-all shadow-2xl"
+      >
+        Commencer mon voyage
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+      <p class="text-sm text-white/60 mt-4">Aucun compte requis · 100&nbsp;% gratuit</p>
     </div>
   </section>
 
-  <!-- Categories -->
-  <section class="py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="text-center mb-14 fade-in">
-        <h2 class="font-display text-3xl sm:text-4xl font-bold text-deep-teal mb-4">
-          Quel type de voyage vous inspire ?
+  <!-- Comment ça marche -->
+  <section class="py-24 bg-warm-white">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <p class="font-display italic text-amber mb-3">Comment ça marche</p>
+        <h2 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-deep-teal mb-4">
+          Six étapes, un voyage.
         </h2>
-        <p class="text-slate text-lg max-w-2xl mx-auto">
-          Trouvez l'aventure qui vous correspond parmi nos catégories.
+        <p class="text-slate max-w-2xl mx-auto">
+          Tu avances à ton rythme, tes choix sont sauvegardés. Tu peux partir, revenir, partager.
         </p>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 fade-in">
-        {categories.map(cat => (
-          <a href={`/destinations?cat=${cat.name.toLowerCase()}`} class="group text-center p-6 rounded-2xl bg-warm-white hover:bg-cream transition-all duration-300 hover:shadow-md">
-            <div class="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{cat.icon}</div>
-            <h3 class="font-semibold text-deep-teal text-sm mb-1">{cat.name}</h3>
-            <p class="text-slate text-xs hidden sm:block">{cat.desc}</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          { n: 1, t: 'Destination', d: 'Choisis ton pays, avec qui tu pars, ton rythme et tes envies.' },
+          { n: 2, t: 'Itinéraire', d: 'Place tes étapes sur une carte interactive et construis ton parcours.' },
+          { n: 3, t: 'Logements', d: 'Sélectionne tes hébergements sur Booking ou Airbnb directement depuis le site.' },
+          { n: 4, t: 'Voiture', d: 'Compare et réserve ta location avec nos partenaires.' },
+          { n: 5, t: 'Transport', d: 'Trouve ton vol depuis ta ville de départ.' },
+          { n: 6, t: 'Récap', d: 'Reçois ton voyage par email, partage-le, vois ton budget total estimé.' },
+        ].map(s => (
+          <div class="bg-white rounded-2xl p-8 border border-cream hover:shadow-lg transition-shadow">
+            <div class="w-12 h-12 rounded-full bg-amber/15 text-amber flex items-center justify-center font-display text-xl font-bold mb-4">{s.n}</div>
+            <h3 class="font-display text-xl font-bold text-deep-teal mb-2">{s.t}</h3>
+            <p class="text-slate text-sm leading-relaxed">{s.d}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Destination phare : Namibie -->
+  <section class="py-24 bg-cream">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <p class="font-display italic text-amber mb-3">Destination phare</p>
+          <h2 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Namibie</h2>
+          <p class="text-slate leading-relaxed mb-4">
+            Des dunes rouges de Sossusvlei aux pans salins d'Etosha, en passant par la Skeleton Coast et les Chutes Victoria&nbsp;: la Namibie est l'un des plus grands road trips du monde.
+          </p>
+          <p class="text-slate leading-relaxed mb-8">
+            Notre planificateur te propose 14 lieux à intégrer librement à ton itinéraire, selon ton rythme et tes intérêts.
+          </p>
+          <a
+            href="/voyage/destination"
+            class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all"
+          >
+            Planifier mon voyage en Namibie
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
           </a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- Popular Destinations -->
-  <section class="py-20 bg-warm-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-end justify-between mb-14 fade-in">
-        <div>
-          <h2 class="font-display text-3xl sm:text-4xl font-bold text-deep-teal mb-4">
-            Destinations populaires
-          </h2>
-          <p class="text-slate text-lg">
-            Nos itinéraires les plus appréciés, prêts à être suivis.
-          </p>
         </div>
-        <a href="/destinations" class="hidden sm:inline-flex items-center gap-2 text-deep-teal hover:text-amber font-medium transition-colors">
-          Tout voir
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </a>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 fade-in">
-        {destinations.map(dest => (
-          <DestinationCard
-            title={dest.data.title}
-            country={dest.data.country}
-            slug={dest.id}
-            heroImage={dest.data.heroImage}
-            duration={dest.data.duration}
-            description={dest.data.description}
-            categories={dest.data.categories}
-          />
-        ))}
-      </div>
-      <div class="text-center mt-10 sm:hidden">
-        <a href="/destinations" class="text-deep-teal hover:text-amber font-medium transition-colors">
-          Voir toutes les destinations →
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Latest Blog Posts -->
-  <section class="py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-end justify-between mb-14 fade-in">
-        <div>
-          <h2 class="font-display text-3xl sm:text-4xl font-bold text-deep-teal mb-4">
-            Derniers articles
-          </h2>
-          <p class="text-slate text-lg">
-            Conseils, récits et inspirations pour vos prochains voyages.
-          </p>
+        <div class="grid grid-cols-2 gap-4">
+          <img src="/images/inspiration/sossusvlei.jpg" alt="Sossusvlei" class="rounded-2xl aspect-[3/4] object-cover" />
+          <img src="/images/inspiration/etosha.jpg" alt="Etosha" class="rounded-2xl aspect-[3/4] object-cover mt-8" />
         </div>
-        <a href="/blog" class="hidden sm:inline-flex items-center gap-2 text-deep-teal hover:text-amber font-medium transition-colors">
-          Tous les articles
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </a>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 fade-in">
-        {blogPosts.map(post => (
-          <BlogCard
-            title={post.data.title}
-            slug={post.id}
-            heroImage={post.data.heroImage}
-            description={post.data.description}
-            publishDate={post.data.publishDate}
-            tags={post.data.tags}
-            author={post.data.author}
-          />
-        ))}
       </div>
     </div>
   </section>
 
-  <!-- Newsletter -->
-  <Newsletter />
+  <!-- CTA final -->
+  <section class="py-24 bg-deep-teal text-white text-center">
+    <div class="max-w-3xl mx-auto px-4">
+      <h2 class="font-display text-3xl md:text-4xl font-bold mb-4">Prêt à partir&nbsp;?</h2>
+      <p class="text-white/80 mb-8">Ça prend cinq minutes pour avoir un voyage complet sous les yeux.</p>
+      <a
+        href="/voyage/destination"
+        class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-amber text-charcoal font-bold hover:bg-white transition-all"
+      >
+        Commencer maintenant
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+  </section>
 
   <Footer />
 </BaseLayout>

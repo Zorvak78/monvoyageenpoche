@@ -1,0 +1,31 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+---
+
+<FunnelLayout
+  title="Étape 2 — Construire ton itinéraire | Mon Voyage en Poche"
+  step={2}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+    <p class="font-display italic text-amber mb-2">Étape 2 sur 6</p>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Construire ton itinéraire</h1>
+
+    <div class="bg-cream rounded-2xl p-8 mb-8 inline-block text-left max-w-md mx-auto">
+      <p class="text-sm font-semibold text-amber uppercase tracking-wide mb-3">Tes choix</p>
+      <pre id="trip-debug" class="text-xs text-charcoal whitespace-pre-wrap font-mono"></pre>
+    </div>
+
+    <p class="text-slate mb-8">La carte interactive arrive très bientôt. En attendant, tes choix sont sauvegardés.</p>
+
+    <a href="/voyage/destination" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-deep-teal text-deep-teal font-semibold hover:bg-deep-teal hover:text-white transition-all">
+      ← Modifier mes choix
+    </a>
+  </div>
+
+  <script>
+    import { loadTrip } from '../../lib/tripState';
+    const trip = loadTrip();
+    const el = document.getElementById('trip-debug');
+    if (el) el.textContent = JSON.stringify(trip, null, 2);
+  </script>
+</FunnelLayout>
