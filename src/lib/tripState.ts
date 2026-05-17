@@ -9,6 +9,11 @@ export type Interest =
   | 'faune' | 'plages' | 'photographie' | 'vie-nocturne' | 'spiritualite';
 export type Rythme = 'lent' | 'modere' | 'intense';
 
+export interface ItineraryStep {
+  slug: string;
+  days: number;
+}
+
 export interface TripState {
   country: string | null;
   composition: Composition | null;
@@ -16,7 +21,7 @@ export interface TripState {
   interests: Interest[];
   days: number | null;
   departureCity: string | null;
-  itinerary: string[];
+  itinerary: ItineraryStep[];
   updatedAt: number;
 }
 
@@ -33,6 +38,14 @@ const defaultState: TripState = {
   updatedAt: 0,
 };
 
+function migrate(state: any): TripState {
+  // Migration: itinerary used to be string[], now {slug, days}[]
+  if (Array.isArray(state.itinerary) && state.itinerary.length > 0 && typeof state.itinerary[0] === 'string') {
+    state.itinerary = state.itinerary.map((slug: string) => ({ slug, days: 1 }));
+  }
+  return { ...defaultState, ...state };
+}
+
 export function loadTrip(): TripState {
   if (typeof window === 'undefined') return { ...defaultState };
 
@@ -41,7 +54,7 @@ export function loadTrip(): TripState {
   if (shared) {
     try {
       const decoded = JSON.parse(atob(shared));
-      const merged = { ...defaultState, ...decoded, updatedAt: Date.now() };
+      const merged = migrate({ ...decoded, updatedAt: Date.now() });
       saveTrip(merged);
       return merged;
     } catch (e) {}
@@ -50,7 +63,7 @@ export function loadTrip(): TripState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultState };
-    return { ...defaultState, ...JSON.parse(raw) };
+    return migrate(JSON.parse(raw));
   } catch (e) {
     return { ...defaultState };
   }
@@ -83,7 +96,7 @@ function loadTripFromStorage(): TripState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultState };
-    return { ...defaultState, ...JSON.parse(raw) };
+    return migrate(JSON.parse(raw));
   } catch (e) {
     return { ...defaultState };
   }
