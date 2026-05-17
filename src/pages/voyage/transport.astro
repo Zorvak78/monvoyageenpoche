@@ -1,0 +1,19 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+---
+
+<FunnelLayout
+  title="Étape 4 — Trouver ton transport | Mon Voyage en Poche"
+  step={4}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+    <p class="font-display italic text-amber mb-2">Étape 4 sur 4</p>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Trouver ton transport</h1>
+    <p class="text-slate mb-8">Cette étape arrive très bientôt : avion, location de voiture, train — tout au même endroit.</p>
+
+    <div class="flex justify-center gap-3">
+      <a href="/voyage/logement" class="px-6 py-3 rounded-full border-2 border-deep-teal text-deep-teal font-semibold hover:bg-deep-teal hover:text-white transition-all">← Logements</a>
+      <a href="/voyage/recap" class="px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all">Récap →</a>
+    </div>
+  </div>
+</FunnelLayout>

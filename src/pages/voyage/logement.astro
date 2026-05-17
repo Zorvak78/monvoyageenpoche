@@ -1,0 +1,31 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+---
+
+<FunnelLayout
+  title="Étape 3 — Choisir tes logements | Mon Voyage en Poche"
+  step={3}
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+    <p class="font-display italic text-amber mb-2">Étape 3 sur 4</p>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Choisir tes logements</h1>
+    <p class="text-slate mb-8">Cette étape arrive très bientôt : suggestions Booking & Airbnb pour chaque étape de ton itinéraire.</p>
+
+    <div class="bg-cream rounded-2xl p-6 mb-8 inline-block text-left">
+      <p class="text-sm font-semibold text-amber uppercase tracking-wide mb-3">Itinéraire enregistré</p>
+      <pre id="trip-debug" class="text-xs text-charcoal whitespace-pre-wrap font-mono"></pre>
+    </div>
+
+    <div class="flex justify-center gap-3">
+      <a href="/voyage/itineraire" class="px-6 py-3 rounded-full border-2 border-deep-teal text-deep-teal font-semibold hover:bg-deep-teal hover:text-white transition-all">← Itinéraire</a>
+      <a href="/voyage/transport" class="px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all">Transport →</a>
+    </div>
+  </div>
+
+  <script>
+    import { loadTrip } from '../../lib/tripState';
+    const trip = loadTrip();
+    const el = document.getElementById('trip-debug');
+    if (el) el.textContent = JSON.stringify(trip, null, 2);
+  </script>
+</FunnelLayout>

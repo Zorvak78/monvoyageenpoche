@@ -1,31 +1,326 @@
 ---
 import FunnelLayout from '../../layouts/FunnelLayout.astro';
+import { getCollection } from 'astro:content';
+
+const lieux = await getCollection('lieux');
+
+const lieuxData = lieux.map(l => ({
+  slug: l.id.replace(/^[^/]+\//, '').replace(/\.md$/, ''),
+  ...l.data,
+}));
+
+const countryConfigs: Record<string, { name: string; center: [number, number]; zoom: number }> = {
+  namibie: { name: 'Namibie', center: [-22.5, 17], zoom: 6 },
+  italie: { name: 'Italie', center: [42.5, 12.5], zoom: 6 },
+  perou: { name: 'Pérou', center: [-10, -76], zoom: 5 },
+  japon: { name: 'Japon', center: [36, 138], zoom: 5 },
+};
 ---
 
 <FunnelLayout
   title="Étape 2 — Construire ton itinéraire | Mon Voyage en Poche"
+  description="Place tes étapes sur la carte et construis ton parcours."
   step={2}
 >
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-    <p class="font-display italic text-amber mb-2">Étape 2 sur 4</p>
-    <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Construire ton itinéraire</h1>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin />
 
-    <div class="bg-cream rounded-2xl p-8 mb-8 inline-block text-left max-w-md mx-auto">
-      <p class="text-sm font-semibold text-amber uppercase tracking-wide mb-3">Tes choix</p>
-      <pre id="trip-debug" class="text-xs text-charcoal whitespace-pre-wrap font-mono"></pre>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <header class="mb-6">
+      <p class="font-display italic text-amber mb-1">Étape 2 sur 4</p>
+      <h1 class="font-display text-3xl md:text-4xl font-bold text-deep-teal">Construire ton itinéraire</h1>
+      <p class="text-slate mt-2">Clique sur les marqueurs pour découvrir les lieux et les ajouter à ton voyage. Réorganise-les avec un glisser-déposer.</p>
+    </header>
+
+    <!-- Empty state fallback (no step 1 done) -->
+    <div id="no-trip" class="hidden bg-cream rounded-2xl p-8 text-center">
+      <h2 class="font-display text-xl font-bold text-deep-teal mb-2">Commence par l'étape 1</h2>
+      <p class="text-slate mb-4">Tu dois d'abord choisir ta destination.</p>
+      <a href="/voyage/destination" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all">
+        ← Aller à l'étape 1
+      </a>
     </div>
 
-    <p class="text-slate mb-8">La carte interactive arrive très bientôt. En attendant, tes choix sont sauvegardés.</p>
+    <div id="itinerary-builder" class="hidden grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- Map -->
+      <div class="lg:col-span-3 bg-white rounded-2xl overflow-hidden border border-cream shadow-sm">
+        <div id="map" class="w-full h-[500px] lg:h-[640px]"></div>
+        <div class="px-4 py-3 bg-cream/50 border-t border-cream flex items-center gap-2 text-xs text-slate">
+          <svg class="w-4 h-4 text-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="filter-info">Affichage de tous les lieux disponibles.</span>
+        </div>
+      </div>
 
-    <a href="/voyage/destination" class="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-deep-teal text-deep-teal font-semibold hover:bg-deep-teal hover:text-white transition-all">
-      ← Modifier mes choix
-    </a>
+      <!-- Side panel -->
+      <aside class="lg:col-span-2 bg-white rounded-2xl border border-cream shadow-sm p-6 flex flex-col">
+        <div class="mb-5">
+          <div class="flex items-baseline justify-between gap-3 mb-1">
+            <h2 class="font-display text-xl font-bold text-deep-teal">Ton itinéraire</h2>
+            <span id="step-count" class="text-xs font-semibold text-slate uppercase tracking-wide">0 étape</span>
+          </div>
+          <div class="text-sm text-slate" id="days-summary">
+            <span id="days-used" class="font-bold text-deep-teal">0</span> /
+            <span id="days-total">0</span> jours utilisés
+          </div>
+          <div class="h-2 bg-cream rounded-full mt-2 overflow-hidden">
+            <div id="days-bar" class="h-full bg-amber rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <p id="days-warning" class="hidden mt-2 text-xs text-red-600 font-semibold">⚠ Tu dépasses la durée totale prévue.</p>
+        </div>
+
+        <ol id="itinerary-list" class="space-y-2 flex-1 min-h-[120px]"></ol>
+
+        <div id="empty-itinerary" class="text-center py-10 text-slate text-sm border-2 border-dashed border-cream rounded-xl">
+          <svg class="w-10 h-10 mx-auto text-slate/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          <p>Ton itinéraire est vide.<br/>Clique sur les marqueurs.</p>
+        </div>
+
+        <div class="pt-5 mt-5 border-t border-cream flex flex-col gap-3">
+          <button
+            id="continue-btn"
+            disabled
+            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-bold tracking-wide hover:bg-amber hover:text-charcoal transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Continuer vers les logements
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </button>
+          <a href="/voyage/destination" class="text-center text-xs text-slate hover:text-deep-teal transition-colors">← Modifier mes choix</a>
+        </div>
+      </aside>
+    </div>
   </div>
 
+  <!-- Data injection -->
+  <script type="application/json" id="lieux-data" set:html={JSON.stringify(lieuxData)}></script>
+  <script type="application/json" id="country-configs" set:html={JSON.stringify(countryConfigs)}></script>
+
   <script>
-    import { loadTrip } from '../../lib/tripState';
+    import L from 'leaflet';
+    import Sortable from 'sortablejs';
+    import { loadTrip, saveTrip } from '../../lib/tripState';
+
+    type Lieu = {
+      slug: string; title: string; country: string; region: string; type: string;
+      image: string; description: string; lat: number; lng: number;
+      interests: string[]; duree: number; nuits: boolean;
+    };
+
     const trip = loadTrip();
-    const el = document.getElementById('trip-debug');
-    if (el) el.textContent = JSON.stringify(trip, null, 2);
+    if (!trip.country || !trip.days) {
+      document.getElementById('no-trip')!.classList.remove('hidden');
+    } else {
+      document.getElementById('itinerary-builder')!.classList.remove('hidden');
+      initBuilder();
+    }
+
+    function initBuilder() {
+      const lieuxAll: Lieu[] = JSON.parse(document.getElementById('lieux-data')!.textContent || '[]');
+      const configs = JSON.parse(document.getElementById('country-configs')!.textContent || '{}');
+      const config = configs[trip.country!] || { name: trip.country, center: [0, 0], zoom: 4 };
+
+      // Filter by country + interests
+      let lieuxCountry = lieuxAll.filter(l => l.country === trip.country);
+      let lieuxVisible = trip.interests.length > 0
+        ? lieuxCountry.filter(l => l.interests.some(i => trip.interests.includes(i as any)))
+        : lieuxCountry;
+
+      // Fallback if filter excludes everything
+      if (lieuxVisible.length === 0) lieuxVisible = lieuxCountry;
+
+      const filterInfo = document.getElementById('filter-info')!;
+      filterInfo.textContent = trip.interests.length > 0
+        ? `${lieuxVisible.length} lieu${lieuxVisible.length > 1 ? 'x' : ''} correspondent à tes intérêts (sur ${lieuxCountry.length}).`
+        : `${lieuxCountry.length} lieux disponibles. Filtre par intérêts à l'étape 1 pour affiner.`;
+
+      // Init Leaflet
+      const map = L.map('map', { scrollWheelZoom: false }).setView(config.center, config.zoom);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 18,
+      }).addTo(map);
+
+      const markers = new Map<string, L.Marker>();
+      const polyline = L.polyline([], { color: '#D4A03C', weight: 3, opacity: 0.85, dashArray: '6 8' }).addTo(map);
+
+      function makeIcon(selected: boolean, order: number) {
+        return L.divIcon({
+          className: 'custom-marker',
+          html: selected
+            ? `<div class="marker-pin selected"><span>${order}</span></div>`
+            : `<div class="marker-pin"></div>`,
+          iconSize: [32, 40],
+          iconAnchor: [16, 38],
+          popupAnchor: [0, -38],
+        });
+      }
+
+      lieuxVisible.forEach(lieu => {
+        const isSelected = trip.itinerary.includes(lieu.slug);
+        const order = isSelected ? trip.itinerary.indexOf(lieu.slug) + 1 : 0;
+        const m = L.marker([lieu.lat, lieu.lng], { icon: makeIcon(isSelected, order) }).addTo(map);
+        m.bindPopup(`
+          <div class="popup-content">
+            <img src="${lieu.image}" alt="${lieu.title}" class="popup-img" />
+            <div class="popup-body">
+              <div class="popup-type">${lieu.type} · ${lieu.region}</div>
+              <h3 class="popup-title">${lieu.title}</h3>
+              <p class="popup-desc">${lieu.description}</p>
+              <div class="popup-meta">
+                <span>📅 ${lieu.duree} jour${lieu.duree > 1 ? 's' : ''}</span>
+                ${lieu.nuits ? '<span>🛏 Nuit possible</span>' : '<span>🚐 Étape de visite</span>'}
+              </div>
+              <button class="popup-btn" data-slug="${lieu.slug}">
+                ${isSelected ? '✓ Retirer du voyage' : '+ Ajouter à mon voyage'}
+              </button>
+            </div>
+          </div>
+        `, { maxWidth: 280, minWidth: 260 });
+        markers.set(lieu.slug, m);
+      });
+
+      // Popup button handler
+      map.on('popupopen', (e) => {
+        const btn = (e.popup.getElement() as HTMLElement | null)?.querySelector<HTMLButtonElement>('.popup-btn');
+        if (!btn) return;
+        btn.onclick = () => {
+          const slug = btn.dataset.slug!;
+          toggle(slug);
+          map.closePopup();
+        };
+      });
+
+      // Sortable list
+      const listEl = document.getElementById('itinerary-list')!;
+      Sortable.create(listEl, {
+        animation: 200,
+        handle: '.drag-handle',
+        ghostClass: 'opacity-30',
+        onEnd: () => {
+          const newOrder = Array.from(listEl.children).map(el => (el as HTMLElement).dataset.slug!);
+          saveTrip({ itinerary: newOrder });
+          render();
+        },
+      });
+
+      function toggle(slug: string) {
+        const next = trip.itinerary.includes(slug)
+          ? trip.itinerary.filter(s => s !== slug)
+          : [...trip.itinerary, slug];
+        const updated = saveTrip({ itinerary: next });
+        trip.itinerary = updated.itinerary;
+        render();
+      }
+
+      function render() {
+        // Markers
+        lieuxVisible.forEach(lieu => {
+          const isSel = trip.itinerary.includes(lieu.slug);
+          const order = isSel ? trip.itinerary.indexOf(lieu.slug) + 1 : 0;
+          markers.get(lieu.slug)?.setIcon(makeIcon(isSel, order));
+        });
+
+        // Polyline
+        const coords = trip.itinerary
+          .map(s => lieuxVisible.find(l => l.slug === s))
+          .filter(Boolean)
+          .map(l => [l!.lat, l!.lng] as [number, number]);
+        polyline.setLatLngs(coords);
+
+        // List
+        listEl.innerHTML = trip.itinerary.map((slug, i) => {
+          const l = lieuxVisible.find(x => x.slug === slug) || lieuxAll.find(x => x.slug === slug);
+          if (!l) return '';
+          return `
+            <li data-slug="${slug}" class="flex items-center gap-3 p-3 rounded-xl bg-cream/50 border border-cream group hover:border-amber transition-colors">
+              <span class="drag-handle cursor-grab text-slate hover:text-deep-teal" aria-label="Glisser">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+              </span>
+              <span class="w-7 h-7 rounded-full bg-amber text-charcoal text-xs font-bold flex items-center justify-center flex-shrink-0">${i + 1}</span>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-deep-teal text-sm truncate">${l.title}</div>
+                <div class="text-xs text-slate">${l.duree}j · ${l.type}</div>
+              </div>
+              <button class="remove-btn text-slate hover:text-red-600 transition-colors" data-slug="${slug}" aria-label="Retirer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </li>
+          `;
+        }).join('');
+
+        listEl.querySelectorAll<HTMLButtonElement>('.remove-btn').forEach(b => {
+          b.onclick = () => toggle(b.dataset.slug!);
+        });
+
+        // Summary
+        const count = trip.itinerary.length;
+        document.getElementById('step-count')!.textContent = `${count} étape${count > 1 ? 's' : ''}`;
+        const daysUsed = trip.itinerary.reduce((sum, s) => {
+          const l = lieuxAll.find(x => x.slug === s);
+          return sum + (l?.duree || 0);
+        }, 0);
+        document.getElementById('days-used')!.textContent = String(daysUsed);
+        document.getElementById('days-total')!.textContent = String(trip.days);
+        const pct = Math.min(100, (daysUsed / (trip.days || 1)) * 100);
+        document.getElementById('days-bar')!.style.width = `${pct}%`;
+        document.getElementById('days-warning')!.classList.toggle('hidden', daysUsed <= (trip.days || 0));
+
+        document.getElementById('empty-itinerary')!.classList.toggle('hidden', count > 0);
+        const cta = document.getElementById('continue-btn') as HTMLButtonElement;
+        cta.disabled = count === 0;
+      }
+
+      // CTA
+      document.getElementById('continue-btn')!.addEventListener('click', () => {
+        window.location.href = '/voyage/logement';
+      });
+
+      render();
+    }
   </script>
+
+  <style is:global>
+    .custom-marker { background: transparent; border: none; }
+    .marker-pin {
+      width: 28px; height: 28px;
+      border-radius: 50% 50% 50% 0;
+      background: #ffffff;
+      border: 3px solid #0F4C5C;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .marker-pin:hover { transform: rotate(-45deg) scale(1.15); }
+    .marker-pin.selected {
+      background: #D4A03C;
+      border-color: #B8860B;
+    }
+    .marker-pin span {
+      transform: rotate(45deg);
+      color: #2D2D2D;
+      font-weight: 800;
+      font-size: 12px;
+    }
+
+    .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; width: 100% !important; }
+    .popup-img { width: 100%; height: 130px; object-fit: cover; display: block; }
+    .popup-body { padding: 12px 14px 14px; }
+    .popup-type { font-size: 11px; color: #B8860B; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .popup-title { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 700; color: #0F4C5C; margin: 0 0 6px; line-height: 1.2; }
+    .popup-desc { font-size: 12px; color: #5A5A5A; line-height: 1.5; margin: 0 0 10px; }
+    .popup-meta { display: flex; gap: 10px; font-size: 11px; color: #5A5A5A; margin-bottom: 10px; }
+    .popup-btn {
+      width: 100%; padding: 8px 12px; border-radius: 999px;
+      background: #0F4C5C; color: white; font-weight: 700; font-size: 12px;
+      border: none; cursor: pointer; transition: background 0.2s;
+    }
+    .popup-btn:hover { background: #D4A03C; color: #2D2D2D; }
+  </style>
 </FunnelLayout>

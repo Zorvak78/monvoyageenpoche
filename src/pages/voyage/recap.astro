@@ -1,0 +1,26 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+---
+
+<FunnelLayout
+  title="Récap de ton voyage | Mon Voyage en Poche"
+  step="recap"
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+    <p class="font-display italic text-amber mb-2">Récap</p>
+    <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Ton voyage</h1>
+    <p class="text-slate mb-8">Le récap complet arrive bientôt : carte, budget total, envoi par email et partage.</p>
+
+    <div class="bg-cream rounded-2xl p-6 mb-8 inline-block text-left">
+      <p class="text-sm font-semibold text-amber uppercase tracking-wide mb-3">Données enregistrées</p>
+      <pre id="trip-debug" class="text-xs text-charcoal whitespace-pre-wrap font-mono max-w-md"></pre>
+    </div>
+  </div>
+
+  <script>
+    import { loadTrip } from '../../lib/tripState';
+    const trip = loadTrip();
+    const el = document.getElementById('trip-debug');
+    if (el) el.textContent = JSON.stringify(trip, null, 2);
+  </script>
+</FunnelLayout>
