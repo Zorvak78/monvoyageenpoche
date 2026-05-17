@@ -365,28 +365,28 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     }
     .cluster-pin:hover { transform: scale(1.1); }
 
-    .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
-    .leaflet-popup-content { margin: 0; width: 100% !important; }
+    .leaflet-popup-content-wrapper { border-radius: 10px; padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; width: 100% !important; line-height: 1; }
     .popup-mini { display: flex; flex-direction: column; width: 240px; }
     .popup-img {
       display: block;
       width: 100%;
       height: auto;
     }
-    .popup-body { padding: 14px 16px 16px; }
+    .popup-body { padding: 8px 10px 10px; }
     .popup-title {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: 18px; font-weight: 700; color: #0F4C5C;
-      margin: 0 0 8px; line-height: 1.2; text-align: center;
+      font-size: 15px; font-weight: 700; color: #0F4C5C;
+      margin: 0 0 6px; line-height: 1.15; text-align: center;
     }
     .popup-hint {
-      font-size: 11px; color: #B8860B; text-align: center;
-      margin: 0 0 10px; min-height: 0; line-height: 1.4;
+      font-size: 10px; color: #B8860B; text-align: center;
+      margin: 0 0 6px; line-height: 1.3;
     }
     .popup-hint:empty { display: none; }
     .popup-btn {
-      width: 100%; padding: 10px 12px; border-radius: 999px;
-      background: #0F4C5C; color: white; font-weight: 700; font-size: 12px;
+      width: 100%; padding: 7px 10px; border-radius: 999px;
+      background: #0F4C5C; color: white; font-weight: 700; font-size: 11px;
       border: none; cursor: pointer; transition: all 0.2s;
     }
     .popup-btn:hover { background: #D4A03C; color: #2D2D2D; }
