@@ -5,10 +5,52 @@
  * À remplacer par les vrais IDs une fois les programmes activés.
  */
 
-const BOOKING_AID = ''; // ex: '1234567'
+const BOOKING_AID = '';
 const AIRBNB_PID = '';
 const SKYSCANNER_PARTNER = '';
 const DISCOVERCARS_PARTNER = '';
+const TRAINLINE_PARTNER = '';
+
+/** IATA codes des villes de départ communes. */
+const cityToIata: Record<string, string> = {
+  'paris': 'PAR',
+  'lyon': 'LYS',
+  'marseille': 'MRS',
+  'nice': 'NCE',
+  'toulouse': 'TLS',
+  'bordeaux': 'BOD',
+  'nantes': 'NTE',
+  'strasbourg': 'SXB',
+  'bruxelles': 'BRU',
+  'brussels': 'BRU',
+  'geneve': 'GVA',
+  'geneva': 'GVA',
+  'zurich': 'ZRH',
+  'luxembourg': 'LUX',
+  'madrid': 'MAD',
+  'londres': 'LON',
+  'london': 'LON',
+};
+
+/** Données par pays : ville d'arrivée principale, prix indicatifs. */
+export const countriesData: Record<string, {
+  mainCity: string;
+  mainIata: string;
+  flightPerAdult: number;     // EUR aller-retour par adulte
+  carPerDay: number;          // EUR par jour de location
+  trainRelevant: boolean;
+}> = {
+  namibie: { mainCity: 'Windhoek',    mainIata: 'WDH', flightPerAdult: 950,  carPerDay: 95, trainRelevant: false },
+  italie:  { mainCity: 'Rome',        mainIata: 'ROM', flightPerAdult: 180,  carPerDay: 55, trainRelevant: true  },
+  perou:   { mainCity: 'Lima',        mainIata: 'LIM', flightPerAdult: 850,  carPerDay: 60, trainRelevant: false },
+  japon:   { mainCity: 'Tokyo',       mainIata: 'TYO', flightPerAdult: 900,  carPerDay: 70, trainRelevant: true  },
+};
+
+export function cityIata(city: string | null): string {
+  if (!city) return '';
+  const k = city.trim().toLowerCase().replace(/[éè]/g, 'e').replace(/[àâ]/g, 'a');
+  return cityToIata[k] || '';
+}
 
 export function adultsFromComposition(c: string | null): number {
   switch (c) {
@@ -89,30 +131,58 @@ export function formatDateFr(iso: string): string {
 
 export function discoverCarsUrl(opts: {
   pickupCity: string;
-  pickupDate?: string;
+  pickupDate?: string;       // YYYY-MM-DD
   dropoffCity?: string;
   dropoffDate?: string;
 }): string {
-  const url = new URL('https://www.discovercars.com');
+  const url = new URL('https://www.discovercars.com/');
   url.searchParams.set('pickup_location', opts.pickupCity);
-  if (opts.dropoffCity) url.searchParams.set('dropoff_location', opts.dropoffCity);
+  url.searchParams.set('dropoff_location', opts.dropoffCity || opts.pickupCity);
   if (opts.pickupDate) url.searchParams.set('pickup_date', opts.pickupDate);
   if (opts.dropoffDate) url.searchParams.set('dropoff_date', opts.dropoffDate);
+  url.searchParams.set('pickup_time', '10:00');
+  url.searchParams.set('dropoff_time', '10:00');
   if (DISCOVERCARS_PARTNER) url.searchParams.set('a_aid', DISCOVERCARS_PARTNER);
   return url.toString();
 }
 
 export function skyscannerUrl(opts: {
   fromCity: string;
-  toCity: string;
+  toCity?: string;
+  fromIata?: string;
+  toIata?: string;
+  departDate?: string;       // YYYY-MM-DD
+  returnDate?: string;
   adults?: number;
 }): string {
-  const url = new URL('https://www.skyscanner.fr/transport/vols/');
-  // Skyscanner uses IATA codes ideally; we fallback to city query string
-  url.searchParams.set('from', opts.fromCity);
-  url.searchParams.set('to', opts.toCity);
-  if (opts.adults) url.searchParams.set('adults', String(opts.adults));
-  if (SKYSCANNER_PARTNER) url.searchParams.set('associateid', SKYSCANNER_PARTNER);
+  const fromI = opts.fromIata || cityIata(opts.fromCity);
+  const toI = opts.toIata || cityIata(opts.toCity || '');
+  const yymmdd = (iso?: string) => iso ? iso.slice(2).replace(/-/g, '') : '';
+
+  // Deep link si IATA connus
+  if (fromI && toI && opts.departDate) {
+    let path = `https://www.skyscanner.fr/transport/vols/${fromI.toLowerCase()}/${toI.toLowerCase()}/${yymmdd(opts.departDate)}/`;
+    if (opts.returnDate) path += `${yymmdd(opts.returnDate)}/`;
+    const params = new URLSearchParams();
+    if (opts.adults) params.set('adultsv2', String(opts.adults));
+    if (SKYSCANNER_PARTNER) params.set('associateid', SKYSCANNER_PARTNER);
+    const qs = params.toString();
+    return qs ? `${path}?${qs}` : path;
+  }
+
+  // Fallback : page d'accueil avec recherche libre
+  const url = new URL('https://www.skyscanner.fr/');
+  return url.toString();
+}
+
+export function trainlineUrl(opts: {
+  fromCity: string;
+  toCity: string;
+  departDate?: string;
+  adults?: number;
+}): string {
+  const url = new URL('https://www.thetrainline.com/');
+  if (TRAINLINE_PARTNER) url.searchParams.set('utm_source', TRAINLINE_PARTNER);
   return url.toString();
 }
 
