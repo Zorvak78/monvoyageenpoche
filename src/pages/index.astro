@@ -2,22 +2,45 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+const heroSlides = [
+  '/images/inspiration/deadvlei.jpg',
+  '/images/inspiration/sossusvlei.jpg',
+  '/images/inspiration/etosha.jpg',
+  '/images/inspiration/spitzkoppe.jpg',
+  '/images/inspiration/victoria-falls.jpg',
+  '/images/inspiration/swakopmund.jpg',
+];
+
+const inspirations = [
+  { country: 'Namibie', duration: '14 jours', title: 'Grand tour des dunes & savanes', image: '/images/inspiration/sossusvlei.jpg', tags: 'Nature · Aventure', href: '/voyage/destination', available: true },
+  { country: 'Italie', duration: '7 jours', title: 'Toscane & cinq terres', image: '/images/inspiration/deadvlei.jpg', tags: 'Culture · Gastronomie', href: '#', available: false },
+  { country: 'Pérou', duration: '12 jours', title: 'Andes, Cusco & Machu Picchu', image: '/images/inspiration/etosha.jpg', tags: 'Aventure · Culture', href: '#', available: false },
+  { country: 'Japon', duration: '15 jours', title: 'Tokyo, Kyoto & Mont Fuji', image: '/images/inspiration/spitzkoppe.jpg', tags: 'Culture · Gastronomie', href: '#', available: false },
+  { country: 'Islande', duration: '10 jours', title: 'Cercle d\'or & fjords', image: '/images/inspiration/skeleton-coast.jpg', tags: 'Nature · Photographie', href: '#', available: false },
+  { country: 'Vietnam', duration: '14 jours', title: 'Du Nord au Sud', image: '/images/inspiration/victoria-falls.jpg', tags: 'Culture · Gastronomie', href: '#', available: false },
+];
 ---
 
 <BaseLayout
   title="Mon Voyage en Poche — Construis ton voyage de A à Z en autonomie"
-  description="L'outil tout-en-un pour planifier ton voyage : destination, itinéraire, logements, voiture, vol. Tout au même endroit, gratuitement."
+  description="L'outil tout-en-un pour planifier ton voyage : destination, itinéraire, logement, transport. Tout au même endroit, gratuitement."
 >
   <Header transparent />
 
   <!-- Hero -->
   <section class="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
+    <!-- Slideshow -->
     <div class="absolute inset-0 z-0">
-      <img
-        src="/images/inspiration/deadvlei.jpg"
-        alt="Désert de Namibie"
-        class="w-full h-full object-cover"
-      />
+      {heroSlides.map((src, i) => (
+        <img
+          src={src}
+          alt=""
+          class={`hero-slide absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ${i === 0 ? 'opacity-100' : 'opacity-0'}`}
+          data-idx={i}
+          loading={i === 0 ? 'eager' : 'lazy'}
+        />
+      ))}
       <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60"></div>
     </div>
 
@@ -28,8 +51,8 @@ import Footer from '../components/Footer.astro';
         <span class="text-amber">de A à Z</span>
       </h1>
       <p class="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto mb-10 leading-relaxed">
-        Destination, itinéraire, logements, voiture, vol&nbsp;:
-        tout au même endroit, en six étapes, gratuitement.
+        Destination, itinéraire, logement, transport&nbsp;:
+        tout au même endroit, en quatre étapes, gratuitement.
       </p>
       <a
         href="/voyage/destination"
@@ -50,21 +73,19 @@ import Footer from '../components/Footer.astro';
       <div class="text-center mb-16">
         <p class="font-display italic text-amber mb-3">Comment ça marche</p>
         <h2 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-deep-teal mb-4">
-          Six étapes, un voyage.
+          Quatre étapes, un voyage.
         </h2>
         <p class="text-slate max-w-2xl mx-auto">
-          Tu avances à ton rythme, tes choix sont sauvegardés. Tu peux partir, revenir, partager.
+          Tu avances à ton rythme, tes choix sont sauvegardés, et tu repars avec un récap complet.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { n: 1, t: 'Destination', d: 'Choisis ton pays, avec qui tu pars, ton rythme et tes envies.' },
           { n: 2, t: 'Itinéraire', d: 'Place tes étapes sur une carte interactive et construis ton parcours.' },
-          { n: 3, t: 'Logements', d: 'Sélectionne tes hébergements sur Booking ou Airbnb directement depuis le site.' },
-          { n: 4, t: 'Voiture', d: 'Compare et réserve ta location avec nos partenaires.' },
-          { n: 5, t: 'Transport', d: 'Trouve ton vol depuis ta ville de départ.' },
-          { n: 6, t: 'Récap', d: 'Reçois ton voyage par email, partage-le, vois ton budget total estimé.' },
+          { n: 3, t: 'Logement', d: 'Sélectionne tes hébergements via Booking ou Airbnb directement.' },
+          { n: 4, t: 'Transport', d: 'Avion, voiture, train : trouve et réserve tes trajets en un clic.' },
         ].map(s => (
           <div class="bg-white rounded-2xl p-8 border border-cream hover:shadow-lg transition-shadow">
             <div class="w-12 h-12 rounded-full bg-amber/15 text-amber flex items-center justify-center font-display text-xl font-bold mb-4">{s.n}</div>
@@ -73,36 +94,54 @@ import Footer from '../components/Footer.astro';
           </div>
         ))}
       </div>
+
+      <div class="text-center mt-10">
+        <p class="text-sm text-slate">
+          + <span class="font-semibold text-deep-teal">Un récap complet</span> avec budget total, partage et envoi par email.
+        </p>
+      </div>
     </div>
   </section>
 
-  <!-- Destination phare : Namibie -->
-  <section class="py-24 bg-cream">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <p class="font-display italic text-amber mb-3">Destination phare</p>
-          <h2 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-6">Namibie</h2>
-          <p class="text-slate leading-relaxed mb-4">
-            Des dunes rouges de Sossusvlei aux pans salins d'Etosha, en passant par la Skeleton Coast et les Chutes Victoria&nbsp;: la Namibie est l'un des plus grands road trips du monde.
-          </p>
-          <p class="text-slate leading-relaxed mb-8">
-            Notre planificateur te propose 14 lieux à intégrer librement à ton itinéraire, selon ton rythme et tes intérêts.
-          </p>
-          <a
-            href="/voyage/destination"
-            class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all"
-          >
-            Planifier mon voyage en Namibie
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </a>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <img src="/images/inspiration/sossusvlei.jpg" alt="Sossusvlei" class="rounded-2xl aspect-[3/4] object-cover" />
-          <img src="/images/inspiration/etosha.jpg" alt="Etosha" class="rounded-2xl aspect-[3/4] object-cover mt-8" />
-        </div>
+  <!-- Carousel inspirations -->
+  <section class="py-24 bg-cream overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <p class="font-display italic text-amber mb-3">Inspirations</p>
+        <h2 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-deep-teal mb-4">
+          Des voyages qui font rêver.
+        </h2>
+        <p class="text-slate max-w-2xl mx-auto">
+          Quelques itinéraires emblématiques pour t'inspirer.
+        </p>
+      </div>
+    </div>
+
+    <div class="carousel-wrapper relative">
+      <div class="carousel-track flex gap-6 w-max">
+        {[...inspirations, ...inspirations].map(it => (
+          <article class:list={[
+            'carousel-card flex-shrink-0 w-[320px] md:w-[360px] aspect-[4/5] rounded-2xl overflow-hidden relative group',
+            !it.available && 'opacity-90'
+          ]}>
+            <img src={it.image} alt={it.country} class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
+            <div class="absolute top-4 left-4 flex gap-2">
+              <span class="px-3 py-1 rounded-full bg-white/90 text-charcoal text-xs font-semibold">{it.country}</span>
+              {!it.available && <span class="px-3 py-1 rounded-full bg-amber text-charcoal text-xs font-semibold">Bientôt</span>}
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+              <p class="text-xs text-amber font-semibold mb-1 tracking-wide uppercase">{it.duration} · {it.tags}</p>
+              <h3 class="font-display text-xl font-bold leading-tight mb-3">{it.title}</h3>
+              {it.available && (
+                <a href={it.href} class="inline-flex items-center gap-2 text-sm font-semibold hover:text-amber transition-colors">
+                  Planifier ce voyage
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </a>
+              )}
+            </div>
+          </article>
+        ))}
       </div>
     </div>
   </section>
@@ -125,4 +164,40 @@ import Footer from '../components/Footer.astro';
   </section>
 
   <Footer />
+
+  <script>
+    // Hero slideshow
+    const slides = document.querySelectorAll<HTMLImageElement>('.hero-slide');
+    if (slides.length > 1) {
+      let idx = 0;
+      setInterval(() => {
+        slides[idx].classList.remove('opacity-100');
+        slides[idx].classList.add('opacity-0');
+        idx = (idx + 1) % slides.length;
+        slides[idx].classList.remove('opacity-0');
+        slides[idx].classList.add('opacity-100');
+      }, 4500);
+    }
+  </script>
+
+  <style>
+    .carousel-wrapper {
+      mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+    }
+    .carousel-track {
+      animation: scroll 45s linear infinite;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    .carousel-track:hover {
+      animation-play-state: paused;
+    }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(calc(-50% - 0.75rem)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .carousel-track { animation: none; }
+    }
+  </style>
 </BaseLayout>

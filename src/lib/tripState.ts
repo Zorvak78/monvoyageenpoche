@@ -4,7 +4,9 @@
  */
 
 export type Composition = 'couple' | 'famille' | 'amis' | 'solo';
-export type Interest = 'nature' | 'aventure' | 'culture' | 'detente' | 'gastronomie';
+export type Interest =
+  | 'nature' | 'aventure' | 'culture' | 'gastronomie' | 'detente'
+  | 'faune' | 'plages' | 'photographie' | 'vie-nocturne' | 'spiritualite';
 export type Rythme = 'lent' | 'modere' | 'intense';
 
 export interface TripState {
@@ -14,7 +16,7 @@ export interface TripState {
   interests: Interest[];
   days: number | null;
   departureCity: string | null;
-  itinerary: string[]; // slugs de lieux dans l'ordre
+  itinerary: string[];
   updatedAt: number;
 }
 
@@ -34,7 +36,6 @@ const defaultState: TripState = {
 export function loadTrip(): TripState {
   if (typeof window === 'undefined') return { ...defaultState };
 
-  // 1. URL share takes priority (et écrase le localStorage)
   const params = new URLSearchParams(window.location.search);
   const shared = params.get('t');
   if (shared) {
@@ -43,12 +44,9 @@ export function loadTrip(): TripState {
       const merged = { ...defaultState, ...decoded, updatedAt: Date.now() };
       saveTrip(merged);
       return merged;
-    } catch (e) {
-      // URL corrompue, on ignore
-    }
+    } catch (e) {}
   }
 
-  // 2. localStorage
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...defaultState };

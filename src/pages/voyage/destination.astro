@@ -6,21 +6,34 @@ const countries = [
   { slug: 'italie', name: 'Italie', image: '/images/inspiration/sossusvlei.jpg', available: false, tagline: 'Bientôt' },
   { slug: 'perou', name: 'Pérou', image: '/images/inspiration/etosha.jpg', available: false, tagline: 'Bientôt' },
   { slug: 'japon', name: 'Japon', image: '/images/inspiration/spitzkoppe.jpg', available: false, tagline: 'Bientôt' },
+  { slug: 'islande', name: 'Islande', image: '/images/inspiration/skeleton-coast.jpg', available: false, tagline: 'Bientôt' },
+  { slug: 'vietnam', name: 'Vietnam', image: '/images/inspiration/victoria-falls.jpg', available: false, tagline: 'Bientôt' },
 ];
 
 const compositions = [
-  { value: 'couple', label: 'En couple', emoji: '💕' },
-  { value: 'famille', label: 'En famille', emoji: '👨‍👩‍👧' },
-  { value: 'amis', label: 'Entre amis', emoji: '🥂' },
-  { value: 'solo', label: 'Solo', emoji: '🎒' },
+  { value: 'couple', label: 'En couple' },
+  { value: 'famille', label: 'En famille' },
+  { value: 'amis', label: 'Entre amis' },
+  { value: 'solo', label: 'Solo' },
+];
+
+const rythmes = [
+  { value: 'lent', label: 'Posé', desc: 'Peu de déplacements, séjours longs sur place' },
+  { value: 'modere', label: 'Équilibré', desc: 'Le bon mix entre étapes et repos' },
+  { value: 'intense', label: 'Intense', desc: 'Beaucoup bouger, road trip, étapes courtes' },
 ];
 
 const interests = [
-  { value: 'nature', label: 'Nature & paysages' },
-  { value: 'aventure', label: 'Aventure & outdoor' },
-  { value: 'culture', label: 'Culture & histoire' },
-  { value: 'gastronomie', label: 'Gastronomie' },
-  { value: 'detente', label: 'Détente' },
+  { value: 'nature',       label: 'Nature',        icon: 'M12 2L4 9l1.5 1.5L12 4l6.5 6.5L20 9 12 2zm0 5l-6 6v8h4v-5h4v5h4v-8l-6-6z' },
+  { value: 'aventure',     label: 'Aventure',      icon: 'M3 18L9 8l4 6 3-4 5 8H3zm0 2h18v1H3v-1z' },
+  { value: 'culture',      label: 'Culture',       icon: 'M12 2L2 7v2h20V7L12 2zM4 10v9H3v2h18v-2h-1v-9h-2v9h-3v-9h-2v9h-2v-9H9v9H6v-9H4z' },
+  { value: 'gastronomie',  label: 'Gastronomie',   icon: 'M8.1 13.34l2.83-2.83L3.91 3.5a4.008 4.008 0 0 0 0 5.66l4.19 4.18zm6.78-1.81c1.53.71 3.68.21 5.27-1.38 1.91-1.91 2.28-4.65.81-6.12-1.46-1.46-4.20-1.10-6.12.81-1.59 1.59-2.09 3.74-1.38 5.27L3.7 19.87l1.41 1.41L12 14.41l6.88 6.88 1.41-1.41L13.41 13l1.47-1.47z' },
+  { value: 'detente',      label: 'Détente',       icon: 'M12 7a5 5 0 100 10 5 5 0 000-10zm0-5v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41' },
+  { value: 'faune',        label: 'Faune',         icon: 'M4.5 9.5a2 2 0 11-4 0 2 2 0 014 0zm7-4a2 2 0 11-4 0 2 2 0 014 0zm6 4a2 2 0 11-4 0 2 2 0 014 0zm2.5 6a2 2 0 11-4 0 2 2 0 014 0zM12 22c-4 0-7-2.5-7-5.5 0-2 1.5-3.5 3-4.5s2-2.5 4-2.5 2.5 1.5 4 2.5 3 2.5 3 4.5c0 3-3 5.5-7 5.5z' },
+  { value: 'plages',       label: 'Plages',        icon: 'M2 18s2-2 5-2 5 2 5 2 2-2 5-2 5 2 5 2v3H2v-3zm10-9a4 4 0 100 8 4 4 0 000-8z' },
+  { value: 'photographie', label: 'Photographie',  icon: 'M9 3L7.17 5H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.17L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10z' },
+  { value: 'vie-nocturne', label: 'Vie nocturne',  icon: 'M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z' },
+  { value: 'spiritualite', label: 'Spiritualité',  icon: 'M12 2C10 6 6 8 6 12c0 3 2.5 5 4 7-1-2-1-4 0-6 1 2 1 4 0 6 1.5-2 4-4 4-7 0-4-4-6-6-10h4zm5 14a3 3 0 11-6 0 3 3 0 016 0z' },
 ];
 ---
 
@@ -31,22 +44,40 @@ const interests = [
 >
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <header class="mb-10">
-      <p class="font-display italic text-amber mb-2">Étape 1 sur 6</p>
+      <p class="font-display italic text-amber mb-2">Étape 1 sur 4</p>
       <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-3">Trouver ta destination</h1>
-      <p class="text-slate text-lg">Parle-nous de ton voyage idéal. On utilise ces infos pour personnaliser les étapes suivantes.</p>
+      <p class="text-slate text-lg">Parle-nous de ton voyage idéal. On utilise ces infos pour personnaliser la suite.</p>
     </header>
 
-    <form id="destination-form" class="space-y-12">
-      <!-- Pays -->
+    <form id="destination-form" class="space-y-14">
+
+      <!-- Pays : recherche + cards -->
       <section>
         <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Quel pays&nbsp;?</h2>
-        <p class="text-sm text-slate mb-4">D'autres pays arrivent bientôt.</p>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <p class="text-sm text-slate mb-4">Cherche parmi nos destinations. D'autres pays arrivent bientôt.</p>
+
+        <div class="relative mb-6">
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input
+            type="text"
+            id="country-search"
+            placeholder="Rechercher un pays…"
+            class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-cream bg-white text-charcoal placeholder:text-slate focus:border-amber focus:outline-none transition-colors text-base"
+            autocomplete="off"
+          />
+        </div>
+
+        <div id="country-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
           {countries.map(c => (
-            <label class:list={[
-              'relative rounded-2xl overflow-hidden aspect-[3/4] cursor-pointer group',
-              !c.available && 'opacity-50 cursor-not-allowed'
-            ]}>
+            <label
+              data-country-name={c.name.toLowerCase()}
+              class:list={[
+                'country-card relative rounded-2xl overflow-hidden aspect-[4/5] cursor-pointer group',
+                !c.available && 'opacity-60 cursor-not-allowed'
+              ]}
+            >
               <input
                 type="radio"
                 name="country"
@@ -56,7 +87,7 @@ const interests = [
                 required
               />
               <img src={c.image} alt={c.name} class="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105" />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-black/20"></div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/85 to-black/10"></div>
               <div class="absolute inset-0 border-4 border-transparent peer-checked:border-amber rounded-2xl transition-colors"></div>
               <div class="absolute bottom-0 left-0 right-0 p-4 text-white">
                 <div class="font-display text-lg font-bold">{c.name}</div>
@@ -68,6 +99,7 @@ const interests = [
             </label>
           ))}
         </div>
+        <p id="no-country" class="hidden text-center text-slate text-sm mt-6">Aucun pays ne correspond à ta recherche. D'autres destinations sont en cours d'ajout.</p>
       </section>
 
       <!-- Composition -->
@@ -78,9 +110,8 @@ const interests = [
           {compositions.map(c => (
             <label class="relative cursor-pointer">
               <input type="radio" name="composition" value={c.value} class="peer sr-only" required />
-              <div class="p-4 rounded-xl border-2 border-cream bg-white text-center transition-all peer-checked:border-amber peer-checked:bg-amber/5 hover:border-amber/50">
-                <div class="text-2xl mb-1">{c.emoji}</div>
-                <div class="text-sm font-semibold text-charcoal">{c.label}</div>
+              <div class="px-4 py-5 rounded-xl border-2 border-cream bg-white text-center text-sm font-semibold text-charcoal transition-all peer-checked:border-amber peer-checked:bg-amber/10 hover:border-amber/50">
+                {c.label}
               </div>
             </label>
           ))}
@@ -91,22 +122,16 @@ const interests = [
       <section>
         <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Quel rythme&nbsp;?</h2>
         <p class="text-sm text-slate mb-4">Préférez-vous bouger souvent ou poser vos valises&nbsp;?</p>
-        <div class="bg-white border border-cream rounded-2xl p-6">
-          <input
-            type="range"
-            id="rythme"
-            name="rythme"
-            min="0"
-            max="2"
-            step="1"
-            value="1"
-            class="w-full accent-amber"
-          />
-          <div class="flex justify-between text-xs text-slate mt-3 px-1">
-            <span><strong class="block text-charcoal">Poser ses valises</strong>Peu de déplacements, séjours longs</span>
-            <span class="text-center"><strong class="block text-charcoal">Équilibré</strong>Le mix idéal</span>
-            <span class="text-right"><strong class="block text-charcoal">Beaucoup bouger</strong>Road trip, étapes courtes</span>
-          </div>
+        <div class="grid grid-cols-3 gap-3">
+          {rythmes.map(r => (
+            <label class="relative cursor-pointer">
+              <input type="radio" name="rythme" value={r.value} class="peer sr-only" required />
+              <div class="h-full p-5 rounded-xl border-2 border-cream bg-white text-center transition-all peer-checked:border-amber peer-checked:bg-amber/10 hover:border-amber/50">
+                <div class="font-display text-lg font-bold text-deep-teal mb-2">{r.label}</div>
+                <div class="text-xs text-slate leading-snug">{r.desc}</div>
+              </div>
+            </label>
+          ))}
         </div>
       </section>
 
@@ -114,12 +139,15 @@ const interests = [
       <section>
         <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Tes intérêts&nbsp;?</h2>
         <p class="text-sm text-slate mb-4">Plusieurs choix possibles. On filtrera les lieux selon tes envies.</p>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
           {interests.map(i => (
             <label class="relative cursor-pointer">
               <input type="checkbox" name="interests" value={i.value} class="peer sr-only" />
-              <div class="px-4 py-3 rounded-xl border-2 border-cream bg-white text-center text-sm font-semibold text-charcoal transition-all peer-checked:border-amber peer-checked:bg-amber/10 hover:border-amber/50">
-                {i.label}
+              <div class="flex flex-col items-center gap-2 px-3 py-4 rounded-xl border-2 border-cream bg-white text-center transition-all peer-checked:border-amber peer-checked:bg-amber/10 hover:border-amber/50">
+                <svg class="w-7 h-7 text-deep-teal" fill="currentColor" viewBox="0 0 24 24">
+                  <path d={i.icon}/>
+                </svg>
+                <span class="text-xs font-semibold text-charcoal">{i.label}</span>
               </div>
             </label>
           ))}
@@ -145,7 +173,7 @@ const interests = [
 
         <section>
           <h2 class="font-display text-xl font-bold text-deep-teal mb-1">Ville de départ</h2>
-          <p class="text-sm text-slate mb-4">Pour trouver ton vol à l'étape 5.</p>
+          <p class="text-sm text-slate mb-4">Pour trouver ton vol à l'étape transport.</p>
           <input
             type="text"
             id="departureCity"
@@ -176,8 +204,12 @@ const interests = [
     import { loadTrip, saveTrip } from '../../lib/tripState';
 
     const form = document.getElementById('destination-form') as HTMLFormElement;
+    const searchInput = document.getElementById('country-search') as HTMLInputElement;
+    const cards = document.querySelectorAll<HTMLElement>('.country-card');
+    const noResult = document.getElementById('no-country');
+
     if (form) {
-      // Hydrate depuis localStorage
+      // Hydrate from localStorage
       const trip = loadTrip();
       if (trip.country) {
         const radio = form.querySelector<HTMLInputElement>(`input[name="country"][value="${trip.country}"]`);
@@ -187,37 +219,44 @@ const interests = [
         const radio = form.querySelector<HTMLInputElement>(`input[name="composition"][value="${trip.composition}"]`);
         if (radio) radio.checked = true;
       }
-      const rythmeMap = { lent: '0', modere: '1', intense: '2' };
-      const rythmeInput = form.querySelector<HTMLInputElement>('#rythme');
-      if (rythmeInput) rythmeInput.value = rythmeMap[trip.rythme] ?? '1';
-
+      if (trip.rythme) {
+        const radio = form.querySelector<HTMLInputElement>(`input[name="rythme"][value="${trip.rythme}"]`);
+        if (radio) radio.checked = true;
+      }
       trip.interests.forEach(i => {
         const cb = form.querySelector<HTMLInputElement>(`input[name="interests"][value="${i}"]`);
         if (cb) cb.checked = true;
       });
-
       const daysInput = form.querySelector<HTMLInputElement>('#days');
       if (daysInput && trip.days) daysInput.value = String(trip.days);
-
       const cityInput = form.querySelector<HTMLInputElement>('#departureCity');
       if (cityInput && trip.departureCity) cityInput.value = trip.departureCity;
+
+      // Country search filter
+      searchInput?.addEventListener('input', () => {
+        const q = searchInput.value.trim().toLowerCase();
+        let visible = 0;
+        cards.forEach(card => {
+          const name = card.dataset.countryName || '';
+          const match = !q || name.includes(q);
+          card.style.display = match ? '' : 'none';
+          if (match) visible++;
+        });
+        if (noResult) noResult.classList.toggle('hidden', visible > 0);
+      });
 
       // Submit
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const fd = new FormData(form);
-        const rythmeValues = ['lent', 'modere', 'intense'] as const;
-        const rythmeIdx = Number(fd.get('rythme') ?? 1);
-
         saveTrip({
           country: String(fd.get('country') ?? ''),
           composition: fd.get('composition') as any,
-          rythme: rythmeValues[rythmeIdx] ?? 'modere',
+          rythme: fd.get('rythme') as any,
           interests: fd.getAll('interests') as any[],
           days: Number(fd.get('days')),
           departureCity: String(fd.get('departureCity') ?? ''),
         });
-
         window.location.href = '/voyage/itineraire';
       });
     }

@@ -1,48 +1,47 @@
 ---
+type StepKey = 1 | 2 | 3 | 4 | 'recap';
 interface Props {
-  current: 1 | 2 | 3 | 4 | 5 | 6;
+  current: StepKey;
 }
 const { current } = Astro.props;
 
 const steps = [
-  { n: 1, label: 'Destination', href: '/voyage/destination' },
-  { n: 2, label: 'Itinéraire', href: '/voyage/itineraire' },
-  { n: 3, label: 'Logements', href: '/voyage/logements' },
-  { n: 4, label: 'Voiture', href: '/voyage/voiture' },
-  { n: 5, label: 'Transport', href: '/voyage/transport' },
-  { n: 6, label: 'Récap', href: '/voyage/recap' },
-];
+  { key: 1, label: 'Destination', href: '/voyage/destination' },
+  { key: 2, label: 'Itinéraire', href: '/voyage/itineraire' },
+  { key: 3, label: 'Logement', href: '/voyage/logement' },
+  { key: 4, label: 'Transport', href: '/voyage/transport' },
+] as const;
+
+const recap = { key: 'recap' as const, label: 'Récap', href: '/voyage/recap' };
+const order: StepKey[] = [1, 2, 3, 4, 'recap'];
+const currentIdx = order.indexOf(current);
 ---
 
 <nav class="bg-white border-b border-cream sticky top-20 z-40" aria-label="Étapes du voyage">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-    <ol class="flex items-center justify-between gap-2 overflow-x-auto">
-      {steps.map(s => {
-        const done = s.n < current;
-        const active = s.n === current;
-        const clickable = done;
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <ol class="flex items-center justify-between gap-2">
+      {steps.map((s, i) => {
+        const done = i < currentIdx;
+        const active = s.key === current;
         return (
-          <li class="flex-1 min-w-[88px]">
+          <li class="flex-1 min-w-0">
             <a
-              href={clickable ? s.href : '#'}
-              class:list={[
-                'flex flex-col items-center gap-1.5 group',
-                !clickable && 'pointer-events-none',
-              ]}
+              href={done ? s.href : '#'}
+              class:list={['flex flex-col items-center gap-1.5 group', !done && 'pointer-events-none']}
               aria-current={active ? 'step' : undefined}
             >
               <span class:list={[
-                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors',
+                'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors',
                 active && 'bg-amber text-charcoal',
                 done && 'bg-deep-teal text-white group-hover:bg-amber group-hover:text-charcoal',
                 !active && !done && 'bg-cream text-slate'
               ]}>
                 {done ? (
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                ) : s.n}
+                ) : s.key}
               </span>
               <span class:list={[
-                'text-xs font-medium tracking-wide uppercase whitespace-nowrap',
+                'text-xs font-semibold tracking-wide uppercase whitespace-nowrap',
                 active ? 'text-deep-teal' : 'text-slate'
               ]}>
                 {s.label}
@@ -51,6 +50,36 @@ const steps = [
           </li>
         );
       })}
+
+      <li class="flex items-center pl-2">
+        <span class="text-slate/40 mx-1">·</span>
+      </li>
+
+      <li class="flex-1 min-w-0">
+        <a
+          href={currentIdx >= 4 ? recap.href : '#'}
+          class:list={[
+            'flex flex-col items-center gap-1.5 group',
+            currentIdx < 4 && 'pointer-events-none'
+          ]}
+          aria-current={current === 'recap' ? 'step' : undefined}
+        >
+          <span class:list={[
+            'w-9 h-9 rounded-full flex items-center justify-center transition-colors',
+            current === 'recap' && 'bg-amber text-charcoal',
+            current !== 'recap' && currentIdx >= 4 && 'bg-deep-teal text-white group-hover:bg-amber group-hover:text-charcoal',
+            currentIdx < 4 && 'bg-cream text-slate'
+          ]}>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </span>
+          <span class:list={[
+            'text-xs font-semibold tracking-wide uppercase whitespace-nowrap',
+            current === 'recap' ? 'text-deep-teal' : 'text-slate'
+          ]}>
+            {recap.label}
+          </span>
+        </a>
+      </li>
     </ol>
   </div>
 </nav>
