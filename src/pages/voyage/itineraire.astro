@@ -104,7 +104,7 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     import L from 'leaflet';
     import 'leaflet.markercluster';
     import Sortable from 'sortablejs';
-    import { loadTrip, saveTrip, type ItineraryStep } from '../../lib/tripState';
+    import { loadTrip, saveTrip, makeStepId, type ItineraryStep } from '../../lib/tripState';
 
     type Lieu = {
       slug: string; title: string; country: string; region: string; type: string;
@@ -188,6 +188,7 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
             <img src="${lieu.image}" alt="${lieu.title}" class="popup-img" />
             <div class="popup-body">
               <h3 class="popup-title">${lieu.title}</h3>
+              <p class="popup-hint"></p>
               <button class="popup-btn" data-slug="${lieu.slug}"></button>
             </div>
           </div>
@@ -204,19 +205,22 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
 
       // Popup click handler — recalcule l'état à chaque ouverture
       map.on('popupopen', (e) => {
-        const btn = (e.popup.getElement() as HTMLElement | null)?.querySelector<HTMLButtonElement>('.popup-btn');
+        const el = e.popup.getElement() as HTMLElement | null;
+        if (!el) return;
+        const btn = el.querySelector<HTMLButtonElement>('.popup-btn');
+        const hint = el.querySelector<HTMLElement>('.popup-hint');
         if (!btn) return;
         const slug = btn.dataset.slug!;
-        const sel = isInItinerary(slug);
-        btn.textContent = sel ? '✓ Retirer de mon voyage' : '+ Ajouter à mon voyage';
-        btn.classList.toggle('removing', sel);
+        const already = isInItinerary(slug);
+        btn.textContent = already ? '+ Ajouter à nouveau (boucle)' : '+ Ajouter à mon voyage';
+        if (hint) hint.textContent = already ? `Déjà dans ton voyage. Retire-le depuis le panneau de droite.` : '';
         btn.onclick = () => {
-          toggle(slug);
+          addStep(slug);
           map.closePopup();
         };
       });
 
-      // Sortable list
+      // Sortable list — drag handles refer to unique step IDs
       const listEl = document.getElementById('itinerary-list')!;
       Sortable.create(listEl, {
         animation: 200,
@@ -224,8 +228,8 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         ghostClass: 'opacity-30',
         onEnd: () => {
           const newOrder = Array.from(listEl.children).map(el => {
-            const slug = (el as HTMLElement).dataset.slug!;
-            return trip.itinerary.find(s => s.slug === slug)!;
+            const id = (el as HTMLElement).dataset.id!;
+            return trip.itinerary.find(s => s.id === id)!;
           });
           trip.itinerary = newOrder;
           saveTrip({ itinerary: newOrder });
@@ -233,20 +237,23 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         },
       });
 
-      function toggle(slug: string) {
+      function addStep(slug: string) {
         const lieu = lieuxAll.find(l => l.slug === slug);
         if (!lieu) return;
-        const exists = isInItinerary(slug);
-        trip.itinerary = exists
-          ? trip.itinerary.filter(s => s.slug !== slug)
-          : [...trip.itinerary, { slug, days: lieu.duree }];
+        trip.itinerary = [...trip.itinerary, { id: makeStepId(), slug, days: lieu.duree }];
         saveTrip({ itinerary: trip.itinerary });
         render();
       }
 
-      function updateDays(slug: string, delta: number) {
+      function removeStep(id: string) {
+        trip.itinerary = trip.itinerary.filter(s => s.id !== id);
+        saveTrip({ itinerary: trip.itinerary });
+        render();
+      }
+
+      function updateDays(id: string, delta: number) {
         trip.itinerary = trip.itinerary.map(s =>
-          s.slug === slug ? { ...s, days: Math.max(1, Math.min(30, s.days + delta)) } : s
+          s.id === id ? { ...s, days: Math.max(1, Math.min(30, s.days + delta)) } : s
         );
         saveTrip({ itinerary: trip.itinerary });
         render();
@@ -266,12 +273,12 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
           .map(l => [l!.lat, l!.lng] as [number, number]);
         polyline.setLatLngs(coords);
 
-        // List
+        // List — render by unique step id (allows same slug multiple times for loops)
         listEl.innerHTML = trip.itinerary.map((step, i) => {
           const l = lieuxVisible.find(x => x.slug === step.slug) || lieuxAll.find(x => x.slug === step.slug);
           if (!l) return '';
           return `
-            <li data-slug="${step.slug}" class="flex items-center gap-2 p-3 rounded-xl bg-cream/50 border border-cream hover:border-amber transition-colors">
+            <li data-id="${step.id}" class="flex items-center gap-2 p-3 rounded-xl bg-cream/50 border border-cream hover:border-amber transition-colors">
               <span class="drag-handle cursor-grab text-slate hover:text-deep-teal flex-shrink-0" aria-label="Glisser">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
               </span>
@@ -281,11 +288,11 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
                 <div class="text-[11px] text-slate">${l.type}</div>
               </div>
               <div class="flex items-center gap-1 bg-white rounded-full border border-cream px-1 flex-shrink-0">
-                <button class="days-btn w-6 h-6 rounded-full text-slate hover:bg-cream hover:text-deep-teal transition-colors text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed" data-slug="${step.slug}" data-delta="-1" ${step.days <= 1 ? 'disabled' : ''} aria-label="Moins">−</button>
+                <button class="days-btn w-6 h-6 rounded-full text-slate hover:bg-cream hover:text-deep-teal transition-colors text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed" data-id="${step.id}" data-delta="-1" ${step.days <= 1 ? 'disabled' : ''} aria-label="Moins">−</button>
                 <span class="text-xs font-bold text-deep-teal min-w-[28px] text-center">${step.days}j</span>
-                <button class="days-btn w-6 h-6 rounded-full text-slate hover:bg-cream hover:text-deep-teal transition-colors text-sm font-bold" data-slug="${step.slug}" data-delta="1" aria-label="Plus">+</button>
+                <button class="days-btn w-6 h-6 rounded-full text-slate hover:bg-cream hover:text-deep-teal transition-colors text-sm font-bold" data-id="${step.id}" data-delta="1" aria-label="Plus">+</button>
               </div>
-              <button class="remove-btn text-slate hover:text-red-600 transition-colors flex-shrink-0 ml-1" data-slug="${step.slug}" aria-label="Retirer">
+              <button class="remove-btn text-slate hover:text-red-600 transition-colors flex-shrink-0 ml-1" data-id="${step.id}" aria-label="Retirer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </li>
@@ -293,10 +300,10 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         }).join('');
 
         listEl.querySelectorAll<HTMLButtonElement>('.remove-btn').forEach(b => {
-          b.onclick = () => toggle(b.dataset.slug!);
+          b.onclick = () => removeStep(b.dataset.id!);
         });
         listEl.querySelectorAll<HTMLButtonElement>('.days-btn').forEach(b => {
-          b.onclick = () => updateDays(b.dataset.slug!, Number(b.dataset.delta));
+          b.onclick = () => updateDays(b.dataset.id!, Number(b.dataset.delta));
         });
 
         // Summary
@@ -372,8 +379,13 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     .popup-title {
       font-family: 'Playfair Display', Georgia, serif;
       font-size: 18px; font-weight: 700; color: #0F4C5C;
-      margin: 0 0 12px; line-height: 1.2; text-align: center;
+      margin: 0 0 8px; line-height: 1.2; text-align: center;
     }
+    .popup-hint {
+      font-size: 11px; color: #B8860B; text-align: center;
+      margin: 0 0 10px; min-height: 0; line-height: 1.4;
+    }
+    .popup-hint:empty { display: none; }
     .popup-btn {
       width: 100%; padding: 10px 12px; border-radius: 999px;
       background: #0F4C5C; color: white; font-weight: 700; font-size: 12px;

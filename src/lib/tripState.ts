@@ -10,8 +10,13 @@ export type Interest =
 export type Rythme = 'lent' | 'modere' | 'intense';
 
 export interface ItineraryStep {
+  id: string;
   slug: string;
   days: number;
+}
+
+export function makeStepId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
 export interface TripState {
@@ -39,9 +44,14 @@ const defaultState: TripState = {
 };
 
 function migrate(state: any): TripState {
-  // Migration: itinerary used to be string[], now {slug, days}[]
-  if (Array.isArray(state.itinerary) && state.itinerary.length > 0 && typeof state.itinerary[0] === 'string') {
-    state.itinerary = state.itinerary.map((slug: string) => ({ slug, days: 1 }));
+  if (Array.isArray(state.itinerary)) {
+    state.itinerary = state.itinerary.map((item: any) => {
+      // string → object (very old format)
+      if (typeof item === 'string') return { id: makeStepId(), slug: item, days: 1 };
+      // object without id → add one
+      if (!item.id) return { ...item, id: makeStepId() };
+      return item;
+    });
   }
   return { ...defaultState, ...state };
 }
