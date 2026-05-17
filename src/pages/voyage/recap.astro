@@ -78,17 +78,11 @@ const lieuxData = lieux.map(l => ({
       <!-- Actions -->
       <section class="bg-white rounded-2xl border border-cream shadow-sm p-6 md:p-8">
         <h2 class="font-display text-xl font-bold text-deep-teal mb-2">Garde ton voyage à portée de main</h2>
-        <p class="text-sm text-slate mb-5">Partage-le avec ta tribu ou reçois-le par email pour pouvoir y revenir plus tard.</p>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <button id="share-btn" class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-bold hover:bg-amber hover:text-charcoal transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-            Partager via un lien
-          </button>
-          <button id="email-btn" class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-amber text-charcoal font-bold hover:bg-deep-teal hover:text-white transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Recevoir par email
-          </button>
-        </div>
+        <p class="text-sm text-slate mb-5">Reçois le récap complet par email pour pouvoir le retrouver plus tard.</p>
+        <button id="email-btn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-amber text-charcoal font-bold hover:bg-deep-teal hover:text-white transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          Recevoir par email
+        </button>
       </section>
 
       <div class="flex flex-col-reverse md:flex-row gap-3 justify-between">
@@ -99,26 +93,6 @@ const lieuxData = lieux.map(l => ({
           Recommencer un nouveau voyage
         </a>
       </div>
-    </div>
-  </div>
-
-  <!-- Share dialog -->
-  <div id="share-dialog" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full">
-      <div class="flex items-start justify-between mb-4">
-        <h3 class="font-display text-xl font-bold text-deep-teal">Partager ton voyage</h3>
-        <button class="close-dialog text-slate hover:text-deep-teal" aria-label="Fermer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <p class="text-sm text-slate mb-4">Ce lien rouvre ton voyage avec tous tes choix. Partage-le avec qui tu veux.</p>
-      <div class="flex gap-2">
-        <input id="share-input" type="text" readonly class="flex-1 px-3 py-2 rounded-lg border-2 border-cream bg-cream/50 text-charcoal text-xs font-mono" />
-        <button id="copy-btn" class="px-4 py-2 rounded-lg bg-deep-teal text-white text-sm font-semibold hover:bg-amber hover:text-charcoal transition-colors flex-shrink-0">
-          Copier
-        </button>
-      </div>
-      <p id="copy-feedback" class="text-xs text-green-600 mt-2 hidden">✓ Lien copié dans le presse-papier</p>
     </div>
   </div>
 
@@ -261,30 +235,6 @@ const lieuxData = lieux.map(l => ({
         map.fitBounds(bounds, { padding: [40, 40] });
       }
 
-      // Share
-      const shareBtn = document.getElementById('share-btn')!;
-      const shareDialog = document.getElementById('share-dialog')!;
-      const shareInput = document.getElementById('share-input') as HTMLInputElement;
-      const copyBtn = document.getElementById('copy-btn')!;
-      const copyFeedback = document.getElementById('copy-feedback')!;
-      shareBtn.addEventListener('click', () => {
-        shareInput.value = shareUrl(trip, '/voyage/recap');
-        shareDialog.classList.remove('hidden');
-        copyFeedback.classList.add('hidden');
-        setTimeout(() => shareInput.select(), 50);
-      });
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText(shareInput.value);
-          copyFeedback.classList.remove('hidden');
-          setTimeout(() => copyFeedback.classList.add('hidden'), 2500);
-        } catch {
-          shareInput.select();
-          document.execCommand('copy');
-          copyFeedback.classList.remove('hidden');
-        }
-      });
-
       // Email
       const emailBtn = document.getElementById('email-btn')!;
       const emailDialog = document.getElementById('email-dialog')!;
@@ -328,17 +278,12 @@ const lieuxData = lieux.map(l => ({
         }
       });
 
-      // Close dialogs
+      // Close dialog
       document.querySelectorAll('.close-dialog').forEach(btn => {
-        btn.addEventListener('click', () => {
-          shareDialog.classList.add('hidden');
-          emailDialog.classList.add('hidden');
-        });
+        btn.addEventListener('click', () => emailDialog.classList.add('hidden'));
       });
-      [shareDialog, emailDialog].forEach(d => {
-        d.addEventListener('click', e => {
-          if (e.target === d) d.classList.add('hidden');
-        });
+      emailDialog.addEventListener('click', e => {
+        if (e.target === emailDialog) emailDialog.classList.add('hidden');
       });
     }
   </script>
