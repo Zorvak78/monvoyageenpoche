@@ -12,8 +12,10 @@ stops:
     days: 2
   - slug: "pompei"
     days: 1
-  - slug: "cote-amalfitaine"
-    days: 2
+  - slug: "positano"
+    days: 1
+  - slug: "amalfi"
+    days: 1
   - slug: "capri"
     days: 2
 ---
