@@ -32,18 +32,84 @@ const cityToIata: Record<string, string> = {
   'london': 'LON',
 };
 
-/** Données par pays : ville d'arrivée principale, prix indicatifs. */
+/** Données par pays : ville d'arrivée principale, prix indicatifs, recos transport. */
 export const countriesData: Record<string, {
   mainCity: string;
   mainIata: string;
-  flightPerAdult: number;     // EUR aller-retour par adulte
-  carPerDay: number;          // EUR par jour de location
+  flightPerAdult: number;
+  carPerDay: number;
   trainRelevant: boolean;
+  flightRecommendations?: string[];
+  carRecommendations?: {
+    vehicle: string;
+    notes: string[];
+  };
 }> = {
-  namibie: { mainCity: 'Windhoek',    mainIata: 'WDH', flightPerAdult: 950,  carPerDay: 95, trainRelevant: false },
-  italie:  { mainCity: 'Rome',        mainIata: 'ROM', flightPerAdult: 180,  carPerDay: 55, trainRelevant: true  },
-  perou:   { mainCity: 'Lima',        mainIata: 'LIM', flightPerAdult: 850,  carPerDay: 60, trainRelevant: false },
-  japon:   { mainCity: 'Tokyo',       mainIata: 'TYO', flightPerAdult: 900,  carPerDay: 70, trainRelevant: true  },
+  namibie: {
+    mainCity: 'Windhoek',
+    mainIata: 'WDH',
+    flightPerAdult: 950,
+    carPerDay: 95,
+    trainRelevant: false,
+    flightRecommendations: [
+      'Pas de vol direct depuis la France : escales via Francfort, Doha ou Addis-Abeba.',
+      'Temps de trajet total : 12 à 18 h selon les correspondances.',
+      'Réserver 2 à 3 mois à l\'avance pour les meilleurs tarifs.',
+    ],
+    carRecommendations: {
+      vehicle: '4x4 indispensable (Toyota Hilux ou équivalent)',
+      notes: [
+        'Tente de toit conseillée pour les nuits au plus près de la nature.',
+        'Double roue de secours + jerrycan de carburant : non négociable.',
+        'Permis international requis. Conduite à gauche.',
+      ],
+    },
+  },
+  italie: {
+    mainCity: 'Rome',
+    mainIata: 'ROM',
+    flightPerAdult: 180,
+    carPerDay: 55,
+    trainRelevant: true,
+    carRecommendations: {
+      vehicle: 'Citadine ou compacte',
+      notes: [
+        'Privilégier les petits modèles pour les centres-villes anciens et les routes étroites.',
+        'Boîte manuelle largement répandue ; boîte auto en supplément.',
+      ],
+    },
+  },
+  perou: {
+    mainCity: 'Lima',
+    mainIata: 'LIM',
+    flightPerAdult: 850,
+    carPerDay: 60,
+    trainRelevant: false,
+    flightRecommendations: [
+      'Escale fréquente à Madrid, Amsterdam ou Bogota.',
+      'Vols intérieurs (Cuzco, Arequipa) souvent utiles vu les distances.',
+    ],
+    carRecommendations: {
+      vehicle: 'SUV recommandé, 4x4 pour la cordillère',
+      notes: [
+        'Routes de montagne, altitude élevée — bien vérifier l\'état du véhicule.',
+      ],
+    },
+  },
+  japon: {
+    mainCity: 'Tokyo',
+    mainIata: 'TYO',
+    flightPerAdult: 900,
+    carPerDay: 70,
+    trainRelevant: true,
+    carRecommendations: {
+      vehicle: 'Citadine ou compacte (conduite à gauche)',
+      notes: [
+        'Réseau ferroviaire excellent : le train est souvent plus pratique que la voiture.',
+        'JR Pass à étudier pour les longs trajets.',
+      ],
+    },
+  },
 };
 
 export function cityIata(city: string | null): string {
@@ -127,6 +193,21 @@ export function computeStepDates(
 export function formatDateFr(iso: string): string {
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+/** Distance à vol d'oiseau en km (haversine). */
+export function haversineKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
 }
 
 export function discoverCarsUrl(opts: {
