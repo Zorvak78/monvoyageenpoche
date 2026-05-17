@@ -1,10 +1,10 @@
 ---
-title: "L'Italie du Sud"
+title: "La Côte amalfitaine"
 country: "italie"
 slug: "sud"
-days: 12
-tagline: "Naples, Capri, Amalfi, Sicile"
-description: "Méditerranée pleine puissance : pizza napolitaine, dolce vita capriote, ruines antiques et volcans actifs."
+days: 7
+tagline: "Naples, Pompéi, Amalfi, Capri"
+description: "Une semaine pleine Méditerranée dans la baie de Naples : pizza originelle, ruines de Pompéi, villages perchés au-dessus de la mer et farniente sur Capri."
 heroImage: "/images/placeholder.svg"
 interests: ["plages", "gastronomie", "culture", "detente"]
 stops:
@@ -12,14 +12,8 @@ stops:
     days: 2
   - slug: "pompei"
     days: 1
-  - slug: "capri"
-    days: 2
   - slug: "cote-amalfitaine"
     days: 2
-  - slug: "palerme"
+  - slug: "capri"
     days: 2
-  - slug: "taormine"
-    days: 2
-  - slug: "etna"
-    days: 1
 ---

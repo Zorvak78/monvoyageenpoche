@@ -154,8 +154,8 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       const regionsCountry = regionsAll.filter(r => r.country === trip.country);
       const routesCountry = routesAll.filter(r => r.country === trip.country);
 
-      // Active region filters (state)
-      let activeRegions = new Set<string>(regionsCountry.map(r => r.slug));
+      // Active region filters — empty set = all shown
+      let activeRegions = new Set<string>();
 
       // Init Leaflet
       const map = L.map('map', { scrollWheelZoom: false }).setView(config.center, config.zoom);
@@ -202,8 +202,8 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         let visible = trip.interests.length > 0
           ? lieuxCountry.filter(l => l.interests.some(i => trip.interests.includes(i as any)))
           : [...lieuxCountry];
-        if (regionsCountry.length > 0) {
-          visible = visible.filter(l => !l.regionSlug || activeRegions.has(l.regionSlug));
+        if (regionsCountry.length > 0 && activeRegions.size > 0) {
+          visible = visible.filter(l => l.regionSlug && activeRegions.has(l.regionSlug));
         }
         if (visible.length === 0) visible = lieuxCountry;
         return visible;
@@ -301,17 +301,14 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       }
 
       function applyRoute(route: Route) {
-        if (trip.itinerary.length > 0 && !confirm(`Remplacer ton itinéraire actuel par « ${route.title} » ?`)) return;
         trip.itinerary = route.stops.map(s => ({ id: makeStepId(), slug: s.slug, days: s.days }));
         saveTrip({ itinerary: trip.itinerary });
         render();
-        // Scroll to the side panel on small screens
         document.getElementById('itinerary-list')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
       function clearItinerary() {
         if (trip.itinerary.length === 0) return;
-        if (!confirm('Vider tout ton itinéraire ?')) return;
         trip.itinerary = [];
         saveTrip({ itinerary: [] });
         render();
@@ -383,55 +380,27 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       const regionFiltersEl = document.getElementById('region-filters')!;
       if (regionsCountry.length > 0) {
         regionFiltersEl.classList.remove('hidden');
-        regionFiltersEl.innerHTML = `
-          <button class="region-all-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-deep-teal bg-deep-teal text-white transition-all">
-            Toutes
+        regionFiltersEl.innerHTML = regionsCountry.map(r => `
+          <button class="region-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-all" data-region="${r.slug}">
+            ${r.title}
           </button>
-          ${regionsCountry.map(r => `
-            <button class="region-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-cream bg-white text-charcoal hover:border-amber transition-all" data-region="${r.slug}">
-              ${r.title}
-            </button>
-          `).join('')}
-        `;
-        const allBtn = regionFiltersEl.querySelector<HTMLButtonElement>('.region-all-btn')!;
+        `).join('');
         const regionBtns = regionFiltersEl.querySelectorAll<HTMLButtonElement>('.region-btn');
 
         function refreshRegionUI() {
-          const all = regionsCountry.every(r => activeRegions.has(r.slug));
-          allBtn.classList.toggle('bg-deep-teal', all);
-          allBtn.classList.toggle('text-white', all);
-          allBtn.classList.toggle('border-deep-teal', all);
-          if (!all) {
-            allBtn.classList.add('bg-white', 'text-charcoal', 'border-cream');
-            allBtn.classList.remove('border-deep-teal');
-          } else {
-            allBtn.classList.remove('bg-white', 'text-charcoal', 'border-cream');
-          }
           regionBtns.forEach(b => {
             const slug = b.dataset.region!;
-            const on = activeRegions.has(slug) && !all;
-            b.classList.toggle('bg-amber', on);
-            b.classList.toggle('border-amber', on);
-            b.classList.toggle('text-charcoal', true);
+            const on = activeRegions.has(slug);
+            b.className = on
+              ? 'region-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-all bg-amber border-amber text-charcoal shadow-sm'
+              : 'region-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-all bg-white border-cream text-charcoal hover:border-amber';
           });
         }
-        allBtn.onclick = () => {
-          activeRegions = new Set(regionsCountry.map(r => r.slug));
-          refreshRegionUI();
-          render();
-        };
         regionBtns.forEach(b => {
           b.onclick = () => {
             const slug = b.dataset.region!;
-            const allOn = regionsCountry.every(r => activeRegions.has(r.slug));
-            if (allOn) {
-              activeRegions = new Set([slug]);
-            } else if (activeRegions.has(slug)) {
-              activeRegions.delete(slug);
-              if (activeRegions.size === 0) activeRegions = new Set(regionsCountry.map(r => r.slug));
-            } else {
-              activeRegions.add(slug);
-            }
+            if (activeRegions.has(slug)) activeRegions.delete(slug);
+            else activeRegions.add(slug);
             refreshRegionUI();
             render();
           };
