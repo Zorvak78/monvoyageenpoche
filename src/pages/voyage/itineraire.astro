@@ -3,11 +3,16 @@ import FunnelLayout from '../../layouts/FunnelLayout.astro';
 import { getCollection } from 'astro:content';
 
 const lieux = await getCollection('lieux');
+const regions = await getCollection('regions');
+const routes = await getCollection('routes');
 
 const lieuxData = lieux.map(l => ({
   slug: l.id.replace(/^[^/]+\//, '').replace(/\.md$/, ''),
   ...l.data,
 }));
+
+const regionsData = regions.map(r => ({ ...r.data }));
+const routesData = routes.map(r => ({ ...r.data }));
 
 const countryConfigs: Record<string, { name: string; center: [number, number]; zoom: number }> = {
   namibie: { name: 'Namibie', center: [-22.5, 17], zoom: 6 },
@@ -22,7 +27,6 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
   description="Place tes étapes sur la carte et construis ton parcours."
   step={2}
 >
-  <!-- Leaflet + MarkerCluster CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin />
@@ -31,7 +35,7 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     <header class="mb-6">
       <p class="font-display italic text-amber mb-1">Étape 2 sur 4</p>
       <h1 class="font-display text-3xl md:text-4xl font-bold text-deep-teal">Construire ton itinéraire</h1>
-      <p class="text-slate mt-2">Clique sur un marqueur pour l'ajouter à ton voyage. Ajuste la durée et réorganise les étapes à droite.</p>
+      <p class="text-slate mt-2">Pars d'un voyage suggéré ou construis le tien étape par étape.</p>
     </header>
 
     <div id="no-trip" class="hidden bg-cream rounded-2xl p-8 text-center">
@@ -42,15 +46,29 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       </a>
     </div>
 
+    <!-- Voyages suggérés -->
+    <section id="suggested-section" class="hidden mb-8">
+      <div class="flex items-baseline justify-between mb-4">
+        <h2 class="font-display text-xl font-bold text-deep-teal">Voyages suggérés</h2>
+        <button id="toggle-suggested" class="text-xs text-slate hover:text-deep-teal transition-colors">Masquer</button>
+      </div>
+      <div id="suggested-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
     <div id="itinerary-builder" class="hidden grid grid-cols-1 lg:grid-cols-5 gap-6">
-      <!-- Map -->
-      <div class="lg:col-span-3 bg-white rounded-2xl border border-cream shadow-sm">
-        <div id="map" class="w-full h-[500px] lg:h-[640px] rounded-t-2xl"></div>
-        <div class="px-4 py-3 bg-cream/50 border-t border-cream flex items-center gap-2 text-xs text-slate rounded-b-2xl">
-          <svg class="w-4 h-4 text-amber flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <span id="filter-info">Affichage de tous les lieux disponibles.</span>
+      <!-- Map column -->
+      <div class="lg:col-span-3">
+        <!-- Region filters (only if country has regions) -->
+        <div id="region-filters" class="hidden mb-3 flex flex-wrap gap-2"></div>
+
+        <div class="bg-white rounded-2xl border border-cream shadow-sm">
+          <div id="map" class="w-full h-[500px] lg:h-[600px] rounded-t-2xl"></div>
+          <div class="px-4 py-3 bg-cream/50 border-t border-cream flex items-center gap-2 text-xs text-slate rounded-b-2xl">
+            <svg class="w-4 h-4 text-amber flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="filter-info">Affichage de tous les lieux disponibles.</span>
+          </div>
         </div>
       </div>
 
@@ -77,7 +95,7 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
           <svg class="w-10 h-10 mx-auto text-slate/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
           </svg>
-          <p>Ton itinéraire est vide.<br/>Clique sur les marqueurs.</p>
+          <p>Ton itinéraire est vide.<br/>Clique sur un voyage suggéré ou sur les marqueurs.</p>
         </div>
 
         <div class="pt-5 mt-5 border-t border-cream flex flex-col gap-3">
@@ -91,13 +109,15 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>
           </button>
-          <a href="/voyage/destination" class="text-center text-xs text-slate hover:text-deep-teal transition-colors">← Modifier mes choix</a>
+          <button id="clear-btn" class="text-center text-xs text-slate hover:text-red-600 transition-colors">Vider mon itinéraire</button>
         </div>
       </aside>
     </div>
   </div>
 
   <script type="application/json" id="lieux-data" set:html={JSON.stringify(lieuxData)}></script>
+  <script type="application/json" id="regions-data" set:html={JSON.stringify(regionsData)}></script>
+  <script type="application/json" id="routes-data" set:html={JSON.stringify(routesData)}></script>
   <script type="application/json" id="country-configs" set:html={JSON.stringify(countryConfigs)}></script>
 
   <script>
@@ -107,10 +127,12 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     import { loadTrip, saveTrip, makeStepId, type ItineraryStep } from '../../lib/tripState';
 
     type Lieu = {
-      slug: string; title: string; country: string; region: string; type: string;
-      image: string; description: string; lat: number; lng: number;
-      interests: string[]; duree: number; nuits: boolean;
+      slug: string; title: string; country: string; region: string; regionSlug?: string;
+      type: string; image: string; description: string; lat: number; lng: number;
+      interests: string[]; duree: number; nuits: boolean; tier: number;
     };
+    type Region = { title: string; country: string; slug: string; description: string; heroImage: string; centerLat: number; centerLng: number; zoom: number };
+    type Route = { title: string; country: string; slug: string; days: number; tagline: string; description: string; heroImage: string; interests: string[]; stops: Array<{slug: string; days: number}> };
 
     const trip = loadTrip();
     if (!trip.country || !trip.days) {
@@ -122,21 +144,20 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
 
     function initBuilder() {
       const lieuxAll: Lieu[] = JSON.parse(document.getElementById('lieux-data')!.textContent || '[]');
+      const regionsAll: Region[] = JSON.parse(document.getElementById('regions-data')!.textContent || '[]');
+      const routesAll: Route[] = JSON.parse(document.getElementById('routes-data')!.textContent || '[]');
       const configs = JSON.parse(document.getElementById('country-configs')!.textContent || '{}');
       const config = configs[trip.country!] || { name: trip.country, center: [0, 0], zoom: 4 };
 
+      // Data scoped to selected country
       const lieuxCountry = lieuxAll.filter(l => l.country === trip.country);
-      let lieuxVisible = trip.interests.length > 0
-        ? lieuxCountry.filter(l => l.interests.some(i => trip.interests.includes(i as any)))
-        : lieuxCountry;
-      if (lieuxVisible.length === 0) lieuxVisible = lieuxCountry;
+      const regionsCountry = regionsAll.filter(r => r.country === trip.country);
+      const routesCountry = routesAll.filter(r => r.country === trip.country);
 
-      const filterInfo = document.getElementById('filter-info')!;
-      filterInfo.textContent = trip.interests.length > 0
-        ? `${lieuxVisible.length} lieu${lieuxVisible.length > 1 ? 'x' : ''} correspondent à tes intérêts (sur ${lieuxCountry.length}).`
-        : `${lieuxCountry.length} lieux disponibles. Filtre par intérêts à l'étape 1 pour affiner.`;
+      // Active region filters (state)
+      let activeRegions = new Set<string>(regionsCountry.map(r => r.slug));
 
-      // Map
+      // Init Leaflet
       const map = L.map('map', { scrollWheelZoom: false }).setView(config.center, config.zoom);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -145,7 +166,6 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
 
       const polyline = L.polyline([], { color: '#D4A03C', weight: 3, opacity: 0.85, dashArray: '6 8' }).addTo(map);
 
-      // Cluster group - handles overlapping markers via spiderfy
       const cluster = (L as any).markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
@@ -174,36 +194,62 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         });
       }
 
-      function isInItinerary(slug: string) {
-        return trip.itinerary.some(s => s.slug === slug);
-      }
-      function orderOf(slug: string) {
-        return trip.itinerary.findIndex(s => s.slug === slug) + 1;
+      function isInItinerary(slug: string) { return trip.itinerary.some(s => s.slug === slug); }
+      function orderOf(slug: string) { return trip.itinerary.findIndex(s => s.slug === slug) + 1; }
+
+      // Build markers (filtered by interests AND active regions)
+      function buildVisible(): Lieu[] {
+        let visible = trip.interests.length > 0
+          ? lieuxCountry.filter(l => l.interests.some(i => trip.interests.includes(i as any)))
+          : [...lieuxCountry];
+        if (regionsCountry.length > 0) {
+          visible = visible.filter(l => !l.regionSlug || activeRegions.has(l.regionSlug));
+        }
+        if (visible.length === 0) visible = lieuxCountry;
+        return visible;
       }
 
-      lieuxVisible.forEach(lieu => {
-        const m = L.marker([lieu.lat, lieu.lng], { icon: makeIcon(isInItinerary(lieu.slug), orderOf(lieu.slug)) });
-        m.bindPopup(`
-          <div class="popup-mini" data-slug="${lieu.slug}">
-            <img src="${lieu.image}" alt="${lieu.title}" class="popup-img" />
-            <div class="popup-body">
-              <h3 class="popup-title">${lieu.title}</h3>
-              <p class="popup-hint"></p>
-              <button class="popup-btn" data-slug="${lieu.slug}"></button>
+      let lieuxVisible = buildVisible();
+
+      function renderMarkers() {
+        cluster.clearLayers();
+        markers.clear();
+        lieuxVisible.forEach(lieu => {
+          const m = L.marker([lieu.lat, lieu.lng], { icon: makeIcon(isInItinerary(lieu.slug), orderOf(lieu.slug)) });
+          m.bindPopup(`
+            <div class="popup-mini" data-slug="${lieu.slug}">
+              <img src="${lieu.image}" alt="${lieu.title}" class="popup-img" />
+              <div class="popup-body">
+                <h3 class="popup-title">${lieu.title}</h3>
+                <p class="popup-hint"></p>
+                <button class="popup-btn" data-slug="${lieu.slug}"></button>
+              </div>
             </div>
-          </div>
-        `, {
-          maxWidth: 260,
-          minWidth: 240,
-          autoPan: true,
-          autoPanPadding: L.point(20, 60),
-          closeButton: true,
+          `, {
+            maxWidth: 260,
+            minWidth: 240,
+            autoPan: true,
+            autoPanPadding: L.point(20, 60),
+            closeButton: true,
+          });
+          markers.set(lieu.slug, m);
+          cluster.addLayer(m);
         });
-        markers.set(lieu.slug, m);
-        cluster.addLayer(m);
-      });
+        updateFilterInfo();
+      }
 
-      // Popup click handler — recalcule l'état à chaque ouverture
+      function updateFilterInfo() {
+        const filterInfo = document.getElementById('filter-info')!;
+        const total = lieuxCountry.length;
+        const shown = lieuxVisible.length;
+        const parts = [];
+        if (shown < total) parts.push(`${shown} lieu${shown > 1 ? 'x' : ''} sur ${total}`);
+        else parts.push(`${total} lieux disponibles`);
+        if (trip.interests.length > 0) parts.push(`filtre par intérêts actif`);
+        filterInfo.textContent = parts.join(' · ');
+      }
+
+      // Popup button handler
       map.on('popupopen', (e) => {
         const el = e.popup.getElement() as HTMLElement | null;
         if (!el) return;
@@ -214,18 +260,13 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         const already = isInItinerary(slug);
         btn.textContent = already ? '+ Ajouter à nouveau (boucle)' : '+ Ajouter à mon voyage';
         if (hint) hint.textContent = already ? `Déjà dans ton voyage. Retire-le depuis le panneau de droite.` : '';
-        btn.onclick = () => {
-          addStep(slug);
-          map.closePopup();
-        };
+        btn.onclick = () => { addStep(slug); map.closePopup(); };
       });
 
-      // Sortable list — drag handles refer to unique step IDs
+      // Sortable
       const listEl = document.getElementById('itinerary-list')!;
       Sortable.create(listEl, {
-        animation: 200,
-        handle: '.drag-handle',
-        ghostClass: 'opacity-30',
+        animation: 200, handle: '.drag-handle', ghostClass: 'opacity-30',
         onEnd: () => {
           const newOrder = Array.from(listEl.children).map(el => {
             const id = (el as HTMLElement).dataset.id!;
@@ -259,23 +300,38 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         render();
       }
 
+      function applyRoute(route: Route) {
+        if (trip.itinerary.length > 0 && !confirm(`Remplacer ton itinéraire actuel par « ${route.title} » ?`)) return;
+        trip.itinerary = route.stops.map(s => ({ id: makeStepId(), slug: s.slug, days: s.days }));
+        saveTrip({ itinerary: trip.itinerary });
+        render();
+        // Scroll to the side panel on small screens
+        document.getElementById('itinerary-list')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function clearItinerary() {
+        if (trip.itinerary.length === 0) return;
+        if (!confirm('Vider tout ton itinéraire ?')) return;
+        trip.itinerary = [];
+        saveTrip({ itinerary: [] });
+        render();
+      }
+
       function render() {
-        // Markers
-        lieuxVisible.forEach(lieu => {
-          const sel = isInItinerary(lieu.slug);
-          markers.get(lieu.slug)?.setIcon(makeIcon(sel, orderOf(lieu.slug)));
-        });
+        // Update visible based on regions + interests
+        lieuxVisible = buildVisible();
+        renderMarkers();
 
         // Polyline
         const coords = trip.itinerary
-          .map(s => lieuxVisible.find(l => l.slug === s.slug))
+          .map(s => lieuxAll.find(l => l.slug === s.slug))
           .filter(Boolean)
           .map(l => [l!.lat, l!.lng] as [number, number]);
         polyline.setLatLngs(coords);
 
-        // List — render by unique step id (allows same slug multiple times for loops)
+        // List
         listEl.innerHTML = trip.itinerary.map((step, i) => {
-          const l = lieuxVisible.find(x => x.slug === step.slug) || lieuxAll.find(x => x.slug === step.slug);
+          const l = lieuxAll.find(x => x.slug === step.slug);
           if (!l) return '';
           return `
             <li data-id="${step.id}" class="flex items-center gap-2 p-3 rounded-xl bg-cream/50 border border-cream hover:border-amber transition-colors">
@@ -318,16 +374,126 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
         document.getElementById('days-warning')!.classList.toggle('hidden', !over);
         document.getElementById('days-bar')!.classList.toggle('bg-red-500', over);
         document.getElementById('days-bar')!.classList.toggle('bg-amber', !over);
-
         document.getElementById('empty-itinerary')!.classList.toggle('hidden', count > 0);
         const cta = document.getElementById('continue-btn') as HTMLButtonElement;
         cta.disabled = count === 0;
       }
 
+      // ─── Region filter chips ───
+      const regionFiltersEl = document.getElementById('region-filters')!;
+      if (regionsCountry.length > 0) {
+        regionFiltersEl.classList.remove('hidden');
+        regionFiltersEl.innerHTML = `
+          <button class="region-all-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-deep-teal bg-deep-teal text-white transition-all">
+            Toutes
+          </button>
+          ${regionsCountry.map(r => `
+            <button class="region-btn px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-cream bg-white text-charcoal hover:border-amber transition-all" data-region="${r.slug}">
+              ${r.title}
+            </button>
+          `).join('')}
+        `;
+        const allBtn = regionFiltersEl.querySelector<HTMLButtonElement>('.region-all-btn')!;
+        const regionBtns = regionFiltersEl.querySelectorAll<HTMLButtonElement>('.region-btn');
+
+        function refreshRegionUI() {
+          const all = regionsCountry.every(r => activeRegions.has(r.slug));
+          allBtn.classList.toggle('bg-deep-teal', all);
+          allBtn.classList.toggle('text-white', all);
+          allBtn.classList.toggle('border-deep-teal', all);
+          if (!all) {
+            allBtn.classList.add('bg-white', 'text-charcoal', 'border-cream');
+            allBtn.classList.remove('border-deep-teal');
+          } else {
+            allBtn.classList.remove('bg-white', 'text-charcoal', 'border-cream');
+          }
+          regionBtns.forEach(b => {
+            const slug = b.dataset.region!;
+            const on = activeRegions.has(slug) && !all;
+            b.classList.toggle('bg-amber', on);
+            b.classList.toggle('border-amber', on);
+            b.classList.toggle('text-charcoal', true);
+          });
+        }
+        allBtn.onclick = () => {
+          activeRegions = new Set(regionsCountry.map(r => r.slug));
+          refreshRegionUI();
+          render();
+        };
+        regionBtns.forEach(b => {
+          b.onclick = () => {
+            const slug = b.dataset.region!;
+            const allOn = regionsCountry.every(r => activeRegions.has(r.slug));
+            if (allOn) {
+              activeRegions = new Set([slug]);
+            } else if (activeRegions.has(slug)) {
+              activeRegions.delete(slug);
+              if (activeRegions.size === 0) activeRegions = new Set(regionsCountry.map(r => r.slug));
+            } else {
+              activeRegions.add(slug);
+            }
+            refreshRegionUI();
+            render();
+          };
+        });
+        refreshRegionUI();
+      }
+
+      // ─── Suggested routes ───
+      if (routesCountry.length > 0) {
+        const suggestedSection = document.getElementById('suggested-section')!;
+        suggestedSection.classList.remove('hidden');
+        const suggestedList = document.getElementById('suggested-list')!;
+        suggestedList.innerHTML = routesCountry.map((r, i) => `
+          <article class="route-card bg-white rounded-2xl border border-cream shadow-sm overflow-hidden cursor-pointer group hover:border-amber transition-colors" data-route="${r.slug}">
+            <div class="aspect-[16/9] overflow-hidden bg-cream relative">
+              <img src="${r.heroImage}" alt="${r.title}" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
+              <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/95 text-charcoal text-[10px] font-bold uppercase tracking-wide">
+                ${r.days} jours
+              </div>
+            </div>
+            <div class="p-5">
+              <h3 class="font-display text-lg font-bold text-deep-teal mb-1">${r.title}</h3>
+              <p class="text-xs text-amber font-semibold uppercase tracking-wide mb-2">${r.tagline}</p>
+              <p class="text-sm text-slate leading-snug mb-3">${r.description}</p>
+              <button class="apply-route-btn inline-flex items-center gap-1.5 text-sm font-semibold text-deep-teal hover:text-amber transition-colors" data-route="${r.slug}">
+                Utiliser ce voyage
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              </button>
+            </div>
+          </article>
+        `).join('');
+
+        suggestedList.querySelectorAll<HTMLButtonElement>('.apply-route-btn').forEach(b => {
+          b.onclick = (e) => {
+            e.stopPropagation();
+            const slug = b.dataset.route!;
+            const route = routesCountry.find(r => r.slug === slug);
+            if (route) applyRoute(route);
+          };
+        });
+        suggestedList.querySelectorAll<HTMLElement>('.route-card').forEach(c => {
+          c.onclick = () => {
+            const slug = c.dataset.route!;
+            const route = routesCountry.find(r => r.slug === slug);
+            if (route) applyRoute(route);
+          };
+        });
+
+        const toggleBtn = document.getElementById('toggle-suggested')!;
+        toggleBtn.onclick = () => {
+          const hidden = suggestedList.classList.toggle('hidden');
+          toggleBtn.textContent = hidden ? 'Afficher' : 'Masquer';
+        };
+      }
+
+      // Continue + clear
       document.getElementById('continue-btn')!.addEventListener('click', () => {
         window.location.href = '/voyage/logement';
       });
+      document.getElementById('clear-btn')!.addEventListener('click', clearItinerary);
 
+      // First render
       render();
     }
   </script>
@@ -346,10 +512,7 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     }
     .marker-pin:hover { transform: rotate(-45deg) scale(1.15); z-index: 999; }
     .marker-pin.selected { background: #D4A03C; border-color: #B8860B; }
-    .marker-pin span {
-      transform: rotate(45deg);
-      color: #2D2D2D; font-weight: 800; font-size: 12px;
-    }
+    .marker-pin span { transform: rotate(45deg); color: #2D2D2D; font-weight: 800; font-size: 12px; }
 
     .cluster-icon { background: transparent; border: none; }
     .cluster-pin {
@@ -361,18 +524,12 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       color: white;
       display: flex; align-items: center; justify-content: center;
       font-weight: 800; font-size: 14px;
-      transition: transform 0.2s;
     }
-    .cluster-pin:hover { transform: scale(1.1); }
 
     .leaflet-popup-content-wrapper { border-radius: 10px; padding: 0; overflow: hidden; }
     .leaflet-popup-content { margin: 0; width: 100% !important; line-height: 1; }
     .popup-mini { display: flex; flex-direction: column; width: 240px; }
-    .popup-img {
-      display: block;
-      width: 100%;
-      height: auto;
-    }
+    .popup-img { display: block; width: 100%; height: auto; }
     .popup-body { padding: 8px 10px 10px; }
     .popup-title {
       font-family: 'Playfair Display', Georgia, serif;
@@ -390,7 +547,5 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
       border: none; cursor: pointer; transition: all 0.2s;
     }
     .popup-btn:hover { background: #D4A03C; color: #2D2D2D; }
-    .popup-btn.removing { background: #ffffff; color: #B91C1C; border: 2px solid #FCA5A5; }
-    .popup-btn.removing:hover { background: #FEE2E2; color: #991B1B; border-color: #B91C1C; }
   </style>
 </FunnelLayout>
