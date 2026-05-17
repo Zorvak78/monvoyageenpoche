@@ -369,9 +369,12 @@ const countryConfigs: Record<string, { name: string; center: [number, number]; z
     .leaflet-popup-content { margin: 0; width: 100% !important; }
     .popup-mini { display: flex; flex-direction: column; width: 220px; }
     .popup-img {
-      width: 100%;
-      height: auto;
       display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      max-height: 100px;
+      width: auto;
+      height: auto;
     }
     .popup-body { padding: 14px 16px 16px; }
     .popup-title {
