@@ -43,14 +43,48 @@ export function bookingSearchUrl(opts: {
 export function airbnbSearchUrl(opts: {
   destination: string;
   adults?: number;
+  checkin?: string;  // YYYY-MM-DD
+  checkout?: string;
 }): string {
   const place = encodeURIComponent(opts.destination);
   let url = `https://www.airbnb.fr/s/${place}/homes`;
   const params = new URLSearchParams();
+  if (opts.checkin) params.set('checkin', opts.checkin);
+  if (opts.checkout) params.set('checkout', opts.checkout);
   if (opts.adults) params.set('adults', String(opts.adults));
   if (AIRBNB_PID) params.set('source', AIRBNB_PID);
   const qs = params.toString();
   return qs ? `${url}?${qs}` : url;
+}
+
+/**
+ * Cascade les dates par étape de l'itinéraire à partir d'une date de départ.
+ * Retourne pour chaque step un { checkin, checkout } au format YYYY-MM-DD.
+ */
+export function computeStepDates(
+  startDate: string,
+  itinerary: Array<{ id: string; days: number }>
+): Map<string, { checkin: string; checkout: string }> {
+  const dates = new Map<string, { checkin: string; checkout: string }>();
+  const start = new Date(startDate + 'T00:00:00');
+  let cumulative = 0;
+  for (const step of itinerary) {
+    const ci = new Date(start);
+    ci.setDate(ci.getDate() + cumulative);
+    const co = new Date(ci);
+    co.setDate(co.getDate() + step.days);
+    dates.set(step.id, {
+      checkin: ci.toISOString().slice(0, 10),
+      checkout: co.toISOString().slice(0, 10),
+    });
+    cumulative += step.days;
+  }
+  return dates;
+}
+
+export function formatDateFr(iso: string): string {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
 export function discoverCarsUrl(opts: {

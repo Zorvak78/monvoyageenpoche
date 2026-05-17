@@ -26,6 +26,7 @@ export interface TripState {
   interests: Interest[];
   days: number | null;
   departureCity: string | null;
+  startDate: string | null; // ISO YYYY-MM-DD
   itinerary: ItineraryStep[];
   updatedAt: number;
 }
@@ -39,6 +40,7 @@ const defaultState: TripState = {
   interests: [],
   days: null,
   departureCity: null,
+  startDate: null,
   itinerary: [],
   updatedAt: 0,
 };

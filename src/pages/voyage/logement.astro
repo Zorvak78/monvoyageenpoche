@@ -18,7 +18,7 @@ const lieuxData = lieux.map(l => ({
     <header class="mb-8">
       <p class="font-display italic text-amber mb-1">Étape 3 sur 4</p>
       <h1 class="font-display text-3xl md:text-4xl font-bold text-deep-teal mb-2">Choisir tes logements</h1>
-      <p class="text-slate">Pour chaque étape de ton voyage, on te propose des suggestions Booking et Airbnb pré-remplies. Compare et réserve quand tu veux.</p>
+      <p class="text-slate">Pour chaque étape, on te propose des suggestions Booking et Airbnb pré-remplies avec la ville, les dates et le nombre de voyageurs.</p>
     </header>
 
     <!-- Empty state -->
@@ -31,6 +31,19 @@ const lieuxData = lieux.map(l => ({
     </div>
 
     <div id="lodging-content" class="hidden">
+      <!-- Start date picker -->
+      <div class="bg-white rounded-2xl border border-cream p-5 mb-8 flex flex-col md:flex-row md:items-center gap-4">
+        <div class="flex-1">
+          <label for="start-date" class="block font-semibold text-deep-teal mb-1">Date de départ de ton voyage</label>
+          <p class="text-xs text-slate">On utilise cette date pour pré-remplir les dates de chaque étape sur Booking et Airbnb.</p>
+        </div>
+        <input
+          type="date"
+          id="start-date"
+          class="px-4 py-2.5 rounded-xl border-2 border-cream bg-white text-charcoal focus:border-amber focus:outline-none transition-colors"
+        />
+      </div>
+
       <!-- Cards container -->
       <div id="lodging-list" class="space-y-4 mb-10"></div>
 
@@ -73,10 +86,11 @@ const lieuxData = lieux.map(l => ({
   <script type="application/json" id="lieux-data" set:html={JSON.stringify(lieuxData)}></script>
 
   <script>
-    import { loadTrip } from '../../lib/tripState';
+    import { loadTrip, saveTrip } from '../../lib/tripState';
     import {
       bookingSearchUrl, airbnbSearchUrl,
       adultsFromComposition, estimateNightlyPrice,
+      computeStepDates, formatDateFr,
     } from '../../lib/affiliates';
 
     type Lieu = {
@@ -91,6 +105,25 @@ const lieuxData = lieux.map(l => ({
       document.getElementById('no-trip')!.classList.remove('hidden');
     } else {
       document.getElementById('lodging-content')!.classList.remove('hidden');
+
+      // Default startDate: today + 30 days if not set
+      if (!trip.startDate) {
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        trip.startDate = d.toISOString().slice(0, 10);
+        saveTrip({ startDate: trip.startDate });
+      }
+
+      const dateInput = document.getElementById('start-date') as HTMLInputElement;
+      dateInput.value = trip.startDate;
+      const today = new Date().toISOString().slice(0, 10);
+      dateInput.min = today;
+      dateInput.addEventListener('change', () => {
+        trip.startDate = dateInput.value;
+        saveTrip({ startDate: dateInput.value });
+        render();
+      });
+
       render();
     }
 
@@ -98,6 +131,7 @@ const lieuxData = lieux.map(l => ({
       const lieuxAll: Lieu[] = JSON.parse(document.getElementById('lieux-data')!.textContent || '[]');
       const adults = adultsFromComposition(trip.composition);
       const nightly = estimateNightlyPrice(trip.country, trip.composition);
+      const dates = trip.startDate ? computeStepDates(trip.startDate, trip.itinerary) : new Map();
 
       let totalNights = 0;
       let totalPrice = 0;
@@ -106,6 +140,7 @@ const lieuxData = lieux.map(l => ({
       list.innerHTML = trip.itinerary.map((step, i) => {
         const lieu = lieuxAll.find(l => l.slug === step.slug);
         if (!lieu) return '';
+        const stepDates = dates.get(step.id);
 
         if (lieu.nuits) {
           const nights = step.days;
@@ -114,8 +149,20 @@ const lieuxData = lieux.map(l => ({
           totalPrice += price;
 
           const destination = `${lieu.title}, ${lieu.region}`;
-          const bookingUrl = bookingSearchUrl({ destination, adults });
-          const airbnbUrl = airbnbSearchUrl({ destination, adults });
+          const bookingUrl = bookingSearchUrl({
+            destination, adults,
+            checkin: stepDates?.checkin,
+            checkout: stepDates?.checkout,
+          });
+          const airbnbUrl = airbnbSearchUrl({
+            destination, adults,
+            checkin: stepDates?.checkin,
+            checkout: stepDates?.checkout,
+          });
+
+          const dateLabel = stepDates
+            ? `Du ${formatDateFr(stepDates.checkin)} au ${formatDateFr(stepDates.checkout)}`
+            : '';
 
           return `
             <article class="bg-white rounded-2xl border border-cream shadow-sm overflow-hidden flex flex-col md:flex-row">
@@ -126,8 +173,9 @@ const lieuxData = lieux.map(l => ({
                     <span class="w-6 h-6 rounded-full bg-amber text-charcoal text-xs font-bold flex items-center justify-center">${i + 1}</span>
                     <span class="text-xs font-semibold text-slate uppercase tracking-wide">${lieu.type} · ${lieu.region}</span>
                   </div>
-                  <h2 class="font-display text-xl font-bold text-deep-teal mb-2">${lieu.title}</h2>
-                  <p class="text-sm text-slate mb-3">
+                  <h2 class="font-display text-xl font-bold text-deep-teal mb-1">${lieu.title}</h2>
+                  ${dateLabel ? `<p class="text-sm font-semibold text-amber mb-2">📅 ${dateLabel}</p>` : ''}
+                  <p class="text-sm text-slate mb-2">
                     <strong class="text-deep-teal">${nights} nuit${nights > 1 ? 's' : ''}</strong>
                     · estimé ~${price.toLocaleString('fr-FR')} €
                   </p>
@@ -149,11 +197,11 @@ const lieuxData = lieux.map(l => ({
             </article>
           `;
         } else {
-          // Visit-only stop, no lodging needed
+          const dateLabel = stepDates ? `${formatDateFr(stepDates.checkin)} → ${formatDateFr(stepDates.checkout)}` : '';
           return `
             <div class="flex items-center gap-3 px-5 py-3 rounded-xl bg-cream/60 border border-dashed border-cream text-sm text-slate">
               <span class="w-6 h-6 rounded-full bg-cream text-slate text-xs font-bold flex items-center justify-center flex-shrink-0">${i + 1}</span>
-              <span><strong class="text-deep-teal">${lieu.title}</strong> — visite, pas de logement dédié (incluse dans l'étape voisine)</span>
+              <span><strong class="text-deep-teal">${lieu.title}</strong> ${dateLabel ? `<span class="text-xs">(${dateLabel})</span>` : ''} — visite, pas de logement dédié</span>
             </div>
           `;
         }
