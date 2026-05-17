@@ -102,11 +102,17 @@ export const countriesData: Record<string, {
     flightPerAdult: 900,
     carPerDay: 70,
     trainRelevant: true,
+    flightRecommendations: [
+      'Vols directs Paris-Tokyo disponibles (Air France, ANA, JAL) en 12-14 h.',
+      'Aéroports : Narita (NRT) plus loin, Haneda (HND) plus proche du centre.',
+      'JR Pass à acheter avant le départ pour bénéficier du tarif touriste.',
+    ],
     carRecommendations: {
-      vehicle: 'Citadine ou compacte (conduite à gauche)',
+      vehicle: 'Train avant tout — voiture utile en zones rurales (compacte, conduite à gauche)',
       notes: [
-        'Réseau ferroviaire excellent : le train est souvent plus pratique que la voiture.',
-        'JR Pass à étudier pour les longs trajets.',
+        'Le réseau Shinkansen rend la voiture inutile pour les grandes villes.',
+        'Loue une voiture uniquement pour Hokkaidō, Tōhoku, Shikoku ou Kyūshū rural.',
+        'Permis international obligatoire (le permis japonais ne suffit pas).',
       ],
     },
   },
