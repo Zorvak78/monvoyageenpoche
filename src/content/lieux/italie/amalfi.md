@@ -4,7 +4,7 @@ country: "italie"
 region: "Campanie"
 regionSlug: "campanie"
 type: "Village côtier"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/amalfi.jpg"
 description: "Petite ville qui donne son nom à la côte. Cathédrale arabo-normande, baignade à l'ombre des falaises, papier artisanal millénaire."
 lat: 40.6340
 lng: 14.6027

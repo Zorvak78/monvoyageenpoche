@@ -4,7 +4,7 @@ country: "japon"
 region: "Kyūshū"
 regionSlug: "kyushu"
 type: "Côte sud"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/miyazaki.jpg"
 description: "Côte subtropicale, palmiers, gorges de Takachiho (mythologie shintō), poulet local. Sud du Japon ensoleillé."
 lat: 31.9077
 lng: 131.4202

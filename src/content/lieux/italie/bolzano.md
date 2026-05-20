@@ -4,7 +4,7 @@ country: "italie"
 region: "Trentin-Haut-Adige"
 regionSlug: "trentin"
 type: "Ville bilingue"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/bolzano.jpg"
 description: "Capitale du Tyrol du Sud, italien-allemand-ladin. Marchés tyroliens, musée d'Ötzi l'homme des glaces, porte vers les Dolomites."
 lat: 46.4982
 lng: 11.3548

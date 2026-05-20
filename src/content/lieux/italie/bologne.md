@@ -4,7 +4,7 @@ country: "italie"
 region: "Émilie-Romagne"
 regionSlug: "emilie-romagne"
 type: "Capitale gastronomique"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/bologne.jpg"
 description: "« La grasse » : ragù, mortadelle, tortellini. Plus vieille université d'Europe, arcades infinies, tours médiévales penchées."
 lat: 44.4949
 lng: 11.3426

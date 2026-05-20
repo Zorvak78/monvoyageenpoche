@@ -4,7 +4,7 @@ country: "italie"
 region: "Ligurie"
 regionSlug: "ligurie"
 type: "Ville portuaire"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/genes.jpg"
 description: "Plus grand centre historique d'Europe. Palais baroques, ruelles étroites, port animé, focaccia partout. Patrie de Christophe Colomb."
 lat: 44.4056
 lng: 8.9463

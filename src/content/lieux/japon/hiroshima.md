@@ -4,7 +4,7 @@ country: "japon"
 region: "Chūgoku"
 regionSlug: "chugoku"
 type: "Ville mémorielle"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/hiroshima.jpg"
 description: "Mémorial de la paix, dôme de la bombe atomique UNESCO. Reconstruction symbole, château, okonomiyaki style Hiroshima. Émouvant et indispensable."
 lat: 34.3853
 lng: 132.4553

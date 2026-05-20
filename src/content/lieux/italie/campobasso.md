@@ -4,7 +4,7 @@ country: "italie"
 region: "Molise"
 regionSlug: "molise"
 type: "Capitale régionale"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/campobasso.jpg"
 description: "Capitale modeste de la plus petite région d'Italie. Vieille ville médiévale sur la colline, parfaite pour échapper aux foules."
 lat: 41.5630
 lng: 14.6562
