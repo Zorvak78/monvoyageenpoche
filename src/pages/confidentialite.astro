@@ -1,0 +1,98 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout
+  title="Politique de confidentialité | Mon Voyage en Poche"
+  description="Comment Mon Voyage en Poche traite tes données personnelles."
+>
+  <Header />
+
+  <main class="pt-28 pb-16 min-h-screen bg-warm-white">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="font-display italic text-amber mb-2">Vie privée</p>
+      <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-8">Politique de confidentialité</h1>
+
+      <div class="prose prose-slate max-w-none space-y-8 text-slate">
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">En résumé</h2>
+          <div class="bg-cream/60 border border-cream rounded-2xl p-5">
+            <ul class="list-disc pl-6 space-y-1.5">
+              <li>Aucun compte n'est requis pour utiliser le site.</li>
+              <li>Tes choix de voyage sont stockés <strong>uniquement dans ton navigateur</strong> (localStorage).</li>
+              <li>Aucun outil de tracking ou de publicité tiers n'est utilisé.</li>
+              <li>Si tu nous communiques ton email pour recevoir ton récap, il sert uniquement à cet envoi unique.</li>
+              <li>Les liens vers Booking, Airbnb, etc., t'envoient sur ces sites — leurs propres politiques s'appliquent dès que tu y arrives.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Données collectées et finalité</h2>
+
+          <h3 class="font-display text-lg font-bold text-deep-teal mt-5 mb-2">1. Choix de voyage (localStorage)</h3>
+          <p>
+            Au fil des étapes du planificateur, tes choix (pays, durée, intérêts, itinéraire, date de départ, ville de départ) sont enregistrés dans le <strong>localStorage</strong> de ton navigateur, sous la clé <code class="bg-cream px-1.5 py-0.5 rounded text-sm">mvep:trip</code>.
+          </p>
+          <p>
+            Ces données ne sont <strong>jamais transmises à un serveur</strong>. Elles restent sur ton appareil et te permettent de reprendre ton voyage là où tu l'as laissé.
+          </p>
+          <p>
+            Pour les effacer&nbsp;: vide les données du site dans les réglages de ton navigateur.
+          </p>
+
+          <h3 class="font-display text-lg font-bold text-deep-teal mt-5 mb-2">2. Email de récap (optionnel)</h3>
+          <p>
+            Si tu choisis d'envoyer le récap de ton voyage par email, ton adresse email et le récap sont transmis à <a href="https://resend.com" target="_blank" rel="noopener" class="text-deep-teal underline decoration-amber underline-offset-2">Resend</a>, notre prestataire d'envoi d'email (basé aux États-Unis, conforme RGPD). L'email est envoyé une seule fois et nous ne stockons pas ton adresse.
+          </p>
+
+          <h3 class="font-display text-lg font-bold text-deep-teal mt-5 mb-2">3. Données techniques</h3>
+          <p>
+            Notre hébergeur Cloudflare collecte des logs techniques (adresse IP, user-agent, URL visitée) pendant quelques jours à des fins de sécurité (protection contre les attaques, anti-bot). Ces données ne sont ni partagées, ni utilisées à des fins de profilage. Voir la <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener" class="text-deep-teal underline decoration-amber underline-offset-2">politique de confidentialité de Cloudflare</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Cookies et traceurs</h2>
+          <p>
+            Le site <strong>ne dépose pas de cookies de mesure d'audience ou de publicité</strong>. Les seules données stockées sur ton appareil le sont via le mécanisme <strong>localStorage</strong>, qui est techniquement distinct des cookies et permet le fonctionnement du planificateur (sauvegarde de tes choix).
+          </p>
+          <p>
+            Si tu cliques sur un lien partenaire (Booking, Airbnb, Skyscanner, DiscoverCars, Trainline), tu quittes notre site. Ces plateformes utilisent leurs propres cookies et politiques de confidentialité, sur lesquelles nous n'avons aucun contrôle.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Tes droits RGPD</h2>
+          <p>
+            Conformément au Règlement Général sur la Protection des Données (RGPD), tu disposes des droits suivants&nbsp;:
+          </p>
+          <ul class="list-disc pl-6 space-y-1">
+            <li>Droit d'accès, de rectification et de suppression de tes données</li>
+            <li>Droit d'opposition au traitement</li>
+            <li>Droit à la portabilité</li>
+            <li>Droit d'introduire une réclamation auprès de la <a href="https://www.cnil.fr/" target="_blank" rel="noopener" class="text-deep-teal underline decoration-amber underline-offset-2">CNIL</a></li>
+          </ul>
+          <p>
+            Pour exercer ces droits&nbsp;:
+            <a href="mailto:contact@monvoyageenpoche.fr" class="text-deep-teal underline decoration-amber underline-offset-2">contact@monvoyageenpoche.fr</a>
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Modifications de la politique</h2>
+          <p>
+            La présente politique peut être mise à jour. La date de dernière mise à jour est indiquée en bas de cette page.
+          </p>
+        </section>
+
+        <p class="text-xs text-slate/60 italic mt-12">Dernière mise à jour&nbsp;: mai 2026.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>

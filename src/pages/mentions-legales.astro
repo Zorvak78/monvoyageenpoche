@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout
+  title="Mentions légales | Mon Voyage en Poche"
+  description="Mentions légales du site Mon Voyage en Poche."
+>
+  <Header />
+
+  <main class="pt-28 pb-16 min-h-screen bg-warm-white">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="font-display italic text-amber mb-2">Informations légales</p>
+      <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-8">Mentions légales</h1>
+
+      <div class="prose prose-slate max-w-none space-y-8 text-slate">
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Éditeur du site</h2>
+          <p>
+            <strong>Mon Voyage en Poche</strong><br/>
+            Éditeur&nbsp;: [NOM — à compléter]<br/>
+            Statut&nbsp;: [Forme juridique — à compléter]<br/>
+            Adresse&nbsp;: [Adresse postale — à compléter]<br/>
+            Email&nbsp;: <a href="mailto:contact@monvoyageenpoche.fr" class="text-deep-teal underline decoration-amber underline-offset-2">contact@monvoyageenpoche.fr</a><br/>
+            [SIRET — si applicable]<br/>
+            [TVA intracommunautaire — si applicable]
+          </p>
+          <p class="text-xs text-slate/60 italic">À compléter avec ton identité (auto-entrepreneur, SAS, SARL…) avant le lancement.</p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Directeur de la publication</h2>
+          <p>[NOM — à compléter]</p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Hébergement</h2>
+          <p>
+            Le site est hébergé par <strong>Cloudflare, Inc.</strong><br/>
+            101 Townsend Street, San Francisco, CA 94107, États-Unis<br/>
+            <a href="https://www.cloudflare.com/" target="_blank" rel="noopener" class="text-deep-teal underline decoration-amber underline-offset-2">cloudflare.com</a>
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Propriété intellectuelle</h2>
+          <p>
+            L'ensemble des contenus présents sur le site (textes, structure éditoriale, code) sont la propriété de l'éditeur, à l'exception&nbsp;:
+          </p>
+          <ul class="list-disc pl-6 space-y-1">
+            <li>des <strong>photographies</strong>, qui proviennent de Wikipédia / Wikimedia Commons et sont publiées sous licences Creative Commons (CC BY-SA principalement) ou dans le domaine public. La liste complète des crédits photos est disponible dans le fichier <code class="bg-cream px-1.5 py-0.5 rounded text-sm">IMAGE_CREDITS.md</code> du dépôt public du site&nbsp;;</li>
+            <li>des <strong>marques tierces</strong> (Booking, Airbnb, DiscoverCars, Skyscanner, Trainline) qui restent la propriété de leurs détenteurs respectifs.</li>
+          </ul>
+          <p>
+            Toute reproduction, représentation ou diffusion du contenu original sans autorisation expresse de l'éditeur est interdite.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Liens affiliés</h2>
+          <p>
+            Certains liens sur ce site (notamment ceux vers les plateformes de réservation Booking, Airbnb, Skyscanner, DiscoverCars, Trainline) sont des <strong>liens affiliés</strong>. En réservant via ces liens, l'éditeur perçoit une commission sans aucun surcoût pour vous. Cela permet de maintenir le site gratuit. Le choix des partenaires et la présentation des offres ne sont pas influencés par cette rémunération.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Limitation de responsabilité</h2>
+          <p>
+            Les informations présentes sur le site (descriptions de lieux, estimations de prix, recommandations) sont fournies à titre indicatif. L'éditeur s'efforce d'en garantir la qualité mais ne peut être tenu responsable d'erreurs, d'omissions, de l'indisponibilité d'un service partenaire ou de tout préjudice résultant de l'utilisation des informations diffusées.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Contact</h2>
+          <p>
+            Pour toute question, signalement ou demande de retrait&nbsp;:
+            <a href="mailto:contact@monvoyageenpoche.fr" class="text-deep-teal underline decoration-amber underline-offset-2">contact@monvoyageenpoche.fr</a>
+          </p>
+        </section>
+
+        <p class="text-xs text-slate/60 italic mt-12">Dernière mise à jour&nbsp;: mai 2026.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
