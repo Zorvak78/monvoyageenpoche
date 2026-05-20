@@ -86,13 +86,16 @@ export const countriesData: Record<string, {
     carPerDay: 60,
     trainRelevant: false,
     flightRecommendations: [
-      'Escale fréquente à Madrid, Amsterdam ou Bogota.',
-      'Vols intérieurs (Cuzco, Arequipa) souvent utiles vu les distances.',
+      'Escale habituelle à Madrid, Amsterdam, Bogotá ou São Paulo (pas de direct depuis Paris).',
+      'Vols intérieurs (Lima-Cusco, Lima-Arequipa, Lima-Iquitos) presque incontournables : 1500 km séparent les principales villes.',
+      'Prévoir 1 à 2 jours d\'acclimatation à l\'altitude avant tout effort à Cusco ou Puno.',
     ],
     carRecommendations: {
-      vehicle: 'SUV recommandé, 4x4 pour la cordillère',
+      vehicle: 'Bus longue distance ou vols intérieurs (préférables à la voiture)',
       notes: [
-        'Routes de montagne, altitude élevée — bien vérifier l\'état du véhicule.',
+        'Les compagnies Cruz del Sur, Oltursa et PeruHop sont confortables et fiables.',
+        'Pour le train, ligne PeruRail Cusco → Aguas Calientes (obligatoire pour le Machu Picchu).',
+        'Voiture pertinente surtout pour la Vallée Sacrée ou les environs d\'Arequipa.',
       ],
     },
   },
