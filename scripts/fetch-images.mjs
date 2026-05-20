@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 /**
  * Récupère une image Wikipédia / Wikimedia Commons pour chaque lieu utilisant
- * encore le placeholder. Met à jour le frontmatter et écrit un fichier de
- * crédits global.
+ * encore le placeholder.
  *
- * Stratégie :
- *   1. Cherche l'article via l'API de recherche MediaWiki (fr puis en) avec un
- *      indice pays pour désambiguïser (« Florence Italie » au lieu de
- *      « Florence » qui tombe sur la page d'homonymie).
- *   2. Récupère le thumbnail 1200 px de l'article trouvé via prop=pageimages.
- *   3. Télécharge et met à jour le frontmatter.
+ * Stratégie en 3 niveaux :
+ *   1. Lookup direct par titre exact (titles=...) avec suivi de redirections
+ *      → fonctionne pour les noms sans homonymie (Bologne, Lecce, Cusco).
+ *   2. Recherche full-text avec indice pays (« Florence Italie ») et
+ *      gsrlimit élevé → on examine les 10 premiers résultats.
+ *   3. Pour chaque candidat, **vérification par coordonnées GPS** :
+ *      l'article Wikipedia doit avoir des coordonnées dans un rayon < 80 km
+ *      des coordonnées du .md. Élimine les faux positifs (films, personnes,
+ *      événements, batailles).
  *
  * Usage :
  *   node scripts/fetch-images.mjs              # tous les pays
  *   node scripts/fetch-images.mjs italie       # un pays spécifique
- *   node scripts/fetch-images.mjs --force      # force la récupération même
- *                                              # si une image est déjà définie
+ *   node scripts/fetch-images.mjs --force      # ré-télécharge tout
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -28,8 +29,9 @@ const IMAGES_DIR = path.join(ROOT, 'public/images/lieux');
 const CREDITS_FILE = path.join(ROOT, 'IMAGE_CREDITS.md');
 
 const TARGET_WIDTH = 1200;
-const RATE_LIMIT_MS = 200;
-const USER_AGENT = 'MonVoyageEnPoche/1.0 (https://monvoyageenpoche.fr; contact@monvoyageenpoche.fr) Node/22';
+const RATE_LIMIT_MS = 150;
+const COORDS_TOLERANCE_KM = 80;
+const USER_AGENT = 'MonVoyageEnPoche/1.0 (https://monvoyageenpoche.fr; contact@monvoyageenpoche.fr)';
 const PLACEHOLDER = '/images/placeholder.svg';
 
 const args = process.argv.slice(2);
@@ -45,97 +47,155 @@ const COUNTRY_NAMES = {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-/**
- * Recherche un article via l'API de recherche puis récupère son thumbnail.
- * Utilise generator=search qui combine recherche + récupération d'images en
- * une seule requête.
- */
-async function searchAndGetImage(lang, query) {
-  const params = new URLSearchParams({
-    action: 'query',
-    format: 'json',
-    prop: 'pageimages',
-    piprop: 'thumbnail',
-    pithumbsize: String(TARGET_WIDTH),
-    generator: 'search',
-    gsrsearch: query,
-    gsrlimit: '3',
-    redirects: '1',
-    origin: '*',
-  });
-  const url = `https://${lang}.wikipedia.org/w/api.php?${params}`;
-
-  let resp;
-  try {
-    resp = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-  } catch (e) {
-    return { error: `network: ${e.message}` };
-  }
-  if (resp.status === 429) {
-    return { error: 'rate_limit', retry: true };
-  }
-  if (!resp.ok) {
-    return { error: `http_${resp.status}` };
-  }
-
-  let data;
-  try {
-    data = await resp.json();
-  } catch {
-    return { error: 'invalid_json' };
-  }
-
-  const pages = data?.query?.pages;
-  if (!pages) return { error: 'no_results' };
-
-  // Trier par ordre de recherche (index)
-  const sorted = Object.values(pages).sort((a, b) => (a.index || 0) - (b.index || 0));
-  for (const page of sorted) {
-    const thumb = page.thumbnail?.source;
-    if (!thumb) continue;
-    if (/\.svg\.png$/i.test(thumb)) continue;
-    if (page.thumbnail.width < 200) continue;
-    return {
-      url: thumb,
-      title: page.title,
-      page: `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(page.title)}`,
-      lang,
-    };
-  }
-  return { error: 'no_thumbnail_in_results' };
+function haversineKm(a, b) {
+  const R = 6371;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) *
+            Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-async function findImage(title, country) {
-  const cn = COUNTRY_NAMES[country] || { fr: country, en: country };
-  // Liste de requêtes, par ordre de préférence
-  const queries = [
-    { lang: 'fr', q: `${title} ${cn.fr}` },
-    { lang: 'fr', q: title },
-    { lang: 'en', q: `${title} ${cn.en}` },
-    { lang: 'en', q: title },
-  ];
-
-  const attempts = [];
-  for (const { lang, q } of queries) {
-    let r;
-    for (let retry = 0; retry < 3; retry++) {
-      r = await searchAndGetImage(lang, q);
-      if (r.url) return { ...r, attempts };
-      attempts.push({ lang, q, error: r.error });
-      if (r.retry) {
+async function mediawikiQuery(lang, params) {
+  const url = `https://${lang}.wikipedia.org/w/api.php?` + new URLSearchParams({
+    format: 'json',
+    formatversion: '2',
+    origin: '*',
+    ...params,
+  });
+  for (let retry = 0; retry < 3; retry++) {
+    try {
+      const resp = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+      if (resp.status === 429) {
         await sleep(2000 * (retry + 1));
         continue;
       }
-      break;
+      if (!resp.ok) return { error: `http_${resp.status}` };
+      return { data: await resp.json() };
+    } catch (e) {
+      if (retry === 2) return { error: `network: ${e.message}` };
+      await sleep(1000);
     }
-    await sleep(RATE_LIMIT_MS);
   }
-  return { error: 'not_found', attempts };
+  return { error: 'rate_limit_exhausted' };
+}
+
+/**
+ * Récupère thumbnail + coords pour un set de pages identifié par titles ou
+ * par une recherche.
+ */
+async function fetchPagesWithImage(lang, baseParams) {
+  const r = await mediawikiQuery(lang, {
+    action: 'query',
+    prop: 'pageimages|coordinates',
+    piprop: 'thumbnail',
+    pithumbsize: String(TARGET_WIDTH),
+    colimit: '1',
+    redirects: '1',
+    ...baseParams,
+  });
+  if (r.error) return { error: r.error };
+  const pages = r.data?.query?.pages;
+  if (!pages || pages.length === 0) return { error: 'no_pages' };
+  return { pages };
+}
+
+function evaluateCandidate(page, lieuCoords, lang, log) {
+  const thumb = page.thumbnail?.source;
+  if (!thumb) {
+    log.push(`     · ${page.title} → pas de thumbnail`);
+    return null;
+  }
+  if (/\.svg\.png$/i.test(thumb)) {
+    log.push(`     · ${page.title} → SVG ignoré`);
+    return null;
+  }
+  if (page.thumbnail.width < 200) {
+    log.push(`     · ${page.title} → image trop petite`);
+    return null;
+  }
+  // Vérification coords
+  const co = page.coordinates?.[0];
+  if (!co) {
+    log.push(`     · ${page.title} → article sans coordonnées (peut-être un article hors-lieu)`);
+    return { ...makeResult(page, thumb, lang), uncertain: true };
+  }
+  const articleCoords = { lat: co.lat, lng: co.lon };
+  const distance = haversineKm(lieuCoords, articleCoords);
+  if (distance > COORDS_TOLERANCE_KM) {
+    log.push(`     · ${page.title} → coords à ${Math.round(distance)} km, rejeté`);
+    return null;
+  }
+  log.push(`     · ${page.title} → coords à ${Math.round(distance)} km ✓`);
+  return makeResult(page, thumb, lang);
+}
+
+function makeResult(page, thumb, lang) {
+  return {
+    url: thumb,
+    title: page.title,
+    page: `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(page.title.replace(/ /g, '_'))}`,
+    lang,
+  };
+}
+
+async function findImage(title, country, lieuCoords) {
+  const cn = COUNTRY_NAMES[country] || { fr: country, en: country };
+  const log = [];
+  let uncertainFallback = null;
+
+  // ─── NIVEAU 1 : lookup direct par titre ───
+  for (const lang of ['fr', 'en']) {
+    const titleVariants = [title, `${title} (${cn[lang]})`];
+    for (const t of titleVariants) {
+      log.push(`  [${lang}] lookup direct « ${t} »`);
+      const r = await fetchPagesWithImage(lang, { titles: t });
+      await sleep(RATE_LIMIT_MS);
+      if (r.error) { log.push(`     · ${r.error}`); continue; }
+      for (const page of r.pages) {
+        if (page.missing) { log.push(`     · ${page.title} → article inexistant`); continue; }
+        const ev = evaluateCandidate(page, lieuCoords, lang, log);
+        if (ev && !ev.uncertain) return { ...ev, log };
+        if (ev?.uncertain && !uncertainFallback) uncertainFallback = { ...ev, log: [...log] };
+      }
+    }
+  }
+
+  // ─── NIVEAU 2 : recherche avec indice pays ───
+  for (const lang of ['fr', 'en']) {
+    const queries = [`${title} ${cn[lang]}`, title];
+    for (const q of queries) {
+      log.push(`  [${lang}] recherche « ${q} »`);
+      const r = await fetchPagesWithImage(lang, {
+        generator: 'search',
+        gsrsearch: q,
+        gsrlimit: '10',
+      });
+      await sleep(RATE_LIMIT_MS);
+      if (r.error) { log.push(`     · ${r.error}`); continue; }
+      // Trier par index de recherche
+      const sorted = [...r.pages].sort((a, b) => (a.index ?? 999) - (b.index ?? 999));
+      for (const page of sorted) {
+        const ev = evaluateCandidate(page, lieuCoords, lang, log);
+        if (ev && !ev.uncertain) return { ...ev, log };
+        if (ev?.uncertain && !uncertainFallback) uncertainFallback = { ...ev, log: [...log] };
+      }
+    }
+  }
+
+  if (uncertainFallback) {
+    log.push('  ⚠ retour à un candidat sans coordonnées (incertain)');
+    return { ...uncertainFallback, uncertain: true, log };
+  }
+
+  return { error: 'not_found', log };
 }
 
 async function downloadImage(url, dest) {
   const resp = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} ${url}`);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   const buf = Buffer.from(await resp.arrayBuffer());
   await fs.mkdir(path.dirname(dest), { recursive: true });
   await fs.writeFile(dest, buf);
@@ -147,7 +207,11 @@ function parseFrontmatter(content) {
   const fm = {};
   for (const line of m[1].split('\n')) {
     const km = line.match(/^([a-zA-Z_]+):\s*(.*)$/);
-    if (km) fm[km[1]] = km[2].replace(/^"(.*)"$/, '$1');
+    if (km) {
+      let v = km[2].trim();
+      if (/^".*"$/.test(v)) v = v.slice(1, -1);
+      fm[km[1]] = v;
+    }
   }
   return fm;
 }
@@ -163,17 +227,19 @@ async function processLieu(filepath, country, slug) {
     return { status: 'skip', reason: 'already-has-image', title: fm.title };
   }
 
-  const padded = `${country}/${slug}`.padEnd(35);
-  process.stdout.write(`  ${padded} ${fm.title.padEnd(30)} `);
+  const lat = Number(fm.lat);
+  const lng = Number(fm.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    console.log(`  ${country}/${slug} ⚠ coordonnées invalides`);
+    return { status: 'error', error: 'invalid_coords', title: fm.title };
+  }
 
-  const image = await findImage(fm.title, country);
+  console.log(`\n  ${country}/${slug} — « ${fm.title} »`);
+  const image = await findImage(fm.title, country, { lat, lng });
+  if (image.log) image.log.forEach(l => console.log(l));
+
   if (!image.url) {
-    console.log(`❌ ${image.error || 'not_found'}`);
-    if (image.attempts) {
-      for (const a of image.attempts) {
-        console.log(`     · [${a.lang}] "${a.q}" → ${a.error}`);
-      }
-    }
+    console.log(`  ❌ aucune image trouvée pour ${fm.title}`);
     return { status: 'not_found', title: fm.title, country, slug };
   }
 
@@ -182,13 +248,13 @@ async function processLieu(filepath, country, slug) {
   try {
     await downloadImage(image.url, dest);
   } catch (e) {
-    console.log(`❌ download: ${e.message}`);
+    console.log(`  ❌ téléchargement: ${e.message}`);
     return { status: 'error', title: fm.title, error: e.message };
   }
 
   const newContent = content.replace(/^image:\s*"[^"]*"$/m, `image: "${publicPath}"`);
   await fs.writeFile(filepath, newContent);
-  console.log(`✓ [${image.lang}] ${image.title}`);
+  console.log(`  ✓ [${image.lang}] ${image.title}${image.uncertain ? ' (incertain — vérifier)' : ''}`);
 
   return {
     status: 'ok',
@@ -197,6 +263,7 @@ async function processLieu(filepath, country, slug) {
     country, slug,
     source: image.url,
     page: image.page,
+    uncertain: !!image.uncertain,
   };
 }
 
@@ -207,7 +274,7 @@ async function main() {
 
   console.log(`Pays à traiter : ${countries.join(', ')}`);
   console.log(`FORCE = ${FORCE}`);
-  console.log('');
+  console.log(`Tolérance coords : ${COORDS_TOLERANCE_KM} km`);
 
   const results = [];
   for (const country of countries) {
@@ -223,24 +290,30 @@ async function main() {
         console.log(`  ${country}/${slug} ⚠ ${e.message}`);
         results.push({ status: 'error', country, slug, error: e.message });
       }
-      await sleep(RATE_LIMIT_MS);
     }
   }
 
   const ok = results.filter(r => r.status === 'ok');
+  const okSure = ok.filter(r => !r.uncertain);
+  const okUncertain = ok.filter(r => r.uncertain);
   const notFound = results.filter(r => r.status === 'not_found');
   const errors = results.filter(r => r.status === 'error');
   const skipped = results.filter(r => r.status === 'skip');
 
   console.log('\n\n=== RÉSUMÉ ===');
-  console.log(`✓ Récupérés      : ${ok.length}`);
-  console.log(`❌ Non trouvés    : ${notFound.length}`);
-  console.log(`⚠ Erreurs        : ${errors.length}`);
-  console.log(`↷ Ignorés         : ${skipped.length} (déjà une image)`);
+  console.log(`✓ Récupérés (sûrs)    : ${okSure.length}`);
+  console.log(`? Récupérés (à vérifier) : ${okUncertain.length}`);
+  console.log(`❌ Non trouvés         : ${notFound.length}`);
+  console.log(`⚠ Erreurs             : ${errors.length}`);
+  console.log(`↷ Ignorés              : ${skipped.length}`);
 
   if (notFound.length) {
     console.log('\nÀ ajouter manuellement :');
     notFound.forEach(r => console.log(`  - ${r.country}/${r.slug}  (« ${r.title} »)`));
+  }
+  if (okUncertain.length) {
+    console.log('\nÀ vérifier visuellement (image acceptée mais sans contrôle GPS) :');
+    okUncertain.forEach(r => console.log(`  - ${r.country}/${r.slug}  (« ${r.matched} »)`));
   }
 
   const sorted = [...ok].sort((a, b) =>
@@ -255,7 +328,7 @@ async function main() {
     '',
     '| Pays | Lieu | Source Wikipédia |',
     '|---|---|---|',
-    ...sorted.map(r => `| ${r.country} | ${r.title} | [${r.matched}](${r.page}) |`),
+    ...sorted.map(r => `| ${r.country} | ${r.title}${r.uncertain ? ' ⚠' : ''} | [${r.matched}](${r.page}) |`),
     '',
   ].join('\n');
   await fs.writeFile(CREDITS_FILE, credits);
