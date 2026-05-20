@@ -1,0 +1,269 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+import { getCollection } from 'astro:content';
+
+const lieux = await getCollection('lieux');
+const lieuxData = lieux.map(l => ({
+  slug: l.id.replace(/^[^/]+\//, '').replace(/\.md$/, ''),
+  ...l.data,
+}));
+---
+
+<FunnelLayout
+  title="Étape 3 — Choisir tes logements | Mon Voyage en Poche"
+  description="Suggestions de logements Booking et Airbnb pour chaque point de chute de ton voyage."
+  step={3}
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <header class="mb-8">
+      <p class="font-display italic text-amber mb-1">Étape 3 sur 4</p>
+      <h1 class="font-display text-3xl md:text-4xl font-bold text-deep-teal mb-2">Choisir tes logements</h1>
+      <p class="text-slate">On regroupe ton voyage en points de chute (lieux où tu dors) et on associe les visites alentour. Pour chaque, des suggestions Booking et Airbnb pré-remplies.</p>
+    </header>
+
+    <div id="no-trip" class="hidden bg-cream rounded-2xl p-8 text-center">
+      <h2 class="font-display text-xl font-bold text-deep-teal mb-2">Construis d'abord ton itinéraire</h2>
+      <p class="text-slate mb-4">Reviens à l'étape précédente pour ajouter des lieux à ton voyage.</p>
+      <a href="/voyage/itineraire" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all">
+        ← Aller à l'itinéraire
+      </a>
+    </div>
+
+    <div id="no-sleep" class="hidden bg-cream rounded-2xl p-8 text-center">
+      <h2 class="font-display text-xl font-bold text-deep-teal mb-2">Aucun point de chute</h2>
+      <p class="text-slate mb-4">Ton itinéraire ne contient que des visites sans nuit sur place. Ajoute au moins un lieu où dormir.</p>
+      <a href="/voyage/itineraire" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all">
+        ← Modifier l'itinéraire
+      </a>
+    </div>
+
+    <div id="lodging-content" class="hidden">
+      <div class="bg-white rounded-2xl border border-cream p-5 mb-8 flex flex-col md:flex-row md:items-center gap-4">
+        <div class="flex-1">
+          <label for="start-date" class="block font-semibold text-deep-teal mb-1">Date de départ de ton voyage</label>
+          <p class="text-xs text-slate">On utilise cette date pour pré-remplir les dates de chaque point de chute sur Booking et Airbnb.</p>
+        </div>
+        <input
+          type="date"
+          id="start-date"
+          class="px-4 py-2.5 rounded-xl border-2 border-cream bg-white text-charcoal focus:border-amber focus:outline-none transition-colors"
+        />
+      </div>
+
+      <div id="lodging-list" class="space-y-5 mb-10"></div>
+
+      <div class="bg-deep-teal text-white rounded-2xl p-6 md:p-8 mb-8">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <p class="text-amber text-xs font-semibold uppercase tracking-wide mb-1">Budget logement estimé</p>
+            <p class="text-3xl font-display font-bold">
+              ~<span id="total-price">0</span>&nbsp;€
+            </p>
+            <p class="text-white/70 text-sm mt-1">
+              <span id="total-nights">0</span> nuits ·
+              <span id="nightly-avg">0</span> €/nuit en moyenne ·
+              <span id="adults-info">2 adultes</span>
+            </p>
+          </div>
+          <div class="text-xs text-white/60 max-w-xs md:text-right">
+            Estimation indicative pour un lodge/hôtel moyen.
+            Les prix réels dépendent de la saison et de tes choix.
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col-reverse md:flex-row gap-3 justify-between">
+        <a href="/voyage/itineraire" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-deep-teal text-deep-teal font-semibold hover:bg-deep-teal hover:text-white transition-all">
+          ← Modifier l'itinéraire
+        </a>
+        <a href="/voyage/transport" class="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-deep-teal text-white font-bold hover:bg-amber hover:text-charcoal transition-all shadow-lg">
+          Continuer vers le transport
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" id="lieux-data" set:html={JSON.stringify(lieuxData)}></script>
+
+  <script>
+    import { loadTrip, saveTrip, type ItineraryStep } from '../../lib/tripState';
+    import {
+      bookingSearchUrl, airbnbSearchUrl,
+      adultsFromComposition, estimateNightlyPrice,
+      computeStepDates, formatDateFr, haversineKm,
+    } from '../../lib/affiliates';
+
+    type Lieu = {
+      slug: string; title: string; country: string; region: string; type: string;
+      image: string; description: string; lat: number; lng: number;
+      interests: string[]; duree: number; nuits: boolean;
+    };
+
+    type EnrichedStep = ItineraryStep & { lieu: Lieu };
+    type SleepBlock = { sleep: EnrichedStep; visits: EnrichedStep[] };
+
+    const trip = loadTrip();
+
+    if (!trip.country || !trip.itinerary.length) {
+      document.getElementById('no-trip')!.classList.remove('hidden');
+    } else {
+      if (!trip.startDate) {
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        trip.startDate = d.toISOString().slice(0, 10);
+        saveTrip({ startDate: trip.startDate });
+      }
+
+      const dateInput = document.getElementById('start-date') as HTMLInputElement;
+      const today = new Date().toISOString().slice(0, 10);
+      dateInput.min = today;
+      dateInput.value = trip.startDate;
+      dateInput.addEventListener('change', () => {
+        trip.startDate = dateInput.value;
+        saveTrip({ startDate: dateInput.value });
+        render();
+      });
+
+      render();
+    }
+
+    function groupByNearestSleep(enriched: EnrichedStep[]): SleepBlock[] {
+      const sleepBlocks: SleepBlock[] = enriched
+        .filter(s => s.lieu.nuits)
+        .map(s => ({ sleep: s, visits: [] }));
+
+      if (sleepBlocks.length === 0) return [];
+
+      const visits = enriched.filter(s => !s.lieu.nuits);
+      for (const v of visits) {
+        let best = sleepBlocks[0];
+        let bestDist = haversineKm(v.lieu, best.sleep.lieu);
+        for (let i = 1; i < sleepBlocks.length; i++) {
+          const d = haversineKm(v.lieu, sleepBlocks[i].sleep.lieu);
+          if (d < bestDist) { bestDist = d; best = sleepBlocks[i]; }
+        }
+        best.visits.push(v);
+      }
+      return sleepBlocks;
+    }
+
+    function render() {
+      const lieuxAll: Lieu[] = JSON.parse(document.getElementById('lieux-data')!.textContent || '[]');
+      const adults = adultsFromComposition(trip.composition);
+      const nightly = estimateNightlyPrice(trip.country, trip.composition);
+      const dates = trip.startDate ? computeStepDates(trip.startDate, trip.itinerary) : new Map();
+
+      const enriched: EnrichedStep[] = trip.itinerary
+        .map(s => {
+          const lieu = lieuxAll.find(l => l.slug === s.slug);
+          return lieu ? { ...s, lieu } : null;
+        })
+        .filter((s): s is EnrichedStep => s !== null);
+
+      const blocks = groupByNearestSleep(enriched);
+
+      // Empty state si aucun point de chute
+      const content = document.getElementById('lodging-content')!;
+      const noSleep = document.getElementById('no-sleep')!;
+      if (blocks.length === 0) {
+        content.classList.add('hidden');
+        noSleep.classList.remove('hidden');
+        return;
+      }
+      content.classList.remove('hidden');
+      noSleep.classList.add('hidden');
+
+      let totalNights = 0;
+      let totalPrice = 0;
+
+      const list = document.getElementById('lodging-list')!;
+      list.innerHTML = blocks.map((block, blockIdx) => {
+        const lieu = block.sleep.lieu;
+        const nights = block.sleep.days;
+        const price = nights * nightly;
+        totalNights += nights;
+        totalPrice += price;
+
+        const stepDates = dates.get(block.sleep.id);
+        const destination = `${lieu.title}, ${lieu.region}`;
+        const bookingUrl = bookingSearchUrl({
+          destination, adults,
+          checkin: stepDates?.checkin,
+          checkout: stepDates?.checkout,
+        });
+        const airbnbUrl = airbnbSearchUrl({
+          destination, adults,
+          checkin: stepDates?.checkin,
+          checkout: stepDates?.checkout,
+        });
+        const dateLabel = stepDates
+          ? `Du ${formatDateFr(stepDates.checkin)} au ${formatDateFr(stepDates.checkout)}`
+          : '';
+
+        const visitsHtml = block.visits.length > 0 ? `
+          <div class="border-t border-cream px-5 md:px-6 py-4 bg-cream/30">
+            <p class="text-xs font-semibold text-deep-teal uppercase tracking-wide mb-3">
+              ✦ Visites à proximité depuis ${lieu.title}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              ${block.visits.map(v => {
+                const dist = Math.round(haversineKm(v.lieu, lieu));
+                return `
+                  <div class="flex items-center gap-2.5 bg-white border border-cream rounded-full pl-1.5 pr-3.5 py-1">
+                    <img src="${v.lieu.image}" alt="" class="w-7 h-7 rounded-full object-cover" />
+                    <div class="flex flex-col leading-tight">
+                      <span class="text-sm font-semibold text-deep-teal">${v.lieu.title}</span>
+                      <span class="text-[10px] text-slate">~${dist} km · ${v.days}j</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : '';
+
+        return `
+          <article class="bg-white rounded-2xl border border-cream shadow-sm overflow-hidden">
+            <div class="flex flex-col md:flex-row">
+              <img src="${lieu.image}" alt="${lieu.title}" class="w-full md:w-56 h-48 md:h-auto object-cover flex-shrink-0" />
+              <div class="p-5 md:p-6 flex-1 flex flex-col md:flex-row md:items-center gap-5">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="w-6 h-6 rounded-full bg-amber text-charcoal text-xs font-bold flex items-center justify-center">${blockIdx + 1}</span>
+                    <span class="text-xs font-semibold text-slate uppercase tracking-wide">${lieu.type} · ${lieu.region}</span>
+                  </div>
+                  <h2 class="font-display text-xl font-bold text-deep-teal mb-1">${lieu.title}</h2>
+                  ${dateLabel ? `<p class="text-sm font-semibold text-amber mb-2">📅 ${dateLabel}</p>` : ''}
+                  <p class="text-sm text-slate mb-2">
+                    <strong class="text-deep-teal">${nights} nuit${nights > 1 ? 's' : ''}</strong>
+                    · estimé ~${price.toLocaleString('fr-FR')} €
+                    <span class="text-xs text-slate/80">(~${nightly} €/nuit pour ${adults} adulte${adults > 1 ? 's' : ''})</span>
+                  </p>
+                </div>
+                <div class="flex flex-col gap-2 md:w-40 flex-shrink-0">
+                  <a href="${bookingUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#003580] text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+                    Booking
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                  </a>
+                  <a href="${airbnbUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-[#FF385C] text-white text-sm font-semibold hover:opacity-90 transition-opacity">
+                    Airbnb
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+            ${visitsHtml}
+          </article>
+        `;
+      }).join('');
+
+      document.getElementById('total-price')!.textContent = totalPrice.toLocaleString('fr-FR');
+      document.getElementById('total-nights')!.textContent = String(totalNights);
+      document.getElementById('nightly-avg')!.textContent = String(nightly);
+      document.getElementById('adults-info')!.textContent = `${adults} adulte${adults > 1 ? 's' : ''}`;
+    }
+  </script>
+</FunnelLayout>

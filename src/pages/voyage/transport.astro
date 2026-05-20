@@ -1,0 +1,240 @@
+---
+import FunnelLayout from '../../layouts/FunnelLayout.astro';
+---
+
+<FunnelLayout
+  title="Étape 4 — Trouver ton transport | Mon Voyage en Poche"
+  description="Vol, voiture de location, train : tout au même endroit pour préparer ton voyage."
+  step={4}
+>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <header class="mb-8">
+      <p class="font-display italic text-amber mb-1">Étape 4 sur 4</p>
+      <h1 class="font-display text-3xl md:text-4xl font-bold text-deep-teal mb-2">Trouver ton transport</h1>
+      <p class="text-slate">Avion, voiture, train — toutes les options pré-remplies avec ta ville de départ, ta destination et tes dates.</p>
+    </header>
+
+    <!-- Empty state -->
+    <div id="no-trip" class="hidden bg-cream rounded-2xl p-8 text-center">
+      <h2 class="font-display text-xl font-bold text-deep-teal mb-2">Tu dois d'abord finir les étapes précédentes</h2>
+      <p class="text-slate mb-4">On a besoin de ta destination, ton itinéraire et ta date de départ.</p>
+      <a href="/voyage/destination" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-deep-teal text-white font-semibold hover:bg-amber hover:text-charcoal transition-all">
+        ← Reprendre à l'étape 1
+      </a>
+    </div>
+
+    <div id="transport-content" class="hidden space-y-6 mb-10"></div>
+
+    <!-- Budget summary -->
+    <div id="transport-summary" class="hidden bg-deep-teal text-white rounded-2xl p-6 md:p-8 mb-8">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <p class="text-amber text-xs font-semibold uppercase tracking-wide mb-1">Budget transport estimé</p>
+          <p class="text-3xl font-display font-bold">
+            ~<span id="t-total">0</span>&nbsp;€
+          </p>
+          <p class="text-white/70 text-sm mt-1" id="t-detail"></p>
+        </div>
+        <div class="text-xs text-white/60 max-w-xs md:text-right">
+          Estimations indicatives. Les prix réels dépendent de la saison, du
+          délai de réservation et du type de véhicule choisi.
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div id="transport-nav" class="hidden flex flex-col-reverse md:flex-row gap-3 justify-between">
+      <a href="/voyage/logement" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-deep-teal text-deep-teal font-semibold hover:bg-deep-teal hover:text-white transition-all">
+        ← Logements
+      </a>
+      <a href="/voyage/recap" class="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-deep-teal text-white font-bold hover:bg-amber hover:text-charcoal transition-all shadow-lg">
+        Voir le récap complet
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    import { loadTrip } from '../../lib/tripState';
+    import {
+      skyscannerUrl, discoverCarsUrl, trainlineUrl,
+      countriesData, adultsFromComposition, formatDateFr, cityIata,
+    } from '../../lib/affiliates';
+
+    const trip = loadTrip();
+
+    if (!trip.country || !trip.itinerary.length || !trip.startDate || !trip.departureCity) {
+      document.getElementById('no-trip')!.classList.remove('hidden');
+    } else {
+      document.getElementById('transport-content')!.classList.remove('hidden');
+      document.getElementById('transport-summary')!.classList.remove('hidden');
+      document.getElementById('transport-nav')!.classList.remove('hidden');
+      render();
+    }
+
+    function render() {
+      const country = trip.country!;
+      const data = countriesData[country];
+      const adults = adultsFromComposition(trip.composition);
+      const startDate = trip.startDate!;
+      const totalDays = trip.itinerary.reduce((sum, s) => sum + s.days, 0);
+
+      const endDate = new Date(startDate + 'T00:00:00');
+      endDate.setDate(endDate.getDate() + totalDays);
+      const endIso = endDate.toISOString().slice(0, 10);
+
+      // Estimations
+      const flightTotal = data ? Math.round(data.flightPerAdult * adults) : 0;
+      const carTotal = data ? Math.round(data.carPerDay * totalDays) : 0;
+      const grandTotal = flightTotal + carTotal;
+
+      // URLs
+      const flightUrl = skyscannerUrl({
+        fromCity: trip.departureCity!,
+        toIata: data?.mainIata,
+        toCity: data?.mainCity,
+        departDate: startDate,
+        returnDate: endIso,
+        adults,
+      });
+      const carUrl = discoverCarsUrl({
+        pickupCity: data?.mainCity || country,
+        dropoffCity: data?.mainCity || country,
+        pickupDate: startDate,
+        dropoffDate: endIso,
+      });
+      const trainUrl = trainlineUrl({
+        fromCity: trip.departureCity!,
+        toCity: data?.mainCity || country,
+        departDate: startDate,
+        adults,
+      });
+
+      const hasIata = !!cityIata(trip.departureCity!);
+
+      const container = document.getElementById('transport-content')!;
+      container.innerHTML = `
+        <!-- Vol -->
+        <article class="bg-white rounded-2xl border border-cream shadow-sm overflow-hidden">
+          <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
+            <div class="w-14 h-14 rounded-full bg-amber/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-7 h-7 text-amber" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-amber uppercase tracking-wide mb-1">Vol aller-retour</p>
+              <h2 class="font-display text-xl font-bold text-deep-teal mb-1">
+                ${trip.departureCity} → ${data?.mainCity || country}
+              </h2>
+              <p class="text-sm text-slate mb-2">
+                Du ${formatDateFr(startDate)} au ${formatDateFr(endIso)} ·
+                <strong class="text-deep-teal">${adults} adulte${adults > 1 ? 's' : ''}</strong>
+              </p>
+              ${data ? `<p class="text-sm text-slate">Estimé <strong class="text-deep-teal">~${flightTotal.toLocaleString('fr-FR')} €</strong> (~${data.flightPerAdult} €/personne aller-retour)</p>` : ''}
+              ${!hasIata ? `<p class="text-xs text-slate/60 mt-2">⓵ « ${trip.departureCity} » n'est pas dans notre liste de villes connues — Skyscanner s'ouvrira sur la recherche libre, complète à la main.</p>` : ''}
+            </div>
+            <a href="${flightUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#0770e3] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+              Voir sur Skyscanner
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+          ${data?.flightRecommendations?.length ? `
+          <div class="border-t border-cream px-6 md:px-8 py-4 bg-cream/30">
+            <p class="text-xs font-semibold text-deep-teal uppercase tracking-wide mb-2">
+              ✦ Bon à savoir pour ${data.mainCity}
+            </p>
+            <ul class="space-y-1.5">
+              ${data.flightRecommendations.map(r => `
+                <li class="text-sm text-slate flex gap-2">
+                  <span class="text-amber flex-shrink-0">→</span>
+                  <span>${r}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          ` : ''}
+        </article>
+
+        <!-- Voiture -->
+        <article class="bg-white rounded-2xl border border-cream shadow-sm overflow-hidden">
+          <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
+            <div class="w-14 h-14 rounded-full bg-amber/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-7 h-7 text-amber" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-amber uppercase tracking-wide mb-1">Location de voiture</p>
+              <h2 class="font-display text-xl font-bold text-deep-teal mb-1">
+                Récupération à ${data?.mainCity || country}
+              </h2>
+              <p class="text-sm text-slate mb-2">
+                Du ${formatDateFr(startDate)} au ${formatDateFr(endIso)} ·
+                <strong class="text-deep-teal">${totalDays} jour${totalDays > 1 ? 's' : ''}</strong>
+              </p>
+              ${data ? `<p class="text-sm text-slate">Estimé <strong class="text-deep-teal">~${carTotal.toLocaleString('fr-FR')} €</strong> (~${data.carPerDay} €/jour)</p>` : ''}
+            </div>
+            <a href="${carUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FF6F00] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+              Voir sur DiscoverCars
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+          ${data?.carRecommendations ? `
+          <div class="border-t border-cream px-6 md:px-8 py-4 bg-cream/30">
+            <p class="text-xs font-semibold text-deep-teal uppercase tracking-wide mb-2">
+              ✦ Véhicule recommandé : <span class="text-amber">${data.carRecommendations.vehicle}</span>
+            </p>
+            <ul class="space-y-1.5">
+              ${data.carRecommendations.notes.map(n => `
+                <li class="text-sm text-slate flex gap-2">
+                  <span class="text-amber flex-shrink-0">→</span>
+                  <span>${n}</span>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          ` : ''}
+        </article>
+
+        <!-- Train -->
+        ${data?.trainRelevant ? `
+        <article class="bg-white rounded-2xl border border-cream shadow-sm overflow-hidden">
+          <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
+            <div class="w-14 h-14 rounded-full bg-amber/15 flex items-center justify-center flex-shrink-0">
+              <svg class="w-7 h-7 text-amber" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2c-4.42 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-7H6V6h5v4zm2 0V6h5v4h-5zm3.5 7c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold text-amber uppercase tracking-wide mb-1">Train</p>
+              <h2 class="font-display text-xl font-bold text-deep-teal mb-1">
+                Alternative ferroviaire
+              </h2>
+              <p class="text-sm text-slate">
+                Le réseau ferroviaire est bien développé pour cette destination. Compare les trajets en train via Trainline.
+              </p>
+            </div>
+            <a href="${trainUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#00A88E] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+              Voir sur Trainline
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+        </article>
+        ` : `
+        <div class="flex items-center gap-3 px-5 py-3 rounded-xl bg-cream/60 border border-dashed border-cream text-sm text-slate">
+          <svg class="w-5 h-5 text-slate/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Le train n'est pas un mode de transport touristique pertinent pour cette destination — la voiture reste la meilleure option pour rejoindre tes étapes.</span>
+        </div>
+        `}
+      `;
+
+      // Summary
+      document.getElementById('t-total')!.textContent = grandTotal.toLocaleString('fr-FR');
+      document.getElementById('t-detail')!.textContent =
+        `Vol ${flightTotal.toLocaleString('fr-FR')} € + Voiture ${carTotal.toLocaleString('fr-FR')} €`;
+    }
+  </script>
+</FunnelLayout>

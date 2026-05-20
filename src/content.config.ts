@@ -1,71 +1,68 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-const destinations = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/destinations' }),
+export const INTERESTS = [
+  'nature',
+  'aventure',
+  'culture',
+  'gastronomie',
+  'detente',
+  'faune',
+  'plages',
+  'photographie',
+  'vie-nocturne',
+  'spiritualite',
+] as const;
+
+const lieux = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/lieux' }),
   schema: z.object({
     title: z.string(),
     country: z.string(),
-    description: z.string(),
-    heroImage: z.string(),
-    duration: z.string(),
-    budget: z.string(),
-    bestPeriod: z.string(),
-    timezone: z.string().optional(),
-    language: z.string().optional(),
-    currency: z.string().optional(),
-    categories: z.array(z.string()),
-    publishDate: z.coerce.date(),
-    featured: z.boolean().default(false),
-    cardImage: z.string().optional(),
-    excerpt: z.string().optional(),
-  }),
-});
-
-const blog = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    heroImage: z.string(),
-    tags: z.array(z.string()),
-    publishDate: z.coerce.date(),
-    author: z.string().default('Mon Voyage en Poche'),
-    featured: z.boolean().default(false),
-    relatedDestination: z.string().optional(),
-  }),
-});
-
-const inspiration = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/inspiration' }),
-  schema: z.object({
-    title: z.string(),
-    location: z.string(),
-    country: z.string(),
-    continent: z.string().optional(),
-    category: z.string(),
+    region: z.string(),
+    regionSlug: z.string().optional(),
     type: z.string(),
     image: z.string(),
     description: z.string(),
-    slug: z.string().optional(),
-    destinationLink: z.string().optional(),
+    lat: z.number(),
+    lng: z.number(),
+    interests: z.array(z.enum(INTERESTS)),
+    duree: z.number(),
+    nuits: z.boolean().default(true),
+    tier: z.number().int().min(1).max(3).default(2),
   }),
 });
 
-const itineraires = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/itineraires' }),
+const regions = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/regions' }),
   schema: z.object({
     title: z.string(),
     country: z.string(),
-    countryName: z.string(),
-    duration: z.string(),
-    durationLabel: z.string(),
-    days: z.number(),
-    heroImage: z.string(),
-    budget: z.string(),
-    bestPeriod: z.string(),
+    slug: z.string(),
     description: z.string(),
+    heroImage: z.string(),
+    centerLat: z.number(),
+    centerLng: z.number(),
+    zoom: z.number().default(8),
   }),
 });
 
-export const collections = { destinations, blog, inspiration, itineraires };
+const routes = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/routes' }),
+  schema: z.object({
+    title: z.string(),
+    country: z.string(),
+    slug: z.string(),
+    days: z.number(),
+    tagline: z.string(),
+    description: z.string(),
+    heroImage: z.string(),
+    interests: z.array(z.enum(INTERESTS)).default([]),
+    stops: z.array(z.object({
+      slug: z.string(),
+      days: z.number(),
+    })),
+  }),
+});
+
+export const collections = { lieux, regions, routes };
