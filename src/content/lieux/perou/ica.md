@@ -4,7 +4,7 @@ country: "perou"
 region: "Côte sud"
 regionSlug: "cote-sud"
 type: "Capitale du pisco"
-image: "/images/placeholder.svg"
+image: "/images/lieux/perou/ica.jpg"
 description: "Au cœur du désert péruvien, vignobles et bodegas de pisco se visitent. Base pour Huacachina et les lignes de Nazca."
 lat: -14.0678
 lng: -75.7286
