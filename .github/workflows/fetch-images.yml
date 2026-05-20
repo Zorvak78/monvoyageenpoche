@@ -1,0 +1,68 @@
+name: Récupérer les images des lieux
+
+# Déclenché manuellement depuis l'onglet "Actions" sur GitHub
+on:
+  workflow_dispatch:
+    inputs:
+      country:
+        description: 'Pays à traiter (laisser vide pour tous)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - italie
+          - japon
+          - perou
+          - namibie
+      force:
+        description: 'Forcer la récupération même si une image est déjà définie'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloner le repo
+        uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Lancer la récupération des images
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.country }}" ]; then ARGS="$ARGS ${{ inputs.country }}"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          node scripts/fetch-images.mjs $ARGS
+
+      - name: Créer une Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "feat: récupération des images Wikipédia pour les lieux"
+          title: "📸 Images des lieux (Wikipédia)"
+          body: |
+            Pull Request générée automatiquement par le workflow **Récupérer les images des lieux**.
+
+            **Pays ciblé** : `${{ inputs.country || 'tous' }}`
+            **Force** : `${{ inputs.force }}`
+
+            ## Avant de merger
+
+            - Parcours rapide des images téléchargées dans `public/images/lieux/` pour vérifier qu'aucune n'est aberrante (drapeau, blason)
+            - Vérifie `IMAGE_CREDITS.md` pour les attributions
+            - Si une image est incorrecte : remplace-la manuellement dans le dossier et commit par-dessus avant de merger
+
+            Le résumé du run (lieux non trouvés, erreurs) est dans les logs du job ci-dessus.
+          branch: bot/fetch-images
+          delete-branch: true
