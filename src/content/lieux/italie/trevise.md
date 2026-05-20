@@ -4,7 +4,7 @@ country: "italie"
 region: "Vénétie"
 regionSlug: "venetie"
 type: "Ville"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/trevise.jpg"
 description: "Petite Venise sans les touristes : canaux, remparts médiévaux, fresques en plein air. Capitale du prosecco et du tiramisu."
 lat: 45.6669
 lng: 12.2425

@@ -4,7 +4,7 @@ country: "japon"
 region: "Tōhoku"
 regionSlug: "tohoku"
 type: "Capitale Tōhoku"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/sendai.jpg"
 description: "« Cité des arbres », fondée par le seigneur Date Masamune. Festival Tanabata en août, langue de bœuf grillée (gyutan), base pour Matsushima."
 lat: 38.2682
 lng: 140.8694

@@ -4,7 +4,7 @@ country: "italie"
 region: "Vénétie"
 regionSlug: "venetie"
 type: "Montagne"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/dolomites.jpg"
 description: "Pics rosés au coucher du soleil, lacs glaciaires, sentiers de randonnée légendaires (Tre Cime, Lago di Braies). Patrimoine UNESCO."
 lat: 46.5404
 lng: 12.1366

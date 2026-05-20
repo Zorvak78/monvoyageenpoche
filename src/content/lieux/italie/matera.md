@@ -4,7 +4,7 @@ country: "italie"
 region: "Basilicate"
 regionSlug: "basilicate"
 type: "Ville troglodyte"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/matera.jpg"
 description: "Sassi UNESCO : un des plus anciens habitats humains, troglodyte. Capitale européenne de la culture 2019, décor de cinéma absolu."
 lat: 40.6669
 lng: 16.6043
