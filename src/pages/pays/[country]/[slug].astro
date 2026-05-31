@@ -1,0 +1,224 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import JsonLd from '../../../components/JsonLd.astro';
+import { countryContent } from '../../../data/countryContent';
+import { haversineKm } from '../../../lib/affiliates';
+
+export async function getStaticPaths() {
+  const lieux = await getCollection('lieux');
+  const routes = await getCollection('routes');
+
+  const lieuxParsed = lieux.map(l => ({
+    slug: l.id.replace(/^[^/]+\//, '').replace(/\.md$/, ''),
+    ...l.data,
+  }));
+
+  return lieuxParsed.map(lieu => {
+    const sameCountry = lieuxParsed.filter(l => l.country === lieu.country && l.slug !== lieu.slug);
+    // Top 4 plus proches
+    const nearby = sameCountry
+      .map(l => ({ ...l, distance: haversineKm(lieu, l) }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 4);
+    const routesIncluding = routes.filter(r =>
+      r.data.country === lieu.country && r.data.stops.some(s => s.slug === lieu.slug)
+    ).map(r => r.data);
+
+    return {
+      params: { country: lieu.country, slug: lieu.slug },
+      props: { lieu, nearby, routesIncluding },
+    };
+  });
+}
+
+const { country, slug } = Astro.params;
+const { lieu, nearby, routesIncluding } = Astro.props;
+const content = countryContent[lieu.country];
+const countryName = content?.name || lieu.country;
+
+const title = `${lieu.title} (${countryName}) : guide complet | Mon Voyage en Poche`;
+const description = `${lieu.title} — ${lieu.description.slice(0, 130)}${lieu.description.length > 130 ? '…' : ''}`;
+
+const jsonLd = {
+  '@type': 'TouristAttraction',
+  name: lieu.title,
+  description: lieu.description,
+  image: new URL(lieu.image, Astro.site).toString(),
+  url: new URL(`/pays/${country}/${slug}`, Astro.site).toString(),
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: lieu.lat,
+    longitude: lieu.lng,
+  },
+  address: {
+    '@type': 'PostalAddress',
+    addressCountry: countryName,
+    addressRegion: lieu.region,
+  },
+};
+---
+
+<BaseLayout title={title} description={description} ogImage={lieu.image}>
+  <Header transparent />
+
+  <!-- Hero -->
+  <section class="relative h-[55vh] min-h-[400px] flex items-end overflow-hidden">
+    <img src={lieu.image} alt={lieu.title} class="absolute inset-0 w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/85"></div>
+    <div class="relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-10 text-white">
+      <Breadcrumbs items={[
+        { label: 'Accueil', href: '/' },
+        { label: countryName, href: `/pays/${country}` },
+        { label: lieu.title },
+      ]} />
+      <p class="font-display italic text-amber mt-4 mb-2">{lieu.region} · {lieu.type}</p>
+      <h1 class="font-display text-4xl md:text-5xl font-bold mb-2">{lieu.title}</h1>
+      <div class="flex flex-wrap items-center gap-3 text-sm text-white/85">
+        <span>📅 {lieu.duree} jour{lieu.duree > 1 ? 's' : ''} recommandé{lieu.duree > 1 ? 's' : ''}</span>
+        <span class="text-white/40">·</span>
+        <span>{lieu.nuits ? '🛏 Nuit sur place' : '✦ Étape de visite'}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Description + sidebar pratique -->
+  <section class="bg-warm-white py-12 md:py-16">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div class="lg:col-span-2 prose prose-slate max-w-none text-slate leading-relaxed">
+        <p class="text-lg leading-relaxed">{lieu.description}</p>
+      </div>
+
+      <aside class="bg-white rounded-2xl border border-cream p-6 space-y-4 h-fit">
+        <h2 class="font-display text-lg font-bold text-deep-teal">Infos pratiques</h2>
+        <div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-0.5">Type</div>
+          <div class="text-sm font-bold text-deep-teal">{lieu.type}</div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-0.5">Région</div>
+          <div class="text-sm font-bold text-deep-teal">{lieu.region}</div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-0.5">Durée recommandée</div>
+          <div class="text-sm font-bold text-deep-teal">{lieu.duree} jour{lieu.duree > 1 ? 's' : ''}</div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-0.5">Coordonnées</div>
+          <div class="text-sm font-mono text-deep-teal">{lieu.lat.toFixed(4)}, {lieu.lng.toFixed(4)}</div>
+        </div>
+        <div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1.5">Intérêts</div>
+          <div class="flex flex-wrap gap-1.5">
+            {lieu.interests.map(i => (
+              <span class="px-2.5 py-1 rounded-full bg-cream text-xs font-semibold text-deep-teal capitalize">{i.replace('-', ' ')}</span>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          id="add-to-itinerary-btn"
+          data-slug={lieu.slug}
+          data-country={lieu.country}
+          data-days={lieu.duree}
+          class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-deep-teal text-white font-bold hover:bg-amber hover:text-charcoal transition-all"
+        >
+          + Ajouter à mon itinéraire
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+          </svg>
+        </button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Voyages incluant ce lieu -->
+  {routesIncluding.length > 0 && (
+    <section class="bg-cream py-12 md:py-16">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="font-display text-xl md:text-2xl font-bold text-deep-teal mb-6">Dans quel voyage trouver {lieu.title} ?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {routesIncluding.map(route => (
+            <a href={`/voyages/${country}/${route.slug}`} class="block bg-white rounded-2xl border border-cream p-5 hover:border-amber transition-colors group">
+              <div class="text-[11px] font-semibold text-amber uppercase tracking-wide mb-1">{route.days} jours</div>
+              <h3 class="font-display text-base font-bold text-deep-teal mb-2 group-hover:text-amber transition-colors">{route.title}</h3>
+              <p class="text-sm text-slate">{route.tagline}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Lieux à proximité -->
+  {nearby.length > 0 && (
+    <section class="bg-warm-white py-12 md:py-16">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="font-display text-xl md:text-2xl font-bold text-deep-teal mb-6">À découvrir à proximité</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {nearby.map(near => (
+            <a href={`/pays/${country}/${near.slug}`} class="block bg-white rounded-2xl border border-cream overflow-hidden hover:border-amber transition-colors group">
+              <div class="aspect-[4/3] overflow-hidden bg-cream">
+                <img src={near.image} alt={near.title} class="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+              </div>
+              <div class="p-3">
+                <div class="text-[10px] font-semibold text-amber uppercase tracking-wide">~{Math.round(near.distance)} km</div>
+                <h3 class="font-display text-sm font-bold text-deep-teal leading-tight">{near.title}</h3>
+              </div>
+            </a>
+          ))}
+        </div>
+        <div class="text-center mt-8">
+          <a href={`/pays/${country}`} class="inline-flex items-center gap-2 text-deep-teal font-semibold hover:text-amber transition-colors">
+            Tous les lieux de {countryName}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- CTA final -->
+  <section class="bg-deep-teal text-white text-center py-12">
+    <div class="max-w-3xl mx-auto px-4">
+      <h2 class="font-display text-2xl md:text-3xl font-bold mb-3">Inclure {lieu.title} dans ton voyage</h2>
+      <p class="text-white/80 mb-6">Construis ton itinéraire complet avec carte interactive, logements et transport.</p>
+      <a href="/voyage/destination" class="inline-flex items-center gap-3 px-7 py-3 rounded-full bg-amber text-charcoal font-bold hover:bg-white transition-all">
+        Commencer mon voyage
+      </a>
+    </div>
+  </section>
+
+  <Footer />
+
+  <JsonLd slot="head" data={jsonLd} />
+
+  <script>
+    import { loadTrip, saveTrip, makeStepId } from '../../../lib/tripState';
+
+    const btn = document.getElementById('add-to-itinerary-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const slug = btn.dataset.slug!;
+        const country = btn.dataset.country!;
+        const days = Number(btn.dataset.days || 1);
+        const trip = loadTrip();
+        const updated = {
+          country: trip.country || country,
+          itinerary: [
+            ...(trip.country === country ? trip.itinerary : []),
+            { id: makeStepId(), slug, days },
+          ],
+        };
+        saveTrip(updated);
+        window.location.href = '/voyage/itineraire';
+      });
+    }
+  </script>
+</BaseLayout>

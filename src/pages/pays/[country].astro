@@ -1,0 +1,225 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import JsonLd from '../../components/JsonLd.astro';
+import { countryContent } from '../../data/countryContent';
+import { countriesData } from '../../lib/affiliates';
+
+export async function getStaticPaths() {
+  const lieux = await getCollection('lieux');
+  const regions = await getCollection('regions');
+  const routes = await getCollection('routes');
+
+  return Object.keys(countryContent).map(slug => {
+    const content = countryContent[slug];
+    const data = countriesData[slug];
+    return {
+      params: { country: slug },
+      props: {
+        content,
+        data,
+        lieux: lieux
+          .filter(l => l.data.country === slug)
+          .map(l => ({ slug: l.id.replace(/^[^/]+\//, '').replace(/\.md$/, ''), ...l.data })),
+        regions: regions
+          .filter(r => r.data.country === slug)
+          .map(r => r.data),
+        routes: routes
+          .filter(r => r.data.country === slug)
+          .map(r => r.data),
+      },
+    };
+  });
+}
+
+const { country } = Astro.params;
+const { content, data, lieux, regions, routes } = Astro.props;
+
+// Filtre lieux T1 (must-see)
+const lieuxT1 = lieux.filter(l => l.tier === 1).sort((a, b) => a.title.localeCompare(b.title));
+const lieuxOther = lieux.filter(l => l.tier !== 1);
+
+const title = `Voyage en ${content.name} : itinéraires, lieux et bons plans | Mon Voyage en Poche`;
+const description = content.shortDescription;
+
+// JSON-LD TouristDestination
+const jsonLd = {
+  '@type': 'TouristDestination',
+  name: content.name,
+  description: content.shortDescription,
+  image: new URL(content.heroImage, Astro.site).toString(),
+  url: new URL(`/pays/${country}`, Astro.site).toString(),
+  ...(data ? { geo: { '@type': 'GeoCoordinates' } } : {}),
+  includesAttraction: lieuxT1.slice(0, 10).map(l => ({
+    '@type': 'TouristAttraction',
+    name: l.title,
+    url: new URL(`/pays/${country}/${l.slug}`, Astro.site).toString(),
+  })),
+};
+---
+
+<BaseLayout title={title} description={description} ogImage={content.heroImage}>
+  <Header transparent />
+
+  <!-- Hero -->
+  <section class="relative h-[60vh] min-h-[480px] flex items-end overflow-hidden">
+    <img src={content.heroImage} alt={content.name} class="absolute inset-0 w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/80"></div>
+    <div class="relative z-10 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-12 text-white">
+      <Breadcrumbs items={[
+        { label: 'Accueil', href: '/' },
+        { label: 'Pays', href: '/pays' },
+        { label: content.name },
+      ]} />
+      <p class="font-display italic text-amber mt-4 mb-2">{content.tagline}</p>
+      <h1 class="font-display text-5xl md:text-6xl font-bold mb-3">Voyage en {content.name}</h1>
+      <p class="text-white/85 max-w-2xl mb-6">{content.shortDescription}</p>
+      <a href="/voyage/destination" class="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-amber text-charcoal font-bold hover:bg-white transition-all shadow-lg">
+        Planifier mon voyage en {content.name}
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- En un coup d'oeil -->
+  <section class="bg-warm-white py-16">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-deep-teal mb-6">En un coup d'œil</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { icon: '📅', label: 'Meilleure période', value: content.bestPeriod },
+          { icon: '💶', label: 'Budget', value: content.budgetRange },
+          { icon: '🛂', label: 'Visa', value: content.visaInfo },
+          { icon: '🛫', label: 'Vol', value: data?.flightPerAdult ? `~${data.flightPerAdult} €/personne` : '—' },
+        ].map(item => (
+          <div class="bg-white rounded-2xl border border-cream p-5">
+            <div class="text-2xl mb-2">{item.icon}</div>
+            <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">{item.label}</div>
+            <div class="text-sm font-bold text-deep-teal leading-snug">{item.value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Voyages suggérés -->
+  {routes.length > 0 && (
+    <section class="bg-cream py-16">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="font-display italic text-amber mb-2">Itinéraires testés</p>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-deep-teal mb-2">Voyages suggérés en {content.name}</h2>
+        <p class="text-slate mb-8">Des parcours cohérents prêts à être personnalisés en un clic.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {routes.map(route => (
+            <a href={`/voyages/${country}/${route.slug}`} class="block bg-white rounded-2xl border border-cream overflow-hidden hover:border-amber transition-colors group">
+              <div class="aspect-[16/9] overflow-hidden bg-cream relative">
+                <img src={route.heroImage} alt={route.title} class="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                <div class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/95 text-charcoal text-[10px] font-bold uppercase tracking-wide">{route.days} jours</div>
+              </div>
+              <div class="p-5">
+                <h3 class="font-display text-lg font-bold text-deep-teal mb-1">{route.title}</h3>
+                <p class="text-xs text-amber font-semibold uppercase tracking-wide mb-2">{route.tagline}</p>
+                <p class="text-sm text-slate leading-snug">{route.description}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Lieux phares (Tier 1) -->
+  {lieuxT1.length > 0 && (
+    <section class="bg-warm-white py-16">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="font-display italic text-amber mb-2">Incontournables</p>
+        <h2 class="font-display text-2xl md:text-3xl font-bold text-deep-teal mb-8">Lieux emblématiques de {content.name}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          {lieuxT1.map(lieu => (
+            <a href={`/pays/${country}/${lieu.slug}`} class="block bg-white rounded-2xl border border-cream overflow-hidden hover:border-amber transition-colors group">
+              <div class="aspect-[4/3] overflow-hidden bg-cream">
+                <img src={lieu.image} alt={lieu.title} class="w-full h-full object-cover transition-transform group-hover:scale-105" loading="lazy" />
+              </div>
+              <div class="p-4">
+                <div class="text-[11px] font-semibold text-amber uppercase tracking-wide mb-1">{lieu.type} · {lieu.region}</div>
+                <h3 class="font-display text-base font-bold text-deep-teal leading-tight">{lieu.title}</h3>
+              </div>
+            </a>
+          ))}
+        </div>
+        {lieuxOther.length > 0 && (
+          <details class="mt-8">
+            <summary class="cursor-pointer text-deep-teal font-semibold hover:text-amber transition-colors">Voir aussi les {lieuxOther.length} autres lieux de {content.name}</summary>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+              {lieuxOther.map(lieu => (
+                <a href={`/pays/${country}/${lieu.slug}`} class="text-sm text-slate hover:text-deep-teal transition-colors py-2 px-3 rounded-lg hover:bg-cream">
+                  {lieu.title}
+                </a>
+              ))}
+            </div>
+          </details>
+        )}
+      </div>
+    </section>
+  )}
+
+  <!-- Article SEO -->
+  <section class="bg-cream py-16">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="font-display italic text-amber mb-2">Le guide</p>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-deep-teal mb-6">Pourquoi visiter {content.name}</h2>
+      <div class="prose prose-slate max-w-none text-slate leading-relaxed space-y-4">
+        {content.longDescription.split(/\n\n+/).map(p => (
+          <p set:html={p
+            .replace(/\*\*(.+?)\*\*/g, '<strong class="text-deep-teal">$1</strong>')
+            .replace(/^(.+?)(:|\?)\s/, '<strong class="text-deep-teal">$1$2</strong> ')
+          } />
+        ))}
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-10 text-sm">
+        <div class="bg-white rounded-xl border border-cream p-4">
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Langue</div>
+          <div class="font-semibold text-deep-teal">{content.language}</div>
+        </div>
+        <div class="bg-white rounded-xl border border-cream p-4">
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Monnaie</div>
+          <div class="font-semibold text-deep-teal">{content.currency}</div>
+        </div>
+        <div class="bg-white rounded-xl border border-cream p-4">
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Décalage horaire</div>
+          <div class="font-semibold text-deep-teal">{content.timeZone}</div>
+        </div>
+        {data?.mainCity && (
+          <div class="bg-white rounded-xl border border-cream p-4">
+            <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Capitale / entrée</div>
+            <div class="font-semibold text-deep-teal">{data.mainCity} ({data.mainIata})</div>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA final -->
+  <section class="bg-deep-teal text-white text-center py-16">
+    <div class="max-w-3xl mx-auto px-4">
+      <h2 class="font-display text-3xl md:text-4xl font-bold mb-4">Prêt pour la {content.name} ?</h2>
+      <p class="text-white/80 mb-8">Cinq minutes pour avoir ton itinéraire, ton budget et tes liens de réservation.</p>
+      <a href="/voyage/destination" class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-amber text-charcoal font-bold hover:bg-white transition-all">
+        Construire mon voyage
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <Footer />
+
+  <JsonLd slot="head" data={jsonLd} />
+</BaseLayout>

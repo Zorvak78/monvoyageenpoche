@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 
+# Pas d'indexation des pages dynamiques du funnel (peu de contenu SEO)
+Disallow: /voyage/
+
+# Endpoints techniques
+Disallow: /api/
+
 Sitemap: https://monvoyageenpoche.fr/sitemap-index.xml

@@ -8,8 +8,16 @@ interface Props {
   ogType?: string;
 }
 
-const { title, description = "Mon Voyage en Poche — Guides de voyage, itinéraires et bons plans pour explorer le monde autrement.", ogImage = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=630&fit=crop", ogType = "website" } = Astro.props;
+const {
+  title,
+  description = "Mon Voyage en Poche — Construis ton voyage de A à Z en autonomie : destination, itinéraire, logement, transport. Tout au même endroit, gratuitement.",
+  ogImage = "/og-default.svg",
+  ogType = "website",
+} = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const absoluteOgImage = ogImage.startsWith('http')
+  ? ogImage
+  : new URL(ogImage, Astro.site).toString();
 ---
 <!DOCTYPE html>
 <html lang="fr">
@@ -27,7 +35,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <!-- Open Graph -->
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content={ogImage} />
+  <meta property="og:image" content={absoluteOgImage} />
   <meta property="og:url" content={canonicalURL} />
   <meta property="og:type" content={ogType} />
   <meta property="og:site_name" content="Mon Voyage en Poche" />
@@ -37,7 +45,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:image" content={absoluteOgImage} />
+
+  <!-- SEO slot pour JSON-LD spécifique à la page -->
+  <slot name="head" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
