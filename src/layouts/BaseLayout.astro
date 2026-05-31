@@ -50,6 +50,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <slot />
 
   <script>
+    import { setupClickTracking } from '../lib/clickTracker';
+    setupClickTracking();
+
     // Fade in on scroll
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {

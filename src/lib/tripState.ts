@@ -19,6 +19,13 @@ export function makeStepId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+export interface BookingStatus {
+  booked: boolean;
+  reference?: string;
+  notes?: string;
+  bookedAt?: number;
+}
+
 export interface TripState {
   country: string | null;
   composition: Composition | null;
@@ -28,6 +35,7 @@ export interface TripState {
   departureCity: string | null;
   startDate: string | null; // ISO YYYY-MM-DD
   itinerary: ItineraryStep[];
+  bookings: Record<string, BookingStatus>;
   updatedAt: number;
 }
 
@@ -42,6 +50,7 @@ const defaultState: TripState = {
   departureCity: null,
   startDate: null,
   itinerary: [],
+  bookings: {},
   updatedAt: 0,
 };
 
