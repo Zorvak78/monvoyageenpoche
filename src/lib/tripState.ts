@@ -13,10 +13,17 @@ export interface ItineraryStep {
   id: string;
   slug: string;
   days: number;
+  /** Si défini, écrase lieu.nuits : true = je dors ici, false = je ne dors pas. */
+  sleepOverride?: boolean;
 }
 
 export function makeStepId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/** Statut effectif « je dors ici » : override si défini, sinon valeur par défaut du lieu. */
+export function isSleepStep(step: { sleepOverride?: boolean }, lieuNuits: boolean): boolean {
+  return step.sleepOverride !== undefined ? step.sleepOverride : lieuNuits;
 }
 
 export interface BookingStatus {

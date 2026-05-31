@@ -133,7 +133,7 @@ const lieuxData = lieux.map(l => ({
 
   <script>
     import L from 'leaflet';
-    import { loadTrip, saveTrip, shareUrl, type ItineraryStep, type BookingStatus } from '../../lib/tripState';
+    import { loadTrip, saveTrip, shareUrl, isSleepStep, type ItineraryStep, type BookingStatus } from '../../lib/tripState';
     import {
       adultsFromComposition, estimateNightlyPrice,
       computeStepDates, formatDateFr,
@@ -175,7 +175,7 @@ const lieuxData = lieux.map(l => ({
         items.push({ id: 'train', icon: '🚆', label: 'Train (Trainline)' });
       }
       // Un logement par lieu où l'on dort
-      for (const e of enriched.filter(e => e.lieu.nuits)) {
+      for (const e of enriched.filter(e => isSleepStep(e.step, e.lieu.nuits))) {
         items.push({
           id: `lodging-${e.step.id}`,
           icon: '🛏',
@@ -286,7 +286,7 @@ const lieuxData = lieux.map(l => ({
               <div class="text-xs text-slate">${e.lieu.type} · ${e.lieu.region}</div>
             </div>
             <div class="text-right flex-shrink-0">
-              <div class="text-xs font-bold text-deep-teal">${e.step.days}j ${e.lieu.nuits ? '🛏' : '✦'}</div>
+              <div class="text-xs font-bold text-deep-teal">${e.step.days}j ${isSleepStep(e.step, e.lieu.nuits) ? '🛏' : '✦'}</div>
               ${dateLabel ? `<div class="text-[10px] text-slate">${dateLabel}</div>` : ''}
             </div>
           </li>
@@ -294,7 +294,7 @@ const lieuxData = lieux.map(l => ({
       }).join('');
 
       // Budget
-      const totalNights = enriched.filter(e => e.lieu.nuits).reduce((s, e) => s + e.step.days, 0);
+      const totalNights = enriched.filter(e => isSleepStep(e.step, e.lieu.nuits)).reduce((s, e) => s + e.step.days, 0);
       const bLogement = totalNights * nightly;
       const bFlight = data ? data.flightPerAdult * adults : 0;
       const bCar = data ? data.carPerDay * totalDays : 0;
