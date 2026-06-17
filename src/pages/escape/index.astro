@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mission Secrete</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
+    <style is:inline>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
             --bg-dark: #0a0a0f;
@@ -236,7 +236,7 @@
             .reveal-landmarks { font-size:2.2rem;gap:12px }
         }
     </style>
-    <script>
+    <script is:inline>
         function showScreen(index) {
             var names = ['intro','enigme1','enigme2','enigme3','reveal'];
             var all = document.querySelectorAll('.screen');
