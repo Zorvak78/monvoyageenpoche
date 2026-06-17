@@ -1,0 +1,576 @@
+---
+// Standalone escape game page
+---
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mission Secrete</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #14141f;
+            --gold: #d4a03c;
+            --gold-light: #f0d080;
+            --gold-dark: #b8860b;
+            --red: #c0392b;
+            --green: #27ae60;
+            --text: #e8e6e1;
+            --text-muted: #8a8a9a;
+            --font-display: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+        }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        .screen.active { display: flex; }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes revealScale { 0%{transform:scale(.3);opacity:0} 50%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+        @keyframes confettiFall { 0%{transform:translateY(-100vh) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(212,160,60,.3)} 50%{box-shadow:0 0 40px rgba(212,160,60,.6)} }
+
+        .progress-bar { position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.05);z-index:100 }
+        .progress-fill { height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold),var(--gold-light));transition:width .6s;border-radius:0 2px 2px 0 }
+        .step-indicators { position:fixed;top:20px;right:20px;display:flex;gap:8px;z-index:100 }
+        .step-dot { width:12px;height:12px;border-radius:50%;border:2px solid var(--gold-dark);background:transparent;transition:all .3s }
+        .step-dot.completed { background:var(--gold);border-color:var(--gold);box-shadow:0 0 8px rgba(212,160,60,.5) }
+        .step-dot.current { border-color:var(--gold-light);animation:pulse 2s infinite }
+
+        .card {
+            background:var(--bg-card);border:1px solid rgba(212,160,60,.15);
+            border-radius:20px;padding:2.5rem 2rem;max-width:520px;width:100%;
+            text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.3);
+            position:relative;z-index:5;
+        }
+        .card-icon { font-size:3.5rem;margin-bottom:1.5rem;display:block;animation:float 3s ease-in-out infinite }
+        h1 {
+            font-family:var(--font-display);font-size:2.2rem;font-weight:900;
+            background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dark));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            background-clip:text;margin-bottom:.5rem;line-height:1.2;
+        }
+        h2 { font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--gold);margin-bottom:1rem }
+        .subtitle { color:var(--text-muted);font-size:1rem;line-height:1.6;margin-bottom:2rem }
+        .enigme-label {
+            display:inline-block;font-size:.75rem;font-weight:600;text-transform:uppercase;
+            letter-spacing:3px;color:var(--gold-dark);margin-bottom:1rem;padding:4px 12px;
+            border:1px solid rgba(212,160,60,.2);border-radius:20px;
+        }
+
+        .btn {
+            display:inline-flex;align-items:center;justify-content:center;gap:8px;
+            padding:14px 36px;border:none;border-radius:12px;
+            font-family:var(--font-body);font-size:1rem;font-weight:600;
+            cursor:pointer;transition:all .3s;text-decoration:none;
+            touch-action:manipulation;-webkit-user-select:none;user-select:none;
+            position:relative;z-index:10;
+        }
+        .btn-primary {
+            background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+            color:var(--bg-dark);box-shadow:0 4px 15px rgba(212,160,60,.3);
+        }
+        .btn-primary:active { transform:scale(.95); }
+
+        .charade-parts { display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;text-align:left }
+        .charade-line {
+            display:flex;align-items:center;gap:14px;padding:14px 18px;
+            background:rgba(255,255,255,.03);border-radius:12px;border:1px solid rgba(255,255,255,.05);
+        }
+        .charade-emoji { font-size:1.8rem;flex-shrink:0 }
+        .charade-text { font-size:.95rem;color:var(--text-muted);line-height:1.5;font-style:italic }
+        .charade-keyword { font-weight:700;color:var(--gold-light);font-style:normal }
+
+        .input-group { display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:1.5rem;width:100% }
+        .text-input {
+            width:100%;max-width:320px;padding:14px 18px;font-size:1.1rem;
+            font-family:var(--font-body);font-weight:600;background:var(--bg-dark);
+            border:2px solid rgba(212,160,60,.3);border-radius:12px;color:var(--text);
+            outline:none;text-transform:uppercase;letter-spacing:2px;transition:all .3s;text-align:center;
+        }
+        .text-input:focus { border-color:var(--gold);box-shadow:0 0 15px rgba(212,160,60,.15) }
+        .text-input.correct { border-color:var(--green);color:var(--green) }
+        .text-input.wrong { border-color:var(--red);animation:shake .4s }
+
+        .devinette-box {
+            padding:24px 20px;margin-bottom:1.5rem;background:rgba(212,160,60,.05);
+            border:1px solid rgba(212,160,60,.15);border-radius:16px;
+        }
+        .devinette-text { font-size:1.05rem;line-height:1.7;color:var(--text);font-style:italic }
+
+        .thematique-grid { display:flex;flex-direction:column;gap:14px;margin-bottom:1.5rem }
+        .thematique-card {
+            padding:16px;background:rgba(255,255,255,.03);
+            border:1px solid rgba(255,255,255,.06);border-radius:14px;transition:all .4s;
+        }
+        .thematique-card.locked { opacity:.4;pointer-events:none }
+        .thematique-card.active { border-color:rgba(212,160,60,.3);background:rgba(212,160,60,.05) }
+        .thematique-card.solved { border-color:rgba(39,174,96,.4);background:rgba(39,174,96,.05) }
+        .thematique-items { display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:10px }
+        .thematique-item {
+            padding:6px 14px;background:rgba(212,160,60,.1);border:1px solid rgba(212,160,60,.2);
+            border-radius:8px;font-size:.9rem;font-weight:600;color:var(--gold-light);
+        }
+        .thematique-question { font-size:.85rem;color:var(--text-muted);margin-bottom:10px;font-style:italic }
+        .thematique-input-row { display:flex;gap:8px;justify-content:center }
+        .thematique-input {
+            flex:1;max-width:200px;padding:10px 14px;font-size:.95rem;
+            font-family:var(--font-body);font-weight:600;background:var(--bg-dark);
+            border:2px solid rgba(212,160,60,.3);border-radius:10px;color:var(--text);
+            outline:none;text-transform:uppercase;letter-spacing:1px;text-align:center;transition:all .3s;
+        }
+        .thematique-input:focus { border-color:var(--gold) }
+        .thematique-input.correct { border-color:var(--green);color:var(--green) }
+        .thematique-input.wrong { border-color:var(--red);animation:shake .4s }
+        .thematique-btn {
+            padding:10px 18px;border:none;border-radius:10px;
+            background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+            color:var(--bg-dark);font-weight:600;font-family:var(--font-body);
+            cursor:pointer;font-size:.9rem;touch-action:manipulation;
+            -webkit-user-select:none;user-select:none;
+        }
+        .thematique-btn:active { transform:scale(.95) }
+        .solved-badge {
+            display:inline-block;padding:4px 12px;background:rgba(39,174,96,.15);
+            color:var(--green);border-radius:8px;font-size:.85rem;font-weight:600;
+        }
+
+        .deduction-box {
+            padding:20px;margin-top:1.5rem;background:rgba(212,160,60,.08);
+            border:2px solid rgba(212,160,60,.25);border-radius:16px;
+            animation:glow 2s infinite;display:none;
+        }
+        .deduction-box.visible { display:block }
+        .deduction-clues { display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px }
+        .deduction-clue {
+            padding:6px 14px;background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);
+            border-radius:8px;font-size:.9rem;font-weight:600;color:var(--green);
+        }
+        .deduction-question { font-size:1rem;color:var(--gold-light);margin-bottom:12px;font-weight:600 }
+
+        .success-visual {
+            display:none;margin-top:1.5rem;padding:20px;background:rgba(39,174,96,.08);
+            border:1px solid rgba(39,174,96,.2);border-radius:16px;
+        }
+        .success-visual.visible { display:block }
+        .success-icon { font-size:3rem;display:block;margin-bottom:8px }
+        .success-text { font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--green) }
+        .success-sub { font-size:.85rem;color:var(--text-muted);margin-top:4px;display:block }
+
+        .next-btn { display:none;margin-top:1.5rem }
+        .next-btn.visible { display:inline-flex }
+
+        .feedback {
+            padding:10px 20px;border-radius:10px;font-size:.9rem;font-weight:500;
+            margin-top:1rem;display:none;
+        }
+        .feedback.error { display:block;background:rgba(192,57,43,.1);color:#e74c3c;border:1px solid rgba(192,57,43,.2) }
+        .feedback.success { display:block;background:rgba(39,174,96,.1);color:#2ecc71;border:1px solid rgba(39,174,96,.2) }
+
+        .hint-btn {
+            background:none;border:none;color:var(--text-muted);font-size:.8rem;
+            cursor:pointer;padding:8px;margin-top:.5rem;text-decoration:underline;
+            text-underline-offset:3px;font-family:var(--font-body);touch-action:manipulation;
+        }
+        .hint-text { font-size:.85rem;color:var(--gold-dark);margin-top:.5rem;font-style:italic;display:none }
+        .hint-text.visible { display:block }
+
+        .reveal-container { text-align:center;max-width:600px }
+        .reveal-icon { font-size:5rem;display:block;margin-bottom:1rem;animation:revealScale .8s cubic-bezier(.34,1.56,.64,1) }
+        .reveal-title {
+            font-family:var(--font-display);font-size:2.8rem;font-weight:900;
+            background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dark));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+            background-clip:text;margin-bottom:.5rem;line-height:1.2;animation:slideUp .8s ease .3s both;
+        }
+        .reveal-sentence {
+            font-family:var(--font-display);font-size:2rem;font-weight:900;color:#fff;
+            text-shadow:0 0 40px rgba(212,160,60,.5),0 0 80px rgba(212,160,60,.2);
+            margin:1.5rem 0;line-height:1.4;animation:revealScale .8s cubic-bezier(.34,1.56,.64,1) .6s both;
+        }
+        .reveal-sentence .highlight { color:var(--gold-light);font-size:2.6rem }
+        .reveal-landmarks {
+            font-size:3rem;margin:1.5rem 0;animation:slideUp .6s ease 1.3s both;
+            display:flex;justify-content:center;gap:20px;
+        }
+        .reveal-landmarks span { animation:float 2s ease-in-out infinite }
+        .reveal-landmarks span:nth-child(2) { animation-delay:.3s }
+        .reveal-landmarks span:nth-child(3) { animation-delay:.6s }
+        .reveal-landmarks span:nth-child(4) { animation-delay:.9s }
+        .reveal-landmarks span:nth-child(5) { animation-delay:1.2s }
+        .reveal-landmarks span:nth-child(6) { animation-delay:1.5s }
+
+        .confetti-container { position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:1000;overflow:hidden }
+        .confetti-piece { position:absolute;top:-20px;width:10px;height:10px;animation:confettiFall linear forwards }
+
+        @media(max-width:480px) {
+            .card { padding:2rem 1.2rem }
+            h1 { font-size:1.7rem }
+            h2 { font-size:1.2rem }
+            .charade-line { flex-direction:column;text-align:center }
+            .thematique-input-row { flex-direction:column;align-items:center }
+            .thematique-input { max-width:100% }
+            .reveal-title { font-size:2rem }
+            .reveal-sentence { font-size:1.5rem }
+            .reveal-sentence .highlight { font-size:2rem }
+            .reveal-landmarks { font-size:2.2rem;gap:12px }
+        }
+    </style>
+    <script>
+        function showScreen(index) {
+            var names = ['intro','enigme1','enigme2','enigme3','reveal'];
+            var all = document.querySelectorAll('.screen');
+            for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+            document.getElementById(names[index]).classList.add('active');
+            window.scrollTo(0,0);
+
+            var indicators = document.getElementById('stepIndicators');
+            if (index > 0 && index < 4) {
+                indicators.style.display = 'flex';
+                var dots = document.querySelectorAll('.step-dot');
+                for (var d = 0; d < dots.length; d++) {
+                    dots[d].classList.remove('current','completed');
+                    if (d < index - 1) dots[d].classList.add('completed');
+                    else if (d === index - 1) dots[d].classList.add('current');
+                }
+            } else { indicators.style.display = 'none'; }
+            document.getElementById('progressFill').style.width = (index/4)*100 + '%';
+
+            if (index === 2) revealClues();
+        }
+
+        function norm(s) {
+            return s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[-\s]+/g,'');
+        }
+
+        function showFB(id,msg,ok) {
+            var el = document.getElementById(id);
+            el.className = 'feedback ' + (ok ? 'success' : 'error');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function clearFB(id) { document.getElementById(id).style.display = 'none'; }
+
+        function toggleHint(id) { document.getElementById(id).classList.toggle('visible'); }
+
+        // ENIGME 1 - SEPTEMBRE
+        function checkCharade() {
+            var input = document.getElementById('charadeInput');
+            var val = norm(input.value);
+            clearFB('feedback1');
+            input.classList.remove('correct','wrong');
+            if (val === 'septembre') {
+                input.classList.add('correct');
+                showFB('feedback1','Bravo ! Vous avez trouvé !',true);
+                document.getElementById('success1').classList.add('visible');
+                document.getElementById('next1').classList.add('visible');
+                input.disabled = true;
+            } else {
+                input.classList.add('wrong');
+                setTimeout(function(){input.classList.remove('wrong')},400);
+                showFB('feedback1','Ce n\'est pas ça... Relisez la charade !',false);
+            }
+        }
+
+        // ENIGME 2 - WEEK-END
+        function checkDevinette() {
+            var input = document.getElementById('devinetteInput');
+            var val = norm(input.value);
+            clearFB('feedback2');
+            input.classList.remove('correct','wrong');
+            if (val === 'weekend' || val === 'leweekend') {
+                input.classList.add('correct');
+                showFB('feedback2','Exactement !',true);
+                document.getElementById('success2').classList.add('visible');
+                document.getElementById('next2').classList.add('visible');
+                input.disabled = true;
+            } else {
+                input.classList.add('wrong');
+                setTimeout(function(){input.classList.remove('wrong')},400);
+                showFB('feedback2','Ce n\'est pas ça... Réfléchissez bien !',false);
+            }
+        }
+
+        // ENIGME 3 - THEMATIQUES
+        var thAns = [
+            ['capitale','capitales','unecapitale','descapitales'],
+            ['langue','langues','unelangue','deslangues'],
+            ['angleterre','langleterre','england','royaumeuni','grandebretagne']
+        ];
+        var thOK = [false,false,false];
+
+        function checkTh(idx) {
+            var input = document.getElementById('th'+(idx+1));
+            var val = norm(input.value);
+            input.classList.remove('correct','wrong');
+            var ok = false;
+            for (var i=0;i<thAns[idx].length;i++) { if(val===thAns[idx][i]){ok=true;break;} }
+            if (ok) {
+                thOK[idx] = true;
+                input.classList.add('correct');
+                document.getElementById('thInput'+(idx+1)).style.display='none';
+                document.getElementById('thSolved'+(idx+1)).style.display='flex';
+                document.getElementById('thCard'+(idx+1)).classList.remove('active');
+                document.getElementById('thCard'+(idx+1)).classList.add('solved');
+                if (idx<2) {
+                    var next = document.getElementById('thCard'+(idx+2));
+                    next.classList.remove('locked');
+                    next.classList.add('active');
+                }
+                if (thOK[0]&&thOK[1]&&thOK[2]) {
+                    setTimeout(function(){
+                        document.getElementById('deductionBox').classList.add('visible');
+                    },500);
+                }
+            } else {
+                input.classList.add('wrong');
+                setTimeout(function(){input.classList.remove('wrong')},400);
+            }
+        }
+
+        function checkCity() {
+            var input = document.getElementById('finalCity');
+            var val = norm(input.value);
+            clearFB('feedback3');
+            input.classList.remove('correct','wrong');
+            if (val==='londres'||val==='london') {
+                input.classList.add('correct');
+                showFB('feedback3','Bravo ! Le mystère est résolu !',true);
+                setTimeout(function(){ showScreen(4); launchConfetti(); },1500);
+            } else {
+                input.classList.add('wrong');
+                setTimeout(function(){input.classList.remove('wrong')},400);
+                showFB('feedback3','Ce n\'est pas la bonne ville...',false);
+            }
+        }
+
+        function revealClues() {
+            var cards = document.querySelectorAll('#enigme2 .clue-card, #enigme3 .thematique-card.active');
+        }
+
+        function launchConfetti() {
+            var c = document.getElementById('confettiContainer');
+            var cols = ['#d4a03c','#f0d080','#e74c3c','#3498db','#2ecc71','#9b59b6','#fff'];
+            for (var i=0;i<150;i++) {
+                var p = document.createElement('div');
+                p.className='confetti-piece';
+                var sz=Math.random()*10+6, ci=Math.random()>.5;
+                p.style.left=Math.random()*100+'%';
+                p.style.width=sz+'px';
+                p.style.height=ci?sz+'px':sz*2.5+'px';
+                p.style.background=cols[Math.floor(Math.random()*cols.length)];
+                p.style.borderRadius=ci?'50%':'3px';
+                p.style.animationDuration=(Math.random()*2+2)+'s';
+                p.style.animationDelay=Math.random()*2+'s';
+                c.appendChild(p);
+            }
+            setTimeout(function(){c.innerHTML=''},6000);
+        }
+
+        function onKey(e,fn) { if(e.key==='Enter'||e.keyCode===13) fn(); }
+    </script>
+</head>
+<body ontouchstart="">
+
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="step-indicators" id="stepIndicators" style="display:none">
+        <div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+    </div>
+
+    <!-- INTRO -->
+    <div class="screen active" id="intro">
+        <div class="card">
+            <span class="card-icon">&#x1F512;</span>
+            <h1>Mission Secrete</h1>
+            <p class="subtitle">
+                Un mystérieux message a été intercepté.<br>
+                Résolvez les 3 énigmes pour découvrir<br>
+                le secret qui vous attend...
+            </p>
+            <button class="btn btn-primary" onclick="showScreen(1)">Accepter la mission</button>
+        </div>
+    </div>
+
+    <!-- ENIGME 1 -->
+    <div class="screen" id="enigme1">
+        <div class="card">
+            <span class="enigme-label">Énigme 1 / 3</span>
+            <span class="card-icon">&#x1F9E9;</span>
+            <h2>La Charade</h2>
+            <p class="subtitle">Trouvez le mot caché dans cette charade.</p>
+            <div class="charade-parts">
+                <div class="charade-line">
+                    <span class="charade-emoji">&#x1F522;</span>
+                    <span class="charade-text">Mon premier est le <span class="charade-keyword">chiffre 7</span></span>
+                </div>
+                <div class="charade-line">
+                    <span class="charade-emoji">&#x1F48E;</span>
+                    <span class="charade-text">Mon second est une <span class="charade-keyword">pierre précieuse</span> de couleur jaune orangé</span>
+                </div>
+                <div class="charade-line">
+                    <span class="charade-emoji">&#x1F4C5;</span>
+                    <span class="charade-text">Mon tout est un <span class="charade-keyword">mois de l'année</span></span>
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="text" class="text-input" id="charadeInput" placeholder="Votre réponse..." autocomplete="off" spellcheck="false" onkeydown="onKey(event,checkCharade)">
+                <button class="btn btn-primary" onclick="checkCharade()">Valider</button>
+            </div>
+            <div class="feedback" id="feedback1"></div>
+            <div class="success-visual" id="success1">
+                <span class="success-icon">&#x1F341;</span>
+                <span class="success-text">SEPTEMBRE</span>
+                <span class="success-sub">Un mois se dévoile... mais pourquoi ?</span>
+            </div>
+            <button class="btn btn-primary next-btn" id="next1" onclick="showScreen(2)">Énigme suivante</button>
+            <button class="hint-btn" onclick="toggleHint('hint1Text')">Besoin d'un indice ?</button>
+            <p class="hint-text" id="hint1Text">7 se dit aussi "sept"... et l'ambre est une pierre précieuse.</p>
+        </div>
+    </div>
+
+    <!-- ENIGME 2 -->
+    <div class="screen" id="enigme2">
+        <div class="card">
+            <span class="enigme-label">Énigme 2 / 3</span>
+            <span class="card-icon">&#x2753;</span>
+            <h2>La Devinette</h2>
+            <p class="subtitle">Lisez bien et trouvez de qui il s'agit.</p>
+            <div class="devinette-box">
+                <p class="devinette-text">
+                    &laquo; Je suis composé de 2 jours.<br>
+                    Les enfants m'adorent, les parents aussi.<br>
+                    Je suis la pause tant attendue de la semaine.<br>
+                    Qui suis-je ? &raquo;
+                </p>
+            </div>
+            <div class="input-group">
+                <input type="text" class="text-input" id="devinetteInput" placeholder="Votre réponse..." autocomplete="off" spellcheck="false" onkeydown="onKey(event,checkDevinette)">
+                <button class="btn btn-primary" onclick="checkDevinette()">Valider</button>
+            </div>
+            <div class="feedback" id="feedback2"></div>
+            <div class="success-visual" id="success2">
+                <span class="success-icon">&#x1F389;</span>
+                <span class="success-text">WEEK-END</span>
+                <span class="success-sub">La pause parfaite... mais pour aller où ?</span>
+            </div>
+            <button class="btn btn-primary next-btn" id="next2" onclick="showScreen(3)">Énigme suivante</button>
+            <button class="hint-btn" onclick="toggleHint('hint2Text')">Besoin d'un indice ?</button>
+            <p class="hint-text" id="hint2Text">Samedi et dimanche forment le...</p>
+        </div>
+    </div>
+
+    <!-- ENIGME 3 -->
+    <div class="screen" id="enigme3">
+        <div class="card">
+            <span class="enigme-label">Énigme 3 / 3</span>
+            <span class="card-icon">&#x1F50D;</span>
+            <h2>Les Thématiques</h2>
+            <p class="subtitle">Pour chaque série, trouvez le point commun.</p>
+            <div class="thematique-grid">
+                <div class="thematique-card active" id="thCard1">
+                    <div class="thematique-items">
+                        <span class="thematique-item">Berlin</span>
+                        <span class="thematique-item">Paris</span>
+                        <span class="thematique-item">Bruxelles</span>
+                    </div>
+                    <div class="thematique-question">Ces trois villes en sont une...</div>
+                    <div class="thematique-input-row" id="thInput1">
+                        <input type="text" class="thematique-input" id="th1" placeholder="?" autocomplete="off" spellcheck="false" onkeydown="onKey(event,function(){checkTh(0)})">
+                        <button class="thematique-btn" onclick="checkTh(0)">OK</button>
+                    </div>
+                    <div class="thematique-input-row" id="thSolved1" style="display:none">
+                        <span class="solved-badge">&#x2705; CAPITALE</span>
+                    </div>
+                </div>
+                <div class="thematique-card locked" id="thCard2">
+                    <div class="thematique-items">
+                        <span class="thematique-item">Français</span>
+                        <span class="thematique-item">Espagnol</span>
+                        <span class="thematique-item">Italien</span>
+                    </div>
+                    <div class="thematique-question">Français, espagnol, italien en sont une...</div>
+                    <div class="thematique-input-row" id="thInput2">
+                        <input type="text" class="thematique-input" id="th2" placeholder="?" autocomplete="off" spellcheck="false" onkeydown="onKey(event,function(){checkTh(1)})">
+                        <button class="thematique-btn" onclick="checkTh(1)">OK</button>
+                    </div>
+                    <div class="thematique-input-row" id="thSolved2" style="display:none">
+                        <span class="solved-badge">&#x2705; LANGUE</span>
+                    </div>
+                </div>
+                <div class="thematique-card locked" id="thCard3">
+                    <div class="thematique-items">
+                        <span class="thematique-item">Harry Potter</span>
+                        <span class="thematique-item">Fish &amp; Chips</span>
+                        <span class="thematique-item">Big Ben</span>
+                    </div>
+                    <div class="thematique-question">Tout cela vient de...</div>
+                    <div class="thematique-input-row" id="thInput3">
+                        <input type="text" class="thematique-input" id="th3" placeholder="?" autocomplete="off" spellcheck="false" onkeydown="onKey(event,function(){checkTh(2)})">
+                        <button class="thematique-btn" onclick="checkTh(2)">OK</button>
+                    </div>
+                    <div class="thematique-input-row" id="thSolved3" style="display:none">
+                        <span class="solved-badge">&#x2705; ANGLETERRE</span>
+                    </div>
+                </div>
+            </div>
+            <div class="deduction-box" id="deductionBox">
+                <div class="deduction-clues">
+                    <span class="deduction-clue">CAPITALE</span>
+                    <span class="deduction-clue">LANGUE</span>
+                    <span class="deduction-clue">ANGLETERRE</span>
+                </div>
+                <div class="deduction-question">Quelle est la CAPITALE de l'ANGLETERRE où l'on parle cette LANGUE ?</div>
+                <div class="thematique-input-row">
+                    <input type="text" class="thematique-input" id="finalCity" placeholder="La ville..." autocomplete="off" spellcheck="false" style="max-width:240px" onkeydown="onKey(event,checkCity)">
+                    <button class="thematique-btn" onclick="checkCity()">Valider</button>
+                </div>
+            </div>
+            <div class="feedback" id="feedback3"></div>
+        </div>
+    </div>
+
+    <!-- REVEAL -->
+    <div class="screen" id="reveal">
+        <div class="reveal-container">
+            <span class="reveal-icon">&#x1F389;</span>
+            <div class="reveal-title">Surprise !</div>
+            <div class="reveal-sentence">
+                Vous partez en week-end pour<br>
+                <span class="highlight">LONDRES</span><br>
+                en septembre !
+            </div>
+            <div class="reveal-landmarks">
+                <span>&#x1F1EC;&#x1F1E7;</span>
+                <span>&#x1F3A1;</span>
+                <span>&#x1F3F0;</span>
+                <span>&#x2615;</span>
+                <span>&#x1F68C;</span>
+                <span>&#x1F451;</span>
+            </div>
+        </div>
+        <div class="confetti-container" id="confettiContainer"></div>
+    </div>
+
+</body>
+</html>
