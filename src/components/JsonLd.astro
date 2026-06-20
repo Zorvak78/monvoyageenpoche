@@ -1,0 +1,13 @@
+---
+/**
+ * Injecte un script JSON-LD Schema.org dans la page.
+ *
+ * Usage : <JsonLd data={{ '@type': 'TouristAttraction', ... }} />
+ */
+interface Props {
+  data: Record<string, any>;
+}
+const { data } = Astro.props;
+const json = JSON.stringify({ '@context': 'https://schema.org', ...data });
+---
+<script type="application/ld+json" set:html={json} is:inline></script>

@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout
+  title="Conditions générales d'utilisation | Mon Voyage en Poche"
+  description="Conditions d'utilisation du site Mon Voyage en Poche."
+>
+  <Header />
+
+  <main class="pt-28 pb-16 min-h-screen bg-warm-white">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="font-display italic text-amber mb-2">Conditions</p>
+      <h1 class="font-display text-4xl md:text-5xl font-bold text-deep-teal mb-8">Conditions générales d'utilisation</h1>
+
+      <div class="prose prose-slate max-w-none space-y-8 text-slate">
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Objet</h2>
+          <p>
+            Les présentes conditions régissent l'utilisation du site Mon Voyage en Poche, accessible à l'adresse <a href="https://monvoyageenpoche.fr" class="text-deep-teal underline decoration-amber underline-offset-2">monvoyageenpoche.fr</a>. En accédant et en utilisant le site, tu acceptes sans réserve ces conditions.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Nature du service</h2>
+          <p>
+            Mon Voyage en Poche est un <strong>outil gratuit de planification de voyage</strong>. Il propose&nbsp;:
+          </p>
+          <ul class="list-disc pl-6 space-y-1">
+            <li>une présentation de lieux et de régions touristiques&nbsp;;</li>
+            <li>un parcours guidé en 4 étapes pour construire un itinéraire et estimer un budget&nbsp;;</li>
+            <li>des liens vers des plateformes partenaires (Booking, Airbnb, DiscoverCars, Skyscanner, Trainline) qui permettent de réserver les prestations.</li>
+          </ul>
+          <p>
+            <strong>Mon Voyage en Poche n'est ni une agence de voyage, ni un revendeur</strong>. Toute réservation est conclue directement entre toi et le prestataire choisi, selon ses propres conditions de vente.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Estimations et informations</h2>
+          <p>
+            Les prix, durées, recommandations et descriptions affichés sur le site sont fournis à titre <strong>indicatif</strong>. Ils résultent d'estimations basées sur des moyennes constatées et ne constituent en aucun cas une garantie de prix ou de disponibilité au moment de la réservation.
+          </p>
+          <p>
+            L'éditeur s'efforce de maintenir les informations à jour mais ne peut être tenu responsable d'erreurs, d'omissions ou de variations entre les estimations affichées et les prix réels proposés par les partenaires.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Liens affiliés</h2>
+          <p>
+            Certains liens présents sur le site sont des liens d'affiliation. L'éditeur perçoit une commission de la part du partenaire en cas de réservation effectuée via ces liens. Cela ne change rien au prix que tu paies. Le détail est rappelé dans nos <a href="/mentions-legales" class="text-deep-teal underline decoration-amber underline-offset-2">mentions légales</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Responsabilité</h2>
+          <p>
+            L'éditeur décline toute responsabilité concernant&nbsp;:
+          </p>
+          <ul class="list-disc pl-6 space-y-1">
+            <li>les éventuels dysfonctionnements, retards ou indisponibilités du site&nbsp;;</li>
+            <li>les conséquences de l'utilisation des informations diffusées (réservations, choix de voyage)&nbsp;;</li>
+            <li>les services rendus par les partenaires de réservation, qui restent pleinement responsables de leurs prestations&nbsp;;</li>
+            <li>les conditions de séjour (sécurité, formalités douanières, sanitaires, etc.) qui relèvent de la responsabilité du voyageur. Avant tout départ, consulte les conseils aux voyageurs du <a href="https://www.diplomatie.gouv.fr/fr/conseils-aux-voyageurs/" target="_blank" rel="noopener" class="text-deep-teal underline decoration-amber underline-offset-2">ministère des Affaires étrangères</a>.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Propriété intellectuelle</h2>
+          <p>
+            Voir <a href="/mentions-legales" class="text-deep-teal underline decoration-amber underline-offset-2">mentions légales</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Données personnelles</h2>
+          <p>
+            Le traitement de tes données est détaillé dans notre <a href="/confidentialite" class="text-deep-teal underline decoration-amber underline-offset-2">politique de confidentialité</a>.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="font-display text-2xl font-bold text-deep-teal mb-3">Loi applicable</h2>
+          <p>
+            Les présentes conditions sont soumises au droit français. En cas de litige, les tribunaux français sont compétents.
+          </p>
+        </section>
+
+        <p class="text-xs text-slate/60 italic mt-12">Dernière mise à jour&nbsp;: mai 2026.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>

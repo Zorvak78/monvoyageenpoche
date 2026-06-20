@@ -33,6 +33,13 @@ const cityToIata: Record<string, string> = {
 };
 
 /** Données par pays : ville d'arrivée principale, prix indicatifs, recos transport. */
+export const countryLabel: Record<string, string> = {
+  italie: 'Italie',
+  japon: 'Japon',
+  perou: 'Pérou',
+  namibie: 'Namibie',
+};
+
 export const countriesData: Record<string, {
   mainCity: string;
   mainIata: string;

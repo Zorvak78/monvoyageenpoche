@@ -43,6 +43,19 @@ const lieuxData = lieux.map(l => ({
         <ol id="recap-steps" class="space-y-3"></ol>
       </section>
 
+      <!-- Carnet de réservations -->
+      <section class="bg-white rounded-2xl border border-cream shadow-sm p-6 md:p-8">
+        <div class="flex items-baseline justify-between gap-4 mb-3">
+          <h2 class="font-display text-xl font-bold text-deep-teal">Mon carnet de réservations</h2>
+          <span id="bookings-progress" class="text-xs font-semibold text-slate uppercase tracking-wide">0 / 0</span>
+        </div>
+        <p class="text-sm text-slate mb-4">Coche au fur et à mesure de tes réservations. Tu peux noter ta référence et un mémo.</p>
+        <div class="h-2 bg-cream rounded-full overflow-hidden mb-5">
+          <div id="bookings-bar" class="h-full bg-amber transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <ul id="bookings-list" class="space-y-2"></ul>
+      </section>
+
       <!-- Budget consolidé -->
       <section class="bg-deep-teal text-white rounded-2xl p-6 md:p-8">
         <h2 class="font-display text-xl font-bold mb-5">Budget total estimé</h2>
@@ -120,7 +133,7 @@ const lieuxData = lieux.map(l => ({
 
   <script>
     import L from 'leaflet';
-    import { loadTrip, shareUrl, type ItineraryStep } from '../../lib/tripState';
+    import { loadTrip, saveTrip, shareUrl, isSleepStep, type ItineraryStep, type BookingStatus } from '../../lib/tripState';
     import {
       adultsFromComposition, estimateNightlyPrice,
       computeStepDates, formatDateFr,
@@ -140,6 +153,99 @@ const lieuxData = lieux.map(l => ({
     } else {
       document.getElementById('recap-content')!.classList.remove('hidden');
       render();
+    }
+
+    function bookingItems(enriched: Array<{step: ItineraryStep; lieu: Lieu}>, data: any) {
+      const items: Array<{ id: string; icon: string; label: string }> = [];
+      // Vol
+      items.push({
+        id: 'flight',
+        icon: '✈',
+        label: `Vol aller-retour ${trip.departureCity ?? ''} ${data?.mainCity ? '→ ' + data.mainCity : ''}`.trim(),
+      });
+      // Voiture (sauf si non pertinent — pour Japon par ex. le train est privilégié,
+      // mais on garde l'item car certains en prennent quand même une)
+      items.push({
+        id: 'car',
+        icon: '🚗',
+        label: `Voiture${data?.mainCity ? ' à ' + data.mainCity : ''}`,
+      });
+      // Train si pertinent
+      if (data?.trainRelevant) {
+        items.push({ id: 'train', icon: '🚆', label: 'Train (Trainline)' });
+      }
+      // Un logement par lieu où l'on dort
+      for (const e of enriched.filter(e => isSleepStep(e.step, e.lieu.nuits))) {
+        items.push({
+          id: `lodging-${e.step.id}`,
+          icon: '🛏',
+          label: `Logement à ${e.lieu.title} (${e.step.days} nuit${e.step.days > 1 ? 's' : ''})`,
+        });
+      }
+      return items;
+    }
+
+    function renderBookings(enriched: Array<{step: ItineraryStep; lieu: Lieu}>, data: any) {
+      const items = bookingItems(enriched, data);
+      const bookings = trip.bookings || {};
+      const listEl = document.getElementById('bookings-list')!;
+
+      listEl.innerHTML = items.map(it => {
+        const b = bookings[it.id] || { booked: false };
+        return `
+          <li class="rounded-xl border border-cream ${b.booked ? 'bg-amber/5 border-amber/40' : 'bg-cream/30'} transition-colors" data-booking-id="${it.id}">
+            <label class="flex items-center gap-3 px-4 py-3 cursor-pointer">
+              <input type="checkbox" class="booking-cb w-5 h-5 rounded accent-amber flex-shrink-0" ${b.booked ? 'checked' : ''} />
+              <span class="text-xl flex-shrink-0">${it.icon}</span>
+              <span class="flex-1 text-sm font-semibold ${b.booked ? 'text-deep-teal' : 'text-charcoal'}">${it.label}</span>
+              ${b.booked ? '<span class="text-xs font-bold text-amber uppercase tracking-wide">Réservé</span>' : ''}
+            </label>
+            <div class="booking-details ${b.booked ? '' : 'hidden'} px-4 pb-3 pt-1 space-y-2 border-t border-amber/20">
+              <input type="text" class="booking-ref w-full px-3 py-2 rounded-lg border border-cream bg-white text-sm focus:border-amber focus:outline-none" placeholder="Référence / numéro de réservation (optionnel)" value="${b.reference ? b.reference.replace(/"/g, '&quot;') : ''}" />
+              <textarea class="booking-notes w-full px-3 py-2 rounded-lg border border-cream bg-white text-sm focus:border-amber focus:outline-none resize-none" rows="2" placeholder="Notes (heure d'arrivée, parking, contact...)">${b.notes || ''}</textarea>
+            </div>
+          </li>
+        `;
+      }).join('');
+
+      const total = items.length;
+      const done = items.filter(it => bookings[it.id]?.booked).length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      document.getElementById('bookings-progress')!.textContent = `${done} / ${total} réservés`;
+      document.getElementById('bookings-bar')!.style.width = `${pct}%`;
+
+      // Event handlers
+      listEl.querySelectorAll<HTMLLIElement>('li').forEach(li => {
+        const id = li.dataset.bookingId!;
+        const cb = li.querySelector<HTMLInputElement>('.booking-cb')!;
+        const ref = li.querySelector<HTMLInputElement>('.booking-ref')!;
+        const notes = li.querySelector<HTMLTextAreaElement>('.booking-notes')!;
+
+        cb.addEventListener('change', () => {
+          const current = trip.bookings[id] || { booked: false };
+          trip.bookings = {
+            ...trip.bookings,
+            [id]: {
+              ...current,
+              booked: cb.checked,
+              bookedAt: cb.checked ? Date.now() : undefined,
+            },
+          };
+          saveTrip({ bookings: trip.bookings });
+          renderBookings(enriched, data);
+        });
+
+        const saveRefNotes = () => {
+          const current = trip.bookings[id] || { booked: false };
+          trip.bookings = {
+            ...trip.bookings,
+            [id]: { ...current, reference: ref.value || undefined, notes: notes.value || undefined },
+          };
+          saveTrip({ bookings: trip.bookings });
+        };
+        ref.addEventListener('change', saveRefNotes);
+        notes.addEventListener('change', saveRefNotes);
+      });
     }
 
     function render() {
@@ -180,7 +286,7 @@ const lieuxData = lieux.map(l => ({
               <div class="text-xs text-slate">${e.lieu.type} · ${e.lieu.region}</div>
             </div>
             <div class="text-right flex-shrink-0">
-              <div class="text-xs font-bold text-deep-teal">${e.step.days}j ${e.lieu.nuits ? '🛏' : '✦'}</div>
+              <div class="text-xs font-bold text-deep-teal">${e.step.days}j ${isSleepStep(e.step, e.lieu.nuits) ? '🛏' : '✦'}</div>
               ${dateLabel ? `<div class="text-[10px] text-slate">${dateLabel}</div>` : ''}
             </div>
           </li>
@@ -188,7 +294,7 @@ const lieuxData = lieux.map(l => ({
       }).join('');
 
       // Budget
-      const totalNights = enriched.filter(e => e.lieu.nuits).reduce((s, e) => s + e.step.days, 0);
+      const totalNights = enriched.filter(e => isSleepStep(e.step, e.lieu.nuits)).reduce((s, e) => s + e.step.days, 0);
       const bLogement = totalNights * nightly;
       const bFlight = data ? data.flightPerAdult * adults : 0;
       const bCar = data ? data.carPerDay * totalDays : 0;
@@ -201,6 +307,9 @@ const lieuxData = lieux.map(l => ({
       document.getElementById('b-car')!.textContent = bCar.toLocaleString('fr-FR');
       document.getElementById('b-days')!.textContent = String(totalDays);
       document.getElementById('b-total')!.textContent = bTotal.toLocaleString('fr-FR');
+
+      // Bookings checklist
+      renderBookings(enriched, data);
 
       // Map
       const lats = enriched.map(e => e.lieu.lat);

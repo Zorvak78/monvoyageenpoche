@@ -3,6 +3,13 @@ interface Props {
   transparent?: boolean;
 }
 const { transparent = false } = Astro.props;
+
+const destinations = [
+  { slug: 'namibie', name: 'Namibie' },
+  { slug: 'italie',  name: 'Italie' },
+  { slug: 'japon',   name: 'Japon' },
+  { slug: 'perou',   name: 'Pérou' },
+];
 ---
 
 <header
@@ -23,13 +30,32 @@ const { transparent = false } = Astro.props;
         </span>
       </a>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 md:gap-5">
+        <!-- Dropdown destinations -->
+        <div class="hidden md:block relative group">
+          <button
+            class:list={[
+              'nav-link text-sm font-semibold uppercase tracking-wide transition-colors duration-300 hover:text-amber px-2 py-1 inline-flex items-center gap-1',
+              transparent ? 'text-white' : 'text-charcoal'
+            ]}
+          >
+            Destinations
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div class="absolute right-0 mt-1 w-48 rounded-xl bg-white shadow-lg border border-cream opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+            <a href="/pays" class="block px-4 py-2.5 text-sm font-semibold text-deep-teal border-b border-cream hover:bg-cream/40">Toutes les destinations</a>
+            {destinations.map(d => (
+              <a href={`/pays/${d.slug}`} class="block px-4 py-2 text-sm text-charcoal hover:bg-cream/40 hover:text-deep-teal">{d.name}</a>
+            ))}
+          </div>
+        </div>
+
         <a
           href="/voyage/destination"
-          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber text-charcoal text-sm font-semibold tracking-wide hover:bg-gold hover:text-white transition-all"
+          class="inline-flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-full bg-amber text-charcoal text-xs md:text-sm font-semibold tracking-wide hover:bg-gold hover:text-white transition-all"
         >
           Commencer mon voyage
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </a>

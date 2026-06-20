@@ -1,0 +1,40 @@
+---
+export interface BreadcrumbItem {
+  label: string;
+  href?: string; // dernier item sans href = page courante
+}
+
+interface Props {
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+const site = Astro.site?.toString() || 'https://monvoyageenpoche.fr';
+
+// JSON-LD BreadcrumbList
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: items.map((item, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: item.label,
+    ...(item.href ? { item: new URL(item.href, site).toString() } : {}),
+  })),
+};
+---
+
+<nav aria-label="Fil d'Ariane" class="text-xs text-slate flex flex-wrap items-center gap-1.5">
+  {items.map((item, i) => (
+    <>
+      {i > 0 && <span class="text-slate/40">›</span>}
+      {item.href ? (
+        <a href={item.href} class="hover:text-deep-teal transition-colors">{item.label}</a>
+      ) : (
+        <span class="text-deep-teal font-semibold" aria-current="page">{item.label}</span>
+      )}
+    </>
+  ))}
+</nav>
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline></script>

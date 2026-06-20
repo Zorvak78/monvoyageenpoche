@@ -1,0 +1,219 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import JsonLd from '../../../components/JsonLd.astro';
+import { countryContent } from '../../../data/countryContent';
+import { countriesData, estimateNightlyPrice, adultsFromComposition } from '../../../lib/affiliates';
+
+export async function getStaticPaths() {
+  const routes = await getCollection('routes');
+  const lieux = await getCollection('lieux');
+  const lieuxParsed = lieux.map(l => ({
+    slug: l.id.replace(/^[^/]+\//, '').replace(/\.md$/, ''),
+    ...l.data,
+  }));
+
+  return routes.map(r => {
+    const stopsEnriched = r.data.stops.map(s => {
+      const lieu = lieuxParsed.find(l => l.slug === s.slug && l.country === r.data.country);
+      return { ...s, lieu };
+    });
+    return {
+      params: { country: r.data.country, slug: r.data.slug },
+      props: {
+        route: r.data,
+        stops: stopsEnriched,
+      },
+    };
+  });
+}
+
+const { country, slug } = Astro.params;
+const { route, stops } = Astro.props;
+const content = countryContent[country];
+const countryName = content?.name || country;
+const data = countriesData[country];
+
+const totalDays = route.stops.reduce((s, x) => s + x.days, 0);
+const nightlyPrice = estimateNightlyPrice(country, 'couple');
+const adults = 2;
+const totalNights = stops.filter(s => s.lieu?.nuits).reduce((sum, s) => sum + s.days, 0);
+const budgetLodging = totalNights * nightlyPrice;
+const budgetFlight = data ? data.flightPerAdult * adults : 0;
+const budgetCar = data ? data.carPerDay * totalDays : 0;
+const budgetTotal = budgetLodging + budgetFlight + budgetCar;
+
+const title = `${route.title} : itinéraire ${totalDays} jours détaillé | Mon Voyage en Poche`;
+const description = `Itinéraire complet ${totalDays} jours : ${route.tagline}. Carte, étapes, budget estimé. Personnalisable en 1 clic.`;
+
+const jsonLd = {
+  '@type': 'TouristTrip',
+  name: route.title,
+  description: route.description,
+  url: new URL(`/voyages/${country}/${slug}`, Astro.site).toString(),
+  image: route.heroImage ? new URL(route.heroImage, Astro.site).toString() : undefined,
+  itinerary: {
+    '@type': 'ItemList',
+    itemListElement: stops.filter(s => s.lieu).map((s, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'TouristAttraction',
+        name: s.lieu!.title,
+        url: new URL(`/pays/${country}/${s.slug}`, Astro.site).toString(),
+      },
+    })),
+  },
+};
+---
+
+<BaseLayout title={title} description={description} ogImage={route.heroImage}>
+  <Header transparent />
+
+  <section class="relative h-[55vh] min-h-[420px] flex items-end overflow-hidden">
+    <img src={route.heroImage} alt={route.title} class="absolute inset-0 w-full h-full object-cover" />
+    <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/85"></div>
+    <div class="relative z-10 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-10 text-white">
+      <Breadcrumbs items={[
+        { label: 'Accueil', href: '/' },
+        { label: countryName, href: `/pays/${country}` },
+        { label: 'Voyages' },
+        { label: route.title },
+      ]} />
+      <p class="font-display italic text-amber mt-4 mb-2">Itinéraire {route.days} jours · {countryName}</p>
+      <h1 class="font-display text-4xl md:text-5xl font-bold mb-3">{route.title}</h1>
+      <p class="text-white/85 max-w-2xl mb-6">{route.tagline}</p>
+      <button
+        type="button"
+        id="apply-route-btn"
+        data-country={country}
+        data-stops={JSON.stringify(route.stops)}
+        class="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-amber text-charcoal font-bold hover:bg-white transition-all shadow-lg"
+      >
+        Personnaliser ce voyage
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="bg-warm-white py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl border border-cream p-5">
+          <div class="text-2xl mb-2">📅</div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Durée</div>
+          <div class="font-bold text-deep-teal">{route.days} jours</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-cream p-5">
+          <div class="text-2xl mb-2">📍</div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Étapes</div>
+          <div class="font-bold text-deep-teal">{route.stops.length}</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-cream p-5">
+          <div class="text-2xl mb-2">🛏</div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Nuits</div>
+          <div class="font-bold text-deep-teal">{totalNights}</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-cream p-5">
+          <div class="text-2xl mb-2">💶</div>
+          <div class="text-xs font-semibold text-slate uppercase tracking-wide mb-1">Budget estimé</div>
+          <div class="font-bold text-deep-teal">~{budgetTotal.toLocaleString('fr-FR')} €</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Étape par étape -->
+  <section class="bg-cream py-12 md:py-16">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-deep-teal mb-2">Le parcours étape par étape</h2>
+      <p class="text-slate mb-8">Chaque étape est cliquable pour découvrir son guide complet.</p>
+      <ol class="space-y-3">
+        {stops.map((s, i) => s.lieu ? (
+          <li>
+            <a href={`/pays/${country}/${s.slug}`} class="flex items-center gap-4 p-4 rounded-2xl bg-white border border-cream hover:border-amber transition-colors group">
+              <span class="w-9 h-9 rounded-full bg-amber text-charcoal text-sm font-bold flex items-center justify-center flex-shrink-0">{i + 1}</span>
+              <img src={s.lieu.image} alt="" class="w-14 h-14 rounded-xl object-cover flex-shrink-0" loading="lazy" />
+              <div class="flex-1 min-w-0">
+                <div class="font-display text-lg font-bold text-deep-teal group-hover:text-amber transition-colors">{s.lieu.title}</div>
+                <div class="text-xs text-slate">{s.lieu.type} · {s.lieu.region}</div>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <div class="text-sm font-bold text-deep-teal">{s.days} jour{s.days > 1 ? 's' : ''}</div>
+                <div class="text-xs text-slate">{s.lieu.nuits ? '🛏 nuit' : '✦ visite'}</div>
+              </div>
+            </a>
+          </li>
+        ) : null)}
+      </ol>
+    </div>
+  </section>
+
+  <!-- Pourquoi ce voyage -->
+  <section class="bg-warm-white py-12 md:py-16">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="font-display italic text-amber mb-2">Pourquoi ce voyage</p>
+      <h2 class="font-display text-2xl md:text-3xl font-bold text-deep-teal mb-6">Cohérence de l'itinéraire</h2>
+      <p class="text-slate leading-relaxed mb-4">{route.description}</p>
+      <div class="bg-cream rounded-2xl p-5 mt-6 text-sm">
+        <div class="font-semibold text-deep-teal mb-2">Détail du budget estimé (base 2 adultes)</div>
+        <ul class="space-y-1 text-slate">
+          <li>Logement : ~{budgetLodging.toLocaleString('fr-FR')} € ({totalNights} nuits × {nightlyPrice} €)</li>
+          <li>Vol : ~{budgetFlight.toLocaleString('fr-FR')} € ({adults} × {data?.flightPerAdult} €)</li>
+          <li>Voiture : ~{budgetCar.toLocaleString('fr-FR')} € ({totalDays} jours × {data?.carPerDay} €)</li>
+          <li class="font-semibold text-deep-teal pt-2 border-t border-white">Total ~{budgetTotal.toLocaleString('fr-FR')} € pour le couple</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-deep-teal text-white text-center py-16">
+    <div class="max-w-3xl mx-auto px-4">
+      <h2 class="font-display text-3xl md:text-4xl font-bold mb-4">Adopter cet itinéraire ?</h2>
+      <p class="text-white/80 mb-8">Il sera pré-chargé dans le planificateur, tu pourras ajouter/retirer des étapes, ajuster les durées et finaliser tes réservations.</p>
+      <button
+        type="button"
+        id="apply-route-btn-bottom"
+        data-country={country}
+        data-stops={JSON.stringify(route.stops)}
+        class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-amber text-charcoal font-bold hover:bg-white transition-all"
+      >
+        Personnaliser ce voyage
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </button>
+    </div>
+  </section>
+
+  <Footer />
+
+  <JsonLd slot="head" data={jsonLd} />
+
+  <script>
+    import { loadTrip, saveTrip, makeStepId } from '../../../lib/tripState';
+
+    function applyRoute(btn: HTMLButtonElement) {
+      const country = btn.dataset.country!;
+      const stops = JSON.parse(btn.dataset.stops!) as Array<{ slug: string; days: number }>;
+      const trip = loadTrip();
+      const newItinerary = stops.map(s => ({ id: makeStepId(), slug: s.slug, days: s.days }));
+      saveTrip({
+        country,
+        itinerary: newItinerary,
+        days: trip.days || stops.reduce((a, b) => a + b.days, 0),
+      });
+      window.location.href = trip.composition && trip.departureCity ? '/voyage/itineraire' : '/voyage/destination';
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('[id^="apply-route-btn"]').forEach(btn => {
+      btn.addEventListener('click', () => applyRoute(btn));
+    });
+  </script>
+</BaseLayout>

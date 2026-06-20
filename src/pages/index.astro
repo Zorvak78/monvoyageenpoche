@@ -12,14 +12,18 @@ const heroSlides = [
   '/images/inspiration/swakopmund.jpg',
 ];
 
-const inspirations = [
-  { country: 'Namibie', duration: '14 jours', title: 'Grand tour des dunes & savanes', image: '/images/inspiration/sossusvlei.jpg', tags: 'Nature · Aventure', href: '/voyage/destination', available: true },
-  { country: 'Italie', duration: '7 jours', title: 'Toscane & cinq terres', image: '/images/inspiration/deadvlei.jpg', tags: 'Culture · Gastronomie', href: '#', available: false },
-  { country: 'Pérou', duration: '12 jours', title: 'Andes, Cusco & Machu Picchu', image: '/images/inspiration/etosha.jpg', tags: 'Aventure · Culture', href: '#', available: false },
-  { country: 'Japon', duration: '15 jours', title: 'Tokyo, Kyoto & Mont Fuji', image: '/images/inspiration/spitzkoppe.jpg', tags: 'Culture · Gastronomie', href: '#', available: false },
-  { country: 'Islande', duration: '10 jours', title: 'Cercle d\'or & fjords', image: '/images/inspiration/skeleton-coast.jpg', tags: 'Nature · Photographie', href: '#', available: false },
-  { country: 'Vietnam', duration: '14 jours', title: 'Du Nord au Sud', image: '/images/inspiration/victoria-falls.jpg', tags: 'Culture · Gastronomie', href: '#', available: false },
-];
+// Carrousel inspirations : on liste les vrais voyages suggérés des 4 pays
+import { getCollection } from 'astro:content';
+const routes = await getCollection('routes');
+const inspirations = routes.map(r => ({
+  country: r.data.country,
+  duration: `${r.data.days} jours`,
+  title: r.data.title,
+  tagline: r.data.tagline,
+  image: r.data.heroImage,
+  href: `/voyages/${r.data.country}/${r.data.slug}`,
+  available: true,
+}));
 ---
 
 <BaseLayout
@@ -131,14 +135,12 @@ const inspirations = [
               {!it.available && <span class="px-3 py-1 rounded-full bg-amber text-charcoal text-xs font-semibold">Bientôt</span>}
             </div>
             <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <p class="text-xs text-amber font-semibold mb-1 tracking-wide uppercase">{it.duration} · {it.tags}</p>
+              <p class="text-xs text-amber font-semibold mb-1 tracking-wide uppercase">{it.duration} · {it.tagline}</p>
               <h3 class="font-display text-xl font-bold leading-tight mb-3">{it.title}</h3>
-              {it.available && (
-                <a href={it.href} class="inline-flex items-center gap-2 text-sm font-semibold hover:text-amber transition-colors">
-                  Planifier ce voyage
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                </a>
-              )}
+              <a href={it.href} class="inline-flex items-center gap-2 text-sm font-semibold hover:text-amber transition-colors">
+                Voir le voyage
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              </a>
             </div>
           </article>
         ))}

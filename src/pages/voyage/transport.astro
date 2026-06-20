@@ -136,7 +136,7 @@ import FunnelLayout from '../../layouts/FunnelLayout.astro';
               ${data ? `<p class="text-sm text-slate">Estimé <strong class="text-deep-teal">~${flightTotal.toLocaleString('fr-FR')} €</strong> (~${data.flightPerAdult} €/personne aller-retour)</p>` : ''}
               ${!hasIata ? `<p class="text-xs text-slate/60 mt-2">⓵ « ${trip.departureCity} » n'est pas dans notre liste de villes connues — Skyscanner s'ouvrira sur la recherche libre, complète à la main.</p>` : ''}
             </div>
-            <a href="${flightUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#0770e3] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+            <a href="${flightUrl}" target="_blank" rel="noopener nofollow sponsored" data-track="flight" data-track-context="${trip.departureCity}-${country}" data-track-partner="skyscanner" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#0770e3] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
               Voir sur Skyscanner
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
@@ -177,7 +177,7 @@ import FunnelLayout from '../../layouts/FunnelLayout.astro';
               </p>
               ${data ? `<p class="text-sm text-slate">Estimé <strong class="text-deep-teal">~${carTotal.toLocaleString('fr-FR')} €</strong> (~${data.carPerDay} €/jour)</p>` : ''}
             </div>
-            <a href="${carUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FF6F00] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+            <a href="${carUrl}" target="_blank" rel="noopener nofollow sponsored" data-track="car" data-track-context="${country}" data-track-partner="discovercars" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#FF6F00] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
               Voir sur DiscoverCars
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
@@ -217,7 +217,7 @@ import FunnelLayout from '../../layouts/FunnelLayout.astro';
                 Le réseau ferroviaire est bien développé pour cette destination. Compare les trajets en train via Trainline.
               </p>
             </div>
-            <a href="${trainUrl}" target="_blank" rel="noopener nofollow sponsored" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#00A88E] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
+            <a href="${trainUrl}" target="_blank" rel="noopener nofollow sponsored" data-track="train" data-track-context="${country}" data-track-partner="trainline" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#00A88E] text-white font-semibold hover:opacity-90 transition-opacity flex-shrink-0">
               Voir sur Trainline
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
