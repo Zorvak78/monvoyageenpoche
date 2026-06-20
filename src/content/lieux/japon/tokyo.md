@@ -4,7 +4,7 @@ country: "japon"
 region: "Kantō"
 regionSlug: "kanto"
 type: "Mégalopole"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/tokyo.jpg"
 description: "37 millions d'habitants. Shibuya scramble, temples Asakusa, Shinjuku néon, Akihabara otaku, food halls. Le futur et le passé, simultanés."
 lat: 35.6762
 lng: 139.6503

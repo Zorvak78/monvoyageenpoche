@@ -4,7 +4,7 @@ country: "japon"
 region: "Chūbu"
 regionSlug: "chubu"
 type: "Village UNESCO"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/shirakawa-go.jpg"
 description: "Maisons gassho-zukuri aux toits de chaume géants comme des mains en prière. Vallée enneigée l'hiver, magique au crépuscule."
 lat: 36.2585
 lng: 136.9069

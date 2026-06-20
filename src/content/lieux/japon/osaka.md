@@ -4,7 +4,7 @@ country: "japon"
 region: "Kansai"
 regionSlug: "kansai"
 type: "Mégapole"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/osaka.jpg"
 description: "Capitale gastronomique : takoyaki, okonomiyaki, ramen. Dotonbori néon, château, atmosphère populaire et chaleureuse opposée à Tokyo."
 lat: 34.6937
 lng: 135.5023

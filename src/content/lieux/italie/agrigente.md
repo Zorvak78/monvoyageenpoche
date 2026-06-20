@@ -4,7 +4,7 @@ country: "italie"
 region: "Sicile"
 regionSlug: "sicile"
 type: "Site archéologique"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/agrigente.jpg"
 description: "Vallée des Temples UNESCO : sept temples doriques mieux conservés qu'en Grèce, dressés face à la Méditerranée."
 lat: 37.3111
 lng: 13.5765

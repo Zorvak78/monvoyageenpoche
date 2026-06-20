@@ -4,7 +4,7 @@ country: "italie"
 region: "Pouilles"
 regionSlug: "pouilles"
 type: "Ville"
-image: "/images/placeholder.svg"
+image: "/images/lieux/italie/bari.jpg"
 description: "Capitale des Pouilles, port adriatique. Vieille ville Bari Vecchia où l'on fabrique les orecchiette dans la rue, basilique Saint-Nicolas."
 lat: 41.1171
 lng: 16.8719

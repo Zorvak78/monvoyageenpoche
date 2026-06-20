@@ -4,7 +4,7 @@ country: "japon"
 region: "Kyūshū"
 regionSlug: "kyushu"
 type: "Capitale Kyūshū"
-image: "/images/placeholder.svg"
+image: "/images/lieux/japon/fukuoka.jpg"
 description: "Métropole moderne et accessible. Berceau du ramen tonkotsu, yatai (stands de rue) sur la rivière, atmosphère détendue."
 lat: 33.5904
 lng: 130.4017
