@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f4ef">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="Ma garde-robe et toutes les tenues possibles, generees automatiquement.">
+<title>Garde-robe · Tenues</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232b3652'/%3E%3Cpath d='M50 22c-6 0-10 4-10 9 0 4 3 6 3 8l-20 13c-2 1-3 3-3 5v18c0 2 2 4 4 4h52c2 0 4-2 4-4V57c0-2-1-4-3-5L57 39c0-2 3-4 3-8 0-5-4-9-10-9z' fill='%23e3d8c3'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   PALETTE & BASES
+   ============================================================ */
+:root{
+  --fond:#f7f4ef;
+  --fond-2:#efe9e0;
+  --carte:#fffdfa;
+  --encre:#2b2723;
+  --encre-2:#6f665d;
+  --encre-3:#9a9088;
+  --trait:#e5ded3;
+  --accent:#2b3652;
+  --ombre:0 1px 2px rgba(43,39,35,.05), 0 4px 16px rgba(43,39,35,.05);
+  --ombre-h:0 2px 6px rgba(43,39,35,.08), 0 10px 28px rgba(43,39,35,.09);
+  --r:14px;
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--fond);
+  color:var(--encre);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.45;
+  padding-bottom:calc(84px + var(--sab));
+}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* ============================================================
+   EN-TETE + FILTRES
+   ============================================================ */
+header{
+  position:sticky;top:0;z-index:30;
+  background:rgba(247,244,239,.93);
+  -webkit-backdrop-filter:saturate(1.6) blur(12px);
+  backdrop-filter:saturate(1.6) blur(12px);
+  border-bottom:1px solid var(--trait);
+  padding:calc(10px + var(--sat)) 0 0;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 14px}
+.titre{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.titre h1{font-size:19px}
+.compteur{font-size:13px;color:var(--encre-2);font-variant-numeric:tabular-nums}
+.filtres{padding:6px 0 9px}
+.groupe{margin-top:7px}
+.groupe > .lbl{
+  font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--encre-3);font-weight:600;margin-bottom:5px;display:block;
+}
+.chips{
+  display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 22px),transparent);
+}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;border:1px solid var(--trait);background:var(--carte);
+  border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;
+  color:var(--encre-2);white-space:nowrap;transition:background .15s,color .15s,border-color .15s;
+}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.fav[aria-pressed="true"]{background:#a8712a;border-color:#a8712a}
+select{
+  width:100%;font-size:16px;padding:8px 34px 8px 12px;border-radius:10px;
+  border:1px solid var(--trait);background:var(--carte);color:var(--encre);
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%239a9088' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:12px;
+}
+.raz{
+  background:none;border:none;color:var(--encre-3);font-size:13px;
+  text-decoration:underline;padding:6px 0;
+}
+
+/* ============================================================
+   GRILLE DE TENUES
+   ============================================================ */
+main{padding-top:14px}
+.grille{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:560px){.grille{grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}}
+
+.carte{
+  background:var(--carte);border:1px solid var(--trait);border-radius:var(--r);
+  box-shadow:var(--ombre);padding:13px 14px 12px;position:relative;
+  display:flex;flex-direction:column;gap:10px;
+}
+.carte-tete{display:flex;align-items:center;gap:8px}
+.badge{
+  font-size:11px;font-weight:650;letter-spacing:.02em;padding:4px 9px;border-radius:999px;
+  color:#fff;white-space:nowrap;
+}
+.badges-sec{display:flex;gap:4px;flex-wrap:wrap}
+.badge-sec{
+  font-size:10.5px;font-weight:600;padding:3px 7px;border-radius:999px;
+  background:var(--fond-2);color:var(--encre-2);
+}
+.etoile{
+  margin-left:auto;background:none;border:none;padding:2px 0 2px 8px;
+  font-size:20px;line-height:1;color:var(--trait);transition:transform .12s,color .12s;
+}
+.etoile[aria-pressed="true"]{color:#d99a2b}
+.etoile:active{transform:scale(.85)}
+
+.harmonie{display:flex;gap:5px;align-items:center}
+.harmonie .past{width:26px;height:26px;border-radius:50%}
+.past{
+  flex:0 0 auto;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(43,39,35,.14), 0 1px 1px rgba(43,39,35,.06);
+}
+
+.lignes{display:flex;flex-direction:column;gap:6px}
+.ligne{display:flex;align-items:center;gap:8px;font-size:14.5px}
+.ligne .past{width:15px;height:15px}
+.ligne .r-lbl{
+  font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--encre-3);
+  font-weight:650;width:80px;flex:0 0 80px;white-space:nowrap;
+}
+.ligne .r-val{color:var(--encre);line-height:1.3}
+.ligne .r-val em{font-style:normal;color:var(--encre-2)}
+
+.pied{
+  border-top:1px dashed var(--trait);padding-top:8px;
+  font-size:11.5px;color:var(--encre-3);display:flex;gap:6px;flex-wrap:wrap;
+}
+.sais{background:var(--fond-2);border-radius:6px;padding:2px 7px;color:var(--encre-2);font-weight:500}
+
+.vide{
+  text-align:center;color:var(--encre-2);padding:48px 20px;font-size:15px;
+  background:var(--carte);border:1px dashed var(--trait);border-radius:var(--r);
+}
+.plus{
+  display:block;width:100%;margin:16px 0 4px;padding:14px;border-radius:12px;
+  border:1px solid var(--trait);background:var(--carte);font-weight:600;color:var(--encre-2);
+  box-shadow:var(--ombre);
+}
+
+/* ============================================================
+   BOUTON TENUE DU JOUR + MODALE
+   ============================================================ */
+.barre{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  padding:10px 14px calc(10px + var(--sab));
+  background:linear-gradient(to top,var(--fond) 62%,rgba(247,244,239,0));
+  pointer-events:none;
+}
+.barre .wrap{pointer-events:auto}
+.cta{
+  width:100%;max-width:1180px;margin:0 auto;display:block;
+  background:var(--accent);color:#fff;border:none;border-radius:13px;
+  padding:15px;font-size:16px;font-weight:650;letter-spacing:.01em;
+  box-shadow:0 6px 20px rgba(43,54,82,.28);
+}
+.cta:active{transform:translateY(1px)}
+
+dialog{
+  position:fixed;inset:0;z-index:60;
+  border:none;padding:0;background:transparent;max-width:none;max-height:none;
+  width:100%;height:100%;margin:0;overflow:visible;
+}
+dialog:not([open]){display:none}
+dialog::backdrop{background:rgba(43,39,35,.45);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.modale{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(420px,calc(100vw - 28px));max-height:calc(100vh - 40px);overflow:auto;
+  background:var(--fond);border-radius:18px;padding:16px;box-shadow:var(--ombre-h);
+}
+.modale h2{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.modale h2 span{font-size:11px;font-weight:600;color:var(--encre-3);text-transform:uppercase;letter-spacing:.08em}
+.modale-actions{display:flex;gap:8px;margin-top:12px}
+.modale-actions button{
+  flex:1;padding:13px;border-radius:11px;border:1px solid var(--trait);
+  background:var(--carte);font-weight:600;font-size:15px;
+}
+.modale-actions .prim{background:var(--accent);border-color:var(--accent);color:#fff}
+
+footer{padding:6px 0 4px;color:var(--encre-3);font-size:11.5px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="titre">
+      <h1>Ma garde-robe</h1>
+      <span class="compteur" id="compteur">…</span>
+    </div>
+    <div class="filtres">
+      <div class="groupe">
+        <span class="lbl">Contexte</span>
+        <div class="chips" id="f-contexte"></div>
+      </div>
+      <div class="groupe">
+        <span class="lbl">Saison</span>
+        <div class="chips" id="f-saison"></div>
+      </div>
+      <div class="groupe">
+        <span class="lbl">Je veux porter</span>
+        <select id="f-piece" aria-label="Filtrer par pièce"></select>
+      </div>
+      <div class="groupe" style="display:flex;align-items:center;gap:10px">
+        <div class="chips" style="flex:1">
+          <button class="chip fav" id="f-favoris" aria-pressed="false" type="button">★ Favoris</button>
+        </div>
+        <button class="raz" id="raz" type="button">Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grille" id="grille"></div>
+  <button class="plus" id="plus" type="button" hidden>Voir plus de tenues</button>
+  <footer id="pied-page"></footer>
+</main>
+
+<div class="barre"><div class="wrap"><button class="cta" id="cta" type="button">🎲 Tenue du jour</button></div></div>
+
+<dialog id="modale">
+  <div class="modale">
+    <h2>Tenue du jour <span id="modale-sous"></span></h2>
+    <div id="modale-carte"></div>
+    <div class="modale-actions">
+      <button type="button" id="retirer">Autre tirage</button>
+      <button type="button" class="prim" id="fermer">Fermer</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+/* ============================================================================
+   1. DONNEES — LA GARDE-ROBE
+   ----------------------------------------------------------------------------
+   Pour faire evoluer l'application : ajoutez / modifiez une piece ci-dessous,
+   les nouvelles tenues apparaissent toutes seules. Aucune tenue n'est ecrite
+   en dur, elles sont toutes calculees a partir de ces objets + des regles (§2).
+
+   Champs communs a toutes les pieces :
+     id         identifiant unique (utilise pour les regles et les favoris)
+     nom        libelle affiche
+     couleur    libelle de la couleur
+     hex        pastille affichee sur la carte (couleur reelle du vetement)
+     clarte     1 = tres fonce … 5 = tres clair. Sert a la regle de contraste.
+                (1-2 = fonce, 3 = moyen, 4-5 = clair)
+     formalite  0 = tres decontracte … 3 = habille. Sert a deduire le contexte.
+     saisons    saisons ou la piece est portable ('ete', 'mi', 'hiver')
+     motif      optionnel : nom du motif (regle « un seul motif par tenue »)
+   ============================================================================ */
+
+const GARDE_ROBE = {
+
+  /* --- Tee-shirts : portes seuls, sous une surchemise, ou sous la chemise en lin -- */
+  tees: [
+    { id:'tee-blanc',   nom:'Tee-shirt',  couleur:'blanc',      hex:'#f7f5f0', clarte:5, formalite:1, saisons:['ete','mi'], blancPur:true },
+    { id:'tee-bordeaux',nom:'Tee-shirt',  couleur:'bordeaux',   hex:'#6e2639', clarte:2, formalite:1, saisons:['ete','mi'] },
+    { id:'tee-vert',    nom:'Tee-shirt',  couleur:'vert foncé', hex:'#2e4636', clarte:1, formalite:1, saisons:['ete','mi'] },
+    { id:'tee-ecru',    nom:'Tee-shirt',  couleur:'écru',       hex:'#e3d8c3', clarte:4, formalite:1, saisons:['ete','mi'] }
+  ],
+
+  /* --- Mailles & pulls : une seule couche structuree par tenue (regle 5) -------- */
+  mailles: [
+    { id:'maille-marine', nom:'Maille manches courtes', couleur:'marine', hex:'#2a3550', clarte:1, formalite:2, saisons:['ete','mi'], manches:'courtes' },
+    { id:'maille-marron', nom:'Maille manches courtes', couleur:'marron', hex:'#6b4a34', clarte:2, formalite:2, saisons:['ete','mi'], manches:'courtes' },
+
+    { id:'pull-terracotta', nom:'Pull manches longues', couleur:'terracotta',   hex:'#b0603c', clarte:3, formalite:2, saisons:['mi','hiver'], manches:'longues' },
+    { id:'pull-camel',      nom:'Pull manches longues', couleur:'camel',        hex:'#c08e52', clarte:4, formalite:2, saisons:['mi','hiver'], manches:'longues' },
+    { id:'pull-marine-chine',nom:'Pull manches longues',couleur:'marine chiné', hex:'#3a465f', clarte:1, formalite:2, saisons:['mi','hiver'], manches:'longues', motif:'chiné' },
+    // Les deux pulls clairs ci-dessous exigent un col de chemise fonce qui depasse.
+    { id:'pull-ecru',       nom:'Pull manches longues', couleur:'écru',         hex:'#e5dcc8', clarte:4, formalite:2, saisons:['mi','hiver'], manches:'longues', exigeColFonce:true },
+    { id:'pull-taupe',      nom:'Pull manches longues', couleur:'taupe clair',  hex:'#b3a392', clarte:4, formalite:2, saisons:['mi','hiver'], manches:'longues', exigeColFonce:true }
+  ],
+
+  /* --- Chemises : seules, sous un pull manches longues, ou (lin) sur un tee ----- */
+  chemises: [
+    { id:'chemise-oxford',    nom:'Chemise oxford',      couleur:'bleu ciel',       hex:'#a8c4dc', clarte:4, formalite:3, saisons:['ete','mi','hiver'] },
+    { id:'chemise-bleu-moyen',nom:'Chemise slim',        couleur:'bleu moyen',      hex:'#5a7fa8', clarte:3, formalite:3, saisons:['ete','mi','hiver'] },
+    { id:'chemise-lin',       nom:'Chemise en lin',      couleur:'blanche',         hex:'#f2eee6', clarte:5, formalite:2, saisons:['ete'], transparente:true }
+  ],
+
+  /* --- Couches exterieures ----------------------------------------------------- */
+  couches: [
+    { id:'surchemise-kaki', nom:'Surchemise',      couleur:'kaki',       hex:'#6b6a47', clarte:2, formalite:1, saisons:['mi','hiver'], type:'surchemise' },
+    { id:'manteau-camel',   nom:'Manteau en laine',couleur:'camel',      hex:'#b98e58', clarte:4, formalite:3, saisons:['hiver'],      type:'manteau' }
+  ],
+
+  /* --- Bas --------------------------------------------------------------------
+     passants     : true => ceinture cuir marron obligatoire (regle 3)
+     chaussettes  : chaussettes accordees a la couleur du pantalon (regle 1)
+     court        : true => short (regle 2 : socquettes + sneakers uniquement)     */
+  bas: [
+    { id:'jean-indigo',  nom:'Jean indigo brut', couleur:'indigo (Levi’s 511)', hex:'#2c3e5c', clarte:2, formalite:2, saisons:['ete','mi','hiver'], passants:true, chaussettes:['ch-marine'] },
+    { id:'chino-olive',  nom:'Chino',            couleur:'olive',                    hex:'#55583c', clarte:2, formalite:2, saisons:['ete','mi','hiver'], passants:true, chaussettes:['ch-kaki'] },
+    // Aucune chaussette beige au tiroir : l'anthracite est le neutre le plus proche.
+    { id:'chino-beige',  nom:'Chino',            couleur:'beige',                    hex:'#c8b394', clarte:4, formalite:2, saisons:['ete','mi','hiver'], passants:true, chaussettes:['ch-anthracite'] },
+    { id:'short-olive',  nom:'Short',            couleur:'olive',                    hex:'#5b5e3f', clarte:2, formalite:0, saisons:['ete'], passants:true,  court:true, chaussettes:['ch-socquettes'] },
+    { id:'short-marine', nom:'Short',            couleur:'marine',                   hex:'#26314b', clarte:1, formalite:0, saisons:['ete'], passants:true,  court:true, chaussettes:['ch-socquettes'] },
+    { id:'short-lin',    nom:'Short en lin',     couleur:'blanc',                    hex:'#f0ebe0', clarte:5, formalite:0, saisons:['ete'], passants:false, court:true, chaussettes:['ch-socquettes'] }
+  ],
+
+  chaussures: [
+    { id:'chukka',   nom:'Chukka daim', couleur:'marine',  hex:'#33405c', clarte:2, formalite:3, saisons:['mi','hiver'],       avecShort:false },
+    { id:'sneakers', nom:'Sneakers',    couleur:'blanches',hex:'#f2f2f0', clarte:5, formalite:1, saisons:['ete','mi','hiver'], avecShort:true }
+  ],
+
+  chaussettes: [
+    { id:'ch-marine',     nom:'Chaussettes longues', couleur:'marine',      hex:'#2a3550', clarte:1, formalite:2, saisons:['ete','mi','hiver'] },
+    { id:'ch-anthracite', nom:'Chaussettes longues', couleur:'anthracite',  hex:'#3a3d42', clarte:1, formalite:2, saisons:['ete','mi','hiver'] },
+    { id:'ch-kaki',       nom:'Chaussettes longues', couleur:'kaki foncé',  hex:'#4a4b34', clarte:1, formalite:2, saisons:['ete','mi','hiver'] },
+    { id:'ch-socquettes', nom:'Socquettes',          couleur:'blanches',    hex:'#f5f5f2', clarte:5, formalite:0, saisons:['ete','mi'] }
+  ],
+
+  accessoires: [
+    { id:'ceinture-marron', nom:'Ceinture cuir', couleur:'marron', hex:'#6b452c', clarte:2, formalite:2, saisons:['ete','mi','hiver'] }
+  ]
+};
+
+/* ============================================================================
+   2. REGLES DE COMPOSITION
+   ----------------------------------------------------------------------------
+   Les regles « structurelles » (1 a 9) sont appliquees par le generateur (§3).
+   Les interdits ci-dessous sont declaratifs : une tenue est rejetee des qu'elle
+   contient TOUTES les pieces d'un groupe `si` ET une piece de `avec`.
+   ============================================================================ */
+
+const INTERDITS = [
+  { si:['short-lin'],       avec:['tee-blanc','tee-ecru'],                                   raison:'monochrome clair' },
+  { si:['chino-beige'],     avec:['chemise-lin','pull-ecru','pull-taupe','tee-ecru'],        raison:'beige sur beige' },
+  { si:['manteau-camel'],   avec:['chino-beige','pull-camel','pull-ecru','pull-taupe'],      raison:'camel sur camel' },
+  { si:['tee-vert'],        avec:['chino-olive','surchemise-kaki'],                          raison:'trop de vert' },
+  { si:['pull-camel'],      avec:['chino-beige'],                                            raison:'camel sur beige' }
+];
+
+// Regle 4 : bucket de clarte. Un haut clair impose un bas fonce, et inversement.
+const bucket = (c) => c <= 2 ? 'fonce' : (c === 3 ? 'moyen' : 'clair');
+
+// Regle 8 : sous le manteau camel, tout doit etre fonce (clarte <= 3 :
+// marine, marron, terracotta, olive, indigo, kaki…).
+const SEUIL_SOUS_MANTEAU = 3;
+
+const SAISONS = [
+  { id:'ete',   nom:'Été' },
+  { id:'mi',    nom:'Mi-saison' },
+  { id:'hiver', nom:'Hiver' }
+];
+
+const CONTEXTES = [
+  { id:'bureau',      nom:'Bureau',              hex:'#2b3652' },
+  { id:'bureau-deco', nom:'Bureau décontracté',  hex:'#5a7fa8' },
+  { id:'soiree',      nom:'Soirée',              hex:'#4d2b3d' },
+  { id:'weekend',     nom:'Week-end',            hex:'#55583c' },
+  { id:'ete',         nom:'Été',                 hex:'#b0603c' },
+  { id:'hiver',       nom:'Hiver',               hex:'#4a5566' }
+];
+
+/* ============================================================================
+   3. GENERATEUR DE TENUES
+   ----------------------------------------------------------------------------
+   Aucune tenue n'est ecrite en dur : on enumere toutes les combinaisons
+   possibles puis on elimine celles qui violent une regle.
+   ============================================================================ */
+
+const G = GARDE_ROBE;
+const parId = {};
+[].concat(G.tees,G.mailles,G.chemises,G.couches,G.bas,G.chaussures,G.chaussettes,G.accessoires)
+  .forEach(p => { parId[p.id] = p; });
+
+const CEINTURE = parId['ceinture-marron'];
+const inter = (a,b) => a.filter(x => b.includes(x));
+
+/* --- 3.1 Silhouettes du haut ------------------------------------------------
+   Regle 5 : pull OU surchemise, jamais les deux.
+   Regle 6 : chemise en lin blanche => tee blanc pur dessous, obligatoire.
+   Regle 7 : surchemise kaki uniquement ouverte sur un tee-shirt.
+   Un tee sous une chemise opaque ou sous un pull n'est pas liste : il ne se
+   voit pas et ne change rien a la tenue.                                      */
+function silhouettes(){
+  const out = [];
+  const surchemise = G.couches.find(c => c.type === 'surchemise');
+
+  G.tees.forEach(tee => {
+    out.push({ tee });                                   // tee seul
+    if (surchemise) out.push({ tee, surchemise });        // tee + surchemise ouverte
+  });
+
+  G.mailles.forEach(maille => {
+    // Un pull clair (ecru, taupe) ne se porte pas sans col de chemise fonce.
+    if (!maille.exigeColFonce) out.push({ maille });
+    // Chemise dessous : seulement sous une maille manches longues.
+    if (maille.manches === 'longues') {
+      G.chemises.forEach(chemise => out.push({ maille, chemise }));
+    }
+  });
+
+  G.chemises.forEach(chemise => {
+    if (chemise.transparente) {
+      const teeBlanc = G.tees.find(t => t.blancPur);
+      if (teeBlanc) out.push({ chemise, tee: teeBlanc }); // regle 6
+    } else {
+      out.push({ chemise });                              // chemise seule
+    }
+  });
+
+  return out;
+}
+
+/* --- 3.2 Contexte et formalite ---------------------------------------------- */
+function contextes(t, saisons){
+  const score = t.hautPrincipal.formalite
+    + (t.chemise && t.maille ? 1 : 0)
+    + t.bas.formalite
+    + t.chaussures.formalite
+    + (t.manteau ? 1 : 0);
+
+  const ctx = [];
+  if (!t.bas.court && t.chemise && !t.surchemise && score >= 7) ctx.push('bureau');
+  if (!t.bas.court && score >= 5 && !ctx.includes('bureau')) ctx.push('bureau-deco');
+  if (t.bas.court || score <= 6) ctx.push('weekend');
+
+  const sombre = [t.tee,t.chemise,t.maille,t.surchemise,t.bas]
+    .filter(Boolean).every(p => p.clarte <= 3);
+  if (!t.bas.court && sombre && score >= 5) ctx.push('soiree');
+
+  if (saisons.includes('ete') && !t.surchemise && !t.manteau) ctx.push('ete');
+  if (saisons.includes('hiver') && (t.manteau || t.surchemise ||
+      (t.maille && t.maille.manches === 'longues'))) ctx.push('hiver');
+
+  return { ctx, score };
+}
+
+/* --- 3.3 Generation complete ------------------------------------------------ */
+function genererTenues(){
+  const tenues = [];
+  const manteau = G.couches.find(c => c.type === 'manteau');
+  const vus = new Set();
+
+  silhouettes().forEach(s => {
+    [null, manteau].forEach(mant => {
+      G.bas.forEach(bas => {
+        bas.chaussettes.forEach(csId => {
+          const chaussettes = parId[csId];
+          G.chaussures.forEach(chaussures => {
+
+            const t = {
+              tee: s.tee || null, chemise: s.chemise || null, maille: s.maille || null,
+              surchemise: s.surchemise || null, manteau: mant || null,
+              bas, chaussettes, chaussures,
+              ceinture: bas.passants ? CEINTURE : null
+            };
+            t.hautPrincipal = t.maille || t.chemise || t.tee;
+
+            const pieces = [t.tee,t.chemise,t.maille,t.surchemise,t.manteau,
+                            t.bas,t.chaussettes,t.chaussures,t.ceinture].filter(Boolean);
+
+            // Regle 2 — short : socquettes blanches + sneakers uniquement,
+            // jamais de chaussettes longues, jamais de chukka.
+            if (bas.court && !chaussures.avecShort) return;
+            if (bas.court && chaussettes.id !== 'ch-socquettes') return;
+            if (!bas.court && chaussettes.id === 'ch-socquettes') return;
+
+            // Saisons : intersection de toutes les pieces, sinon la tenue n'existe pas.
+            let saisons = ['ete','mi','hiver'];
+            pieces.forEach(p => { saisons = inter(saisons, p.saisons); });
+            if (!saisons.length) return;
+
+            // Regle 4 — contraste : un haut clair impose un bas fonce, et inversement.
+            const bh = bucket(t.hautPrincipal.clarte), bb = bucket(bas.clarte);
+            if (bh === bb && bh !== 'moyen') return;
+
+            // Regle 8 — sous le manteau camel, tout doit etre fonce.
+            if (t.manteau && [t.tee,t.chemise,t.maille,t.surchemise,t.bas]
+                .filter(Boolean).some(p => p.clarte > SEUIL_SOUS_MANTEAU)) return;
+
+            // Pull ecru / taupe : col de chemise fonce obligatoire.
+            if (t.maille && t.maille.exigeColFonce &&
+                !(t.chemise && t.chemise.clarte <= 3)) return;
+
+            // Regle 9 — un seul motif maximum.
+            if (pieces.filter(p => p.motif).length > 1) return;
+
+            // Interdits declares en §2.
+            const ids = pieces.map(p => p.id);
+            const interdit = INTERDITS.some(r =>
+              r.si.every(x => ids.includes(x)) && r.avec.some(x => ids.includes(x)));
+            if (interdit) return;
+
+            const cle = ids.slice().sort().join('|');
+            if (vus.has(cle)) return;
+            vus.add(cle);
+
+            const { ctx, score } = contextes(t, saisons);
+            tenues.push(Object.assign(t, { id:cle, pieces, ids, saisons, contextes:ctx, score }));
+          });
+        });
+      });
+    });
+  });
+
+  // Tri : contexte le plus habille d'abord, puis formalite decroissante.
+  const rang = c => CONTEXTES.findIndex(x => x.id === c);
+  tenues.sort((a,b) =>
+    rang(a.contextes[0]) - rang(b.contextes[0]) || b.score - a.score ||
+    a.id.localeCompare(b.id));
+  return tenues;
+}
+
+const TENUES = genererTenues();
+
+/* ============================================================================
+   4. INTERFACE
+   ============================================================================ */
+
+const $ = (s) => document.querySelector(s);
+const CLE_FAV = 'garde-robe.favoris.v1';
+const PAGE = 40;
+
+let favoris = new Set();
+try { favoris = new Set(JSON.parse(localStorage.getItem(CLE_FAV) || '[]')); } catch(e){}
+function sauverFavoris(){
+  try { localStorage.setItem(CLE_FAV, JSON.stringify([...favoris])); } catch(e){}
+}
+
+const filtres = { contexte:null, saison:null, piece:'', favoris:false };
+let visibles = PAGE;
+
+function el(tag, cls, txt){
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+}
+function pastille(p, taille){
+  const n = el('span','past');
+  n.style.background = p.hex;
+  if (taille){ n.style.width = taille + 'px'; n.style.height = taille + 'px'; }
+  n.title = p.nom + ' ' + p.couleur;
+  return n;
+}
+const libelle = (p) => p.nom + ' ' + p.couleur;
+
+/* --- 4.1 Carte d'une tenue --------------------------------------------------- */
+function carte(t){
+  const c = el('div','carte');
+  c.dataset.id = t.id;
+
+  // En-tete : badge de contexte principal + contextes secondaires + favori
+  const tete = el('div','carte-tete');
+  const principal = CONTEXTES.find(x => x.id === t.contextes[0]);
+  if (principal){
+    const b = el('span','badge', principal.nom);
+    b.style.background = principal.hex;
+    tete.appendChild(b);
+  }
+  const secs = el('div','badges-sec');
+  t.contextes.slice(1).forEach(id => {
+    const cx = CONTEXTES.find(x => x.id === id);
+    if (cx) secs.appendChild(el('span','badge-sec', cx.nom));
+  });
+  tete.appendChild(secs);
+
+  const etoile = el('button','etoile','★');
+  etoile.type = 'button';
+  etoile.setAttribute('aria-pressed', favoris.has(t.id));
+  etoile.setAttribute('aria-label','Ajouter aux favoris');
+  etoile.addEventListener('click', () => {
+    if (favoris.has(t.id)) favoris.delete(t.id); else favoris.add(t.id);
+    sauverFavoris();
+    document.querySelectorAll('.carte[data-id="' + CSS.escape(t.id) + '"] .etoile')
+      .forEach(b => b.setAttribute('aria-pressed', favoris.has(t.id)));
+    if (filtres.favoris) rendre();
+  });
+  tete.appendChild(etoile);
+  c.appendChild(tete);
+
+  // Harmonie : une pastille par piece de la tenue
+  const harm = el('div','harmonie');
+  t.pieces.forEach(p => harm.appendChild(pastille(p)));
+  c.appendChild(harm);
+
+  // Le detail, de haut en bas
+  const lignes = el('div','lignes');
+  const ligne = (lbl, p, suffixe) => {
+    if (!p) return;
+    const l = el('div','ligne');
+    l.appendChild(pastille(p));
+    l.appendChild(el('span','r-lbl', lbl));
+    const v = el('span','r-val', p.nom + ' ');
+    v.appendChild(el('em', null, p.couleur + (suffixe || '')));
+    l.appendChild(v);
+    lignes.appendChild(l);
+  };
+
+  ligne('Haut', t.hautPrincipal);
+  if (t.maille && t.chemise) ligne('Dessous', t.chemise, ' — col qui dépasse');
+  else if (t.chemise && t.tee) ligne('Dessous', t.tee);
+  ligne('Couche', t.surchemise, ' — ouverte');
+  ligne('Manteau', t.manteau);
+  ligne('Bas', t.bas);
+  ligne('Chaussettes', t.chaussettes);
+  ligne('Chaussures', t.chaussures);
+  ligne('Ceinture', t.ceinture);
+  c.appendChild(lignes);
+
+  const pied = el('div','pied');
+  t.saisons.forEach(s => {
+    const sn = SAISONS.find(x => x.id === s);
+    if (sn) pied.appendChild(el('span','sais', sn.nom));
+  });
+  c.appendChild(pied);
+  return c;
+}
+
+/* --- 4.2 Filtres ------------------------------------------------------------- */
+function construireFiltres(){
+  const boutons = (cible, items, champ) => {
+    const zone = $(cible);
+    zone.innerHTML = '';
+    const tout = el('button','chip','Tout');
+    tout.type = 'button';
+    tout.setAttribute('aria-pressed', filtres[champ] === null);
+    tout.addEventListener('click', () => { filtres[champ] = null; rendre(); });
+    zone.appendChild(tout);
+    items.forEach(it => {
+      const b = el('button','chip', it.nom);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', filtres[champ] === it.id);
+      b.addEventListener('click', () => { filtres[champ] = it.id; rendre(); });
+      zone.appendChild(b);
+    });
+  };
+  // On ne propose que les contextes reellement atteints par au moins une tenue.
+  const utilises = CONTEXTES.filter(c => TENUES.some(t => t.contextes.includes(c.id)));
+  boutons('#f-contexte', utilises, 'contexte');
+  boutons('#f-saison', SAISONS, 'saison');
+
+  const sel = $('#f-piece');
+  sel.innerHTML = '';
+  sel.appendChild(new Option('Toutes les pièces', ''));
+  const groupes = [
+    ['Tee-shirts', G.tees], ['Mailles & pulls', G.mailles], ['Chemises', G.chemises],
+    ['Couches', G.couches], ['Bas', G.bas], ['Chaussures', G.chaussures],
+    ['Chaussettes', G.chaussettes], ['Accessoires', G.accessoires]
+  ];
+  groupes.forEach(([nom, liste]) => {
+    const og = document.createElement('optgroup');
+    og.label = nom;
+    liste.forEach(p => og.appendChild(new Option(libelle(p), p.id)));
+    sel.appendChild(og);
+  });
+  sel.addEventListener('change', () => { filtres.piece = sel.value; rendre(); });
+
+  $('#f-favoris').addEventListener('click', () => {
+    filtres.favoris = !filtres.favoris;
+    rendre();
+  });
+  $('#raz').addEventListener('click', () => {
+    filtres.contexte = filtres.saison = null;
+    filtres.piece = ''; filtres.favoris = false;
+    $('#f-piece').value = '';
+    rendre();
+  });
+}
+
+function filtrer(){
+  return TENUES.filter(t =>
+    (!filtres.contexte || t.contextes.includes(filtres.contexte)) &&
+    (!filtres.saison   || t.saisons.includes(filtres.saison)) &&
+    (!filtres.piece    || t.ids.includes(filtres.piece)) &&
+    (!filtres.favoris  || favoris.has(t.id))
+  );
+}
+
+/* --- 4.3 Rendu --------------------------------------------------------------- */
+function majEtatsFiltres(){
+  const sync = (cible, champ) => {
+    [...$(cible).children].forEach((b, i) => {
+      const val = i === 0 ? null : (champ === 'contexte'
+        ? CONTEXTES.filter(c => TENUES.some(t => t.contextes.includes(c.id)))[i-1].id
+        : SAISONS[i-1].id);
+      b.setAttribute('aria-pressed', filtres[champ] === val);
+    });
+  };
+  sync('#f-contexte','contexte');
+  sync('#f-saison','saison');
+  $('#f-favoris').setAttribute('aria-pressed', filtres.favoris);
+}
+
+function rendre(reset){
+  if (reset !== false) visibles = PAGE;
+  majEtatsFiltres();
+  const liste = filtrer();
+  const grille = $('#grille');
+  grille.innerHTML = '';
+
+  $('#compteur').textContent = liste.length
+    ? liste.length + (liste.length > 1 ? ' tenues' : ' tenue')
+    : 'aucune tenue';
+
+  if (!liste.length){
+    grille.appendChild(el('div','vide',
+      filtres.favoris ? 'Aucun favori pour l’instant. Touchez l’étoile d’une tenue pour la garder ici.'
+                      : 'Aucune tenue ne correspond à ces filtres.'));
+    $('#plus').hidden = true;
+    return;
+  }
+  liste.slice(0, visibles).forEach(t => grille.appendChild(carte(t)));
+  const reste = liste.length - visibles;
+  $('#plus').hidden = reste <= 0;
+  if (reste > 0) $('#plus').textContent = 'Voir plus de tenues (' + reste + ')';
+}
+
+$('#plus').addEventListener('click', () => { visibles += PAGE; rendre(false); });
+
+/* --- 4.4 Tenue du jour ------------------------------------------------------- */
+const modale = $('#modale');
+function tirer(){
+  const liste = filtrer();
+  if (!liste.length) return;
+  const t = liste[Math.floor(Math.random() * liste.length)];
+  const zone = $('#modale-carte');
+  zone.innerHTML = '';
+  zone.appendChild(carte(t));
+  $('#modale-sous').textContent = liste.length > 1 ? 'tirée parmi ' + liste.length : '';
+  if (!modale.open){
+    if (typeof modale.showModal === 'function') modale.showModal();
+    else modale.setAttribute('open','');
+  }
+}
+$('#cta').addEventListener('click', tirer);
+$('#retirer').addEventListener('click', tirer);
+$('#fermer').addEventListener('click', () => {
+  if (typeof modale.close === 'function') modale.close();
+  else modale.removeAttribute('open');
+});
+modale.addEventListener('click', (e) => { if (e.target === modale) modale.close(); });
+
+/* --- 4.5 Demarrage ----------------------------------------------------------- */
+construireFiltres();
+rendre();
+$('#pied-page').textContent =
+  TENUES.length + ' tenues générées à partir de ' +
+  [].concat(G.tees,G.mailles,G.chemises,G.couches,G.bas,G.chaussures,G.chaussettes,G.accessoires).length +
+  ' pièces · ajoutez une pièce dans le fichier, les combinaisons suivent.';
+</script>
+</body>
+</html>
