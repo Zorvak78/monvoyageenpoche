@@ -478,7 +478,7 @@ const blank = () => ({
   updatedAt: new Date().toISOString(),
   settings: {
     theme: "auto", ownerName: "", hideAmounts: false,
-    lockEnabled: false, lockTimeout: 15,
+    lockEnabled: false, lockTimeout: 15, secDismissed: false,
     catExp: [...CAT_EXP], catInc: [...CAT_INC],
     catBizExp: [...CAT_BIZ_EXP], catBizInc: [...CAT_BIZ_INC],
     rules: [], // { kw, cat, scope:'perso'|'pro' }
@@ -2611,7 +2611,21 @@ const VIEWS = {
 };
 const ALIAS = { dashboard: "apercu", patrimoine: "comptes", bourse: "titres", credits: "dettes", autres: "divers" };
 const resolveView = v => (VIEWS[v] ? v : ALIAS[v] || null);
-function renderView() { (VIEWS[ui.view] || viewApercu)(); hydrateCharts(); }
+function renderView() {
+  (VIEWS[ui.view] || viewApercu)();
+  if (!state.settings.lockEnabled && !state.settings.secDismissed && Lock.available() && location.protocol !== "file:") {
+    const b = document.createElement("div");
+    b.className = "card";
+    b.style.cssText = "border-color:var(--warn);display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px";
+    b.innerHTML = `<span style="color:var(--warn);display:flex">${ico("lockic")}</span>
+      <div style="flex:1;min-width:210px"><b style="font-size:.9rem">Vos données ne sont pas encore chiffrées</b>
+        <div class="t-sub">Choisissez un mot de passe : l'application n'affichera rien sans lui, et vos données resteront illisibles pour tout autre visiteur.</div></div>
+      <button class="btn btn-primary btn-sm" data-act="lock-on">${ico("lockic")}Choisir un mot de passe</button>
+      <button class="btn btn-sm btn-ghost" data-act="sec-later">Plus tard</button>`;
+    const v = $("#view"); v.insertBefore(b, v.firstChild);
+  }
+  hydrateCharts();
+}
 function render() { applyTheme(); renderShell(); renderView(); }
 function go(view) {
   closeModal();
@@ -2670,6 +2684,7 @@ document.addEventListener("click", e => {
     case "rule-del": state.settings.rules.splice(+d.i, 1); save(); render(); return toast("Règle supprimée");
     case "supa-wizard": return supaWizard();
     case "lock-on": return lockOnModal();
+    case "sec-later": state.settings.secDismissed = true; save(); render(); return;
     case "lock-off": return lockOffModal();
     case "lock-change": return lockChangeModal();
     case "lock-now": return lockNow();
