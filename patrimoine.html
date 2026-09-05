@@ -307,6 +307,27 @@ pre.sql{background:var(--surface-2);border:1px solid var(--border);border-radius
 </style>
 </head>
 <body>
+<div id="boot" style="display:block;max-width:640px;margin:0 auto;padding:40px 20px;font:15px/1.55 system-ui,-apple-system,sans-serif;color:#1b1d21">
+  <p style="color:#8d8b85;font-size:.87rem">Chargement de l'application…</p>
+  <noscript><b>JavaScript est désactivé.</b> Activez-le dans les réglages de votre navigateur pour utiliser l'application.</noscript>
+  <div id="boot-late" style="display:none;margin-top:14px">
+    <b style="font-size:.95rem">L'application n'a pas démarré</b>
+    <p style="font-size:.86rem;color:#55575c;margin-top:8px">Deux causes possibles&nbsp;:</p>
+    <ul style="font-size:.86rem;color:#55575c;padding-left:18px;margin:8px 0">
+      <li>le fichier est ouvert depuis un aperçu d'application (messagerie, gestionnaire de fichiers) qui n'exécute pas les scripts&nbsp;: enregistrez-le puis ouvrez-le avec Chrome, Safari ou Firefox&nbsp;;</li>
+      <li>votre navigateur est trop ancien&nbsp;: mettez-le à jour.</li>
+    </ul>
+  </div>
+</div>
+<script>
+/* garde-fou compatible avec les très anciens moteurs : s'exécute même si le script principal échoue */
+(function () {
+  setTimeout(function () {
+    var b = document.getElementById("boot"), l = document.getElementById("boot-late");
+    if (b && l && b.parentNode) l.style.display = "block";
+  }, 2500);
+})();
+</script>
 <div class="app">
   <aside class="sidebar" id="sidebar"></aside>
   <main>
@@ -328,9 +349,9 @@ pre.sql{background:var(--surface-2);border:1px solid var(--border);border-radius
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const nb = v => { const n = typeof v === "number" ? v : parseFloat(String(v ?? "").replace(/\s/g, "").replace(",", ".")); return Number.isFinite(n) ? n : 0; };
+const nb = v => { const t = (v === null || v === undefined) ? "" : v; const n = typeof t === "number" ? t : parseFloat(String(t).replace(/\s/g, "").replace(",", ".")); return isFinite(n) ? n : 0; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const esc = s => String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const nfEur0 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 const nfEur2 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -664,7 +685,7 @@ function confirmDialog(title, msg, onYes, yesLabel = "Supprimer") {
 function formModal({ title, fields, values = {}, onSubmit, wide = false, submitLabel = "Enregistrer", extra = "" }) {
   const html = fields.map(f => {
     if (f.type === "hidden") return "";
-    const v = values[f.key] ?? f.def ?? "";
+    let v = values[f.key]; if (v === undefined || v === null) v = f.def; if (v === undefined || v === null) v = "";
     const req = f.required ? " required" : "";
     let input;
     if (f.type === "select") {
@@ -694,7 +715,7 @@ function formModal({ title, fields, values = {}, onSubmit, wide = false, submitL
         fields.forEach(f => {
           if (f.type === "check") out[f.key] = fd.get(f.key) === "on";
           else if (f.type === "number") out[f.key] = nb(fd.get(f.key));
-          else out[f.key] = (fd.get(f.key) ?? "").toString().trim();
+          else { const raw = fd.get(f.key); out[f.key] = (raw === null || raw === undefined ? "" : raw).toString().trim(); }
         });
         closeModal(); onSubmit(out);
       });
@@ -819,7 +840,7 @@ function drawBars(el, spec, W) {
   const ticks = 4; let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(spec.aria || "Graphique en barres")}">`;
   for (let i = 0; i <= ticks; i++) { const v = min + ((max - min) * i) / ticks, y = Y(v); svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="var(--grid)" stroke-width="1"/><text x="${mL - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)">${eurShort(v)}</text>`; }
   svg += `<line x1="${mL}" y1="${base.toFixed(1)}" x2="${W - mR}" y2="${base.toFixed(1)}" stroke="var(--axis)" stroke-width="1.5"/>`;
-  const nSeries = spec.stacked ? 1 : (groups[0]?.values.length || 1);
+  const nSeries = spec.stacked ? 1 : ((groups[0] && groups[0].values.length) || 1);
   const every = Math.max(1, Math.ceil(groups.length / Math.max(2, Math.floor(iw / 58))));
   groups.forEach((g, gi) => {
     const cx = mL + gw * gi + gw / 2;
@@ -844,7 +865,7 @@ function drawBars(el, spec, W) {
     }
   });
   svg += `</svg>`;
-  const legItems = (groups[0]?.values || []).map(v => ({ label: v.name, color: v.color }));
+  const legItems = ((groups[0] && groups[0].values) || []).map(v => ({ label: v.name, color: v.color }));
   el.innerHTML = svg + (spec.legend === false || legItems.length < 2 ? "" : legendHtml(legItems));
   el.querySelectorAll("path[data-k]").forEach(p => {
     p.addEventListener("pointerenter", e => {
@@ -1003,7 +1024,11 @@ function topbar(title, sub, actions = "") {
       <button class="btn btn-icon btn-ghost" data-act="theme" aria-label="Changer de thème" title="Thème clair / sombre">${ico(isDark() ? "sun" : "moon")}</button>
     </div>`;
 }
-const isDark = () => (state.settings.theme === "dark") || (state.settings.theme === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+const isDark = () => {
+  if (state.settings.theme === "dark") return true;
+  if (state.settings.theme !== "auto") return false;
+  try { return matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) { return false; }
+};
 function applyTheme() {
   const t = state.settings.theme;
   if (t === "auto") document.documentElement.removeAttribute("data-theme");
@@ -1371,7 +1396,7 @@ function viewBudget() {
   const cats = byCategory(txs, ym).map((x, i) => ({ ...x, color: SERIES[i % 8] }));
   const budgets = state.personal.budgets || {};
   const budgetRows = Object.entries(budgets).filter(([, v]) => nb(v) > 0).map(([c, v]) => {
-    const spent = cats.find(x => x.label === c)?.value || 0;
+    const found = cats.find(x => x.label === c); const spent = found ? found.value : 0;
     return { cat: c, budget: nb(v), spent, p: nb(v) ? (spent / nb(v)) * 100 : 0 };
   }).sort((a, b) => b.p - a.p);
   const q = (ui.q || "").toLowerCase();
@@ -2206,7 +2231,7 @@ function exportCsv(scope) {
   const rows = [...txs].sort((a, b) => (a.date || "").localeCompare(b.date || "")).map(t => [
     t.date, t.label, t.category || "", accName(t.accountId), String(nb(t.amount)).replace(".", ","), ...(pro ? [String(nb(t.vatRate))] : []),
   ]);
-  const csv = [head, ...rows].map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
+  const csv = [head, ...rows].map(r => r.map(c => `"${String(c === null || c === undefined ? "" : c).replace(/"/g, '""')}"`).join(";")).join("\n");
   download(`operations-${pro ? "alpega" : "perso"}-${todayISO()}.csv`, "﻿" + csv, "text/csv");
   toast("Export CSV généré");
 }
@@ -2227,7 +2252,7 @@ function go(view) {
   closeModal();
   ui.view = resolveView(view) || "apercu"; ui.q = ""; ui.catFilter = "";
   location.hash = ui.view;
-  scrollTo({ top: 0, behavior: "instant" });
+  try { scrollTo(0, 0); } catch (e) { }
   render();
 }
 document.addEventListener("click", e => {
@@ -2239,7 +2264,7 @@ document.addEventListener("click", e => {
   if (d.range) { ui.range = +d.range; return render(); }
   if (d.per) { ui.period = ymAdd(ui.period, d.per === "next" ? 1 : -1); if (ui.period > curYM()) ui.period = curYM(); return render(); }
   if (d.add) return editItem(d.add, null);
-  const path = (el.closest("[data-list]") || {}).dataset?.list;
+  const listEl = el.closest("[data-list]"); const path = listEl ? listEl.dataset.list : "";
   switch (d.act) {
     case "edit": return editItem(path, d.id);
     case "del": return delItem(path, d.id);
@@ -2279,7 +2304,8 @@ document.addEventListener("click", e => {
     });
     case "rule-del": state.settings.rules.splice(+d.i, 1); save(); render(); return toast("Règle supprimée");
     case "supa-signin": case "supa-signup": {
-      const email = ($("#sb-mail") || {}).value?.trim(), pwd = ($("#sb-pwd") || {}).value;
+      const mailEl = $("#sb-mail"), pwdEl = $("#sb-pwd");
+      const email = mailEl ? mailEl.value.trim() : "", pwd = pwdEl ? pwdEl.value : "";
       state.settings.supabase.url = ($("#sb-url").value || "").trim().replace(/\/$/, "");
       state.settings.supabase.anonKey = ($("#sb-key").value || "").trim();
       save(false);
@@ -2307,7 +2333,12 @@ addEventListener("keydown", e => {
     const p = map[ui.view]; if (p) { e.preventDefault(); editItem(p, null); }
   }
 });
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (state.settings.theme === "auto") render(); });
+try {
+  const mq = matchMedia("(prefers-color-scheme: dark)");
+  const onScheme = () => { if (state.settings.theme === "auto") render(); };
+  if (mq.addEventListener) mq.addEventListener("change", onScheme);
+  else if (mq.addListener) mq.addListener(onScheme);
+} catch (e) { /* navigateur sans matchMedia : thème fixe */ }
 
 /* ==================================================================
    DÉMARRAGE
@@ -2321,6 +2352,16 @@ function installManifest() {
     document.head.appendChild(l);
   } catch (e) { }
 }
+function fatal(msg) {
+  const box = document.getElementById("boot");
+  if (box) {
+    box.style.display = "block";
+    box.innerHTML = '<h1 style="font-size:1.05rem;margin-bottom:8px">L\'application n\'a pas pu démarrer</h1>'
+      + '<p style="font-size:.87rem;color:#55575c;margin-bottom:12px">Votre navigateur a refusé une partie du code. Essayez de mettre à jour votre navigateur, ou ouvrez le fichier avec Chrome / Safari / Firefox à jour.</p>'
+      + '<pre style="font-size:.72rem;white-space:pre-wrap;background:#f2f0eb;border:1px solid #e4e1da;border-radius:8px;padding:10px;overflow:auto">' + String(msg).replace(/</g, "&lt;") + "</pre>";
+  }
+}
+addEventListener("error", e => fatal((e && e.message) || "Erreur inconnue"));
 function init() {
   load();
   installManifest();
@@ -2329,9 +2370,10 @@ function init() {
   touchSnapshot();
   save(false);
   render();
+  const boot = document.getElementById("boot"); if (boot) boot.remove();
   if (Supa.enabled()) Supa.pull(true);
 }
-init();
+try { init(); } catch (e) { fatal((e && e.stack) || e); }
 </script>
 </body>
 </html>
