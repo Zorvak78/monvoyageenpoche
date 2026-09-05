@@ -1,0 +1,2759 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patrimoine — Gestion personnelle & SARL ALPEGA</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Application autonome de gestion de patrimoine personnel et de suivi d'entreprise (SARL ALPEGA). Données locales, export JSON/CSV, synchronisation Supabase optionnelle.">
+<meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101215" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Patrimoine">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3f66'/%3E%3Cpath d='M14 42l11-13 9 8 16-19' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3f66'/%3E%3Cpath d='M14 42l11-13 9 8 16-19' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* ============================== TOKENS ============================== */
+:root{
+  color-scheme: light;
+  --page:#f7f6f3; --surface:#fdfcfa; --surface-2:#f2f0eb; --surface-3:#e9e6df;
+  --ink:#1b1d21; --ink-2:#55575c; --muted:#8d8b85;
+  --grid:#eceae4; --axis:#d8d5cd; --border:#e4e1da; --border-strong:#d4d0c7;
+  --shadow:0 1px 2px rgba(27,29,33,.04);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --s1:#b07d24; --s2:#3f7cb8; --s3:#c0533a; --s4:#4fa87a; --s5:#8a5aa8; --s6:#96581f; --s7:#8c8880;
+  --line:#1f3f66; --line-soft:rgba(31,63,102,.10);
+  --pos:#1f7a4d; --neg:#b23c30; --warn:#a8761a;
+  --pos-bg:rgba(31,122,77,.10); --neg-bg:rgba(178,60,48,.10); --warn-bg:rgba(168,118,26,.12);
+  --accent:#1f3f66; --accent-soft:rgba(31,63,102,.07); --accent-ink:#fff;
+  --r-sm:6px; --r:8px; --r-lg:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --page:#101215; --surface:#16181b; --surface-2:#1e2126; --surface-3:#282c32;
+    --ink:#f2f1ee; --ink-2:#b3b2ae; --muted:#8b8a86;
+    --grid:#24272c; --axis:#31353b; --border:#262a2f; --border-strong:#363b42;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+    --s1:#bd8b33; --s2:#5e97d0; --s3:#c05f42; --s4:#4fa87a; --s5:#a97cc4; --s6:#b8763a; --s7:#9a968c;
+    --line:#8fb0d8; --line-soft:rgba(143,176,216,.12);
+    --pos:#4fa87a; --neg:#d97456; --warn:#d2a03c;
+    --pos-bg:rgba(79,168,122,.14); --neg-bg:rgba(217,116,86,.14); --warn-bg:rgba(210,160,60,.14);
+    --accent:#8fb0d8; --accent-soft:rgba(143,176,216,.12);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#101215; --surface:#16181b; --surface-2:#1e2126; --surface-3:#282c32;
+  --ink:#f2f1ee; --ink-2:#b3b2ae; --muted:#8b8a86;
+  --grid:#24272c; --axis:#31353b; --border:#262a2f; --border-strong:#363b42;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+  --s1:#bd8b33; --s2:#5e97d0; --s3:#c05f42; --s4:#4fa87a; --s5:#a97cc4; --s6:#b8763a; --s7:#9a968c;
+  --line:#8fb0d8; --line-soft:rgba(143,176,216,.12);
+  --pos:#4fa87a; --neg:#d97456; --warn:#d2a03c;
+  --pos-bg:rgba(79,168,122,.14); --neg-bg:rgba(217,116,86,.14); --warn-bg:rgba(210,160,60,.14);
+  --accent:#8fb0d8; --accent-soft:rgba(143,176,216,.12);
+}
+/* ============================== BASE ============================== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--page); color:var(--ink);
+  font:14.5px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
+}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.005em}
+h1{font-size:1.3rem} h2{font-size:1rem} h3{font-size:.9rem}
+p{margin:0}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:1.5px solid var(--accent);outline-offset:2px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+.serif{font-family:var(--serif);font-weight:400;letter-spacing:-.01em}
+.muted{color:var(--muted)} .sec{color:var(--ink-2)}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.hide{display:none!important}
+.eyebrow{font-size:.685rem;text-transform:uppercase;letter-spacing:.1em;font-weight:650;color:var(--muted)}
+/* ============================== APP SHELL ============================== */
+.app{display:flex;min-height:100dvh}
+.sidebar{
+  width:242px;flex:0 0 242px;position:sticky;top:0;height:100dvh;
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:16px 0 0;display:flex;flex-direction:column;overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 18px 18px}
+.brand-mark{width:28px;height:28px;border-radius:7px;background:var(--accent);display:grid;place-items:center;flex:0 0 auto;color:var(--accent-ink)}
+:root[data-theme="dark"] .brand-mark,:root:not([data-theme="light"]) .brand-mark{color:#101215}
+.brand-mark svg{width:16px;height:16px}
+.brand-t{font-weight:640;font-size:.92rem;letter-spacing:-.01em;display:block}
+.brand-s{font-size:.7rem;color:var(--muted)}
+.nav-group{padding:14px 18px 6px;font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;font-weight:650;color:var(--muted)}
+.nav-link{
+  display:flex;align-items:center;gap:11px;padding:8px 18px;
+  color:var(--ink-2);text-decoration:none;font-size:.875rem;font-weight:480;
+  border:none;background:none;width:100%;text-align:left;cursor:pointer;
+  border-left:2px solid transparent;
+}
+.nav-link svg{width:16px;height:16px;flex:0 0 auto;opacity:.75;stroke-width:1.6}
+.nav-link .cnt{margin-left:auto;font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.nav-link:hover{background:var(--surface-2);color:var(--ink)}
+.nav-link.on{background:var(--accent-soft);color:var(--ink);font-weight:600;border-left-color:var(--accent)}
+.nav-link.on svg{opacity:1;color:var(--accent)}
+.side-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted)}
+.side-foot .v{font-size:1.02rem;font-weight:620;color:var(--ink);font-variant-numeric:tabular-nums;margin:3px 0 2px;display:block}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:30;background:var(--page);
+  border-bottom:1px solid var(--border);padding:13px 26px;display:flex;align-items:center;gap:12px;
+}
+.topbar h1{font-size:1.08rem}
+.topbar-sub{font-size:.775rem;color:var(--muted);margin-top:2px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.container{padding:20px 26px 44px;max-width:1280px;width:100%;margin:0 auto}
+.tabbar{display:none}
+/* ============================== CONTROLS ============================== */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:7px 12px;border-radius:var(--r);border:1px solid var(--border-strong);
+  background:var(--surface);color:var(--ink);font-size:.83rem;font-weight:520;
+  cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s;
+}
+.btn:hover{background:var(--surface-2)}
+.btn svg{width:15px;height:15px;stroke-width:1.8}
+.btn-primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+:root[data-theme="dark"] .btn-primary,:root:not([data-theme="light"]) .btn-primary{color:#101215}
+.btn-primary:hover{filter:brightness(1.12);background:var(--accent)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--ink)}
+.btn-link{border:none;background:none;color:var(--accent);padding:0;font-size:.78rem;font-weight:560;cursor:pointer;text-decoration:none}
+.btn-link:hover{text-decoration:underline}
+.btn-danger{color:var(--neg)}
+.btn-danger:hover{background:var(--neg-bg)}
+.btn-sm{padding:5px 9px;font-size:.78rem}
+.btn-icon{padding:6px;border-radius:var(--r-sm)}
+.btn-icon svg{width:16px;height:16px}
+.seg{display:inline-flex;gap:0;background:var(--surface);border-radius:var(--r);padding:2px;border:1px solid var(--border);overflow-x:auto;max-width:100%;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{
+  border:none;background:none;padding:5px 11px;border-radius:var(--r-sm);font-size:.79rem;
+  font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap;
+}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--surface-2);color:var(--ink);font-weight:620}
+select,input,textarea{
+  font:inherit;font-size:.86rem;color:var(--ink);background:var(--surface);
+  border:1px solid var(--border-strong);border-radius:var(--r);padding:8px 10px;width:100%;
+}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:30px}
+input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+.inline-select{width:auto;min-width:118px;padding:6px 28px 6px 10px;font-size:.81rem}
+label{font-size:.78rem;color:var(--ink-2);font-weight:520}
+/* ============================== CARDS / GRID ============================== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:16px 18px}
+.card+.card{margin-top:14px}
+.card-h{display:flex;align-items:center;gap:8px 12px;margin-bottom:14px;flex-wrap:wrap}
+.card-h h2,.card-h h3{margin:0;font-size:.685rem;text-transform:uppercase;letter-spacing:.1em;font-weight:650;color:var(--muted)}
+.card-h .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card-h .right .badge{font-weight:520}
+.grid{display:grid;gap:14px}
+.g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g-auto{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.g-side{grid-template-columns:minmax(0,1.05fr) minmax(0,1.25fr);align-items:stretch}
+.g-side>.card{display:flex;flex-direction:column}
+.g-side>.card .chart-wrap{margin-top:auto}
+.g-side2{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);align-items:start}
+.g-wide{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:start}
+.g-half{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+.span-2{grid-column:span 2}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:14px}
+/* stat tiles */
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;box-shadow:var(--shadow)}
+.stat-l{font-size:.685rem;text-transform:uppercase;letter-spacing:.1em;font-weight:650;color:var(--muted)}
+.stat-v{font-size:1.42rem;font-weight:600;letter-spacing:-.015em;margin-top:8px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat-d{font-size:.765rem;margin-top:6px;display:flex;align-items:center;gap:6px;color:var(--muted);flex-wrap:wrap}
+.stat-d .bar{flex:1 1 100%;min-width:90px;margin-top:2px}
+.hero{padding:20px 22px}
+.hero .stat-v{font-family:var(--serif);font-weight:400;font-size:3.1rem;letter-spacing:-.02em;margin-top:10px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:.78rem;font-weight:600;font-variant-numeric:tabular-nums}
+.pill.up{background:var(--pos-bg);color:var(--pos)}
+.pill.down{background:var(--neg-bg);color:var(--neg)}
+.pill.flat{background:var(--surface-2);color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:2px;flex:0 0 auto;display:inline-block}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:560;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border)}
+.badge.good{color:var(--pos);border-color:var(--pos);background:var(--pos-bg)}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+.badge.crit{color:var(--neg);border-color:var(--neg);background:var(--neg-bg)}
+.badge.info{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+/* meters */
+.bar{height:6px;border-radius:2px;background:var(--surface-3);overflow:hidden;position:relative}
+.bar>span{display:block;height:100%;border-radius:2px;background:var(--accent);transition:width .35s}
+.meter{position:relative}
+.meter .bar{overflow:visible}
+.meter .tick{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink);border-radius:1px;opacity:.75}
+.meter-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:6px}
+.meter-l{font-size:.83rem;font-weight:520;display:flex;align-items:center;gap:7px;min-width:0}
+.meter-l span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meter-v{font-size:.83rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.meter-f{display:flex;justify-content:space-between;gap:10px;font-size:.72rem;color:var(--muted);margin-top:5px}
+/* ============================== TABLES ============================== */
+.tw{overflow-x:auto;margin:0 -18px;padding:0 18px}
+table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:420px}
+thead th{
+  text-align:left;font-size:.665rem;font-weight:650;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.1em;padding:0 10px 9px;white-space:nowrap;border-bottom:1px solid var(--border);
+}
+tbody td{padding:10px;border-bottom:1px solid var(--grid);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.r,th.r{text-align:right}
+td.actions{width:1%;white-space:nowrap;text-align:right}
+td.actions .btn{opacity:.45}
+tr:hover td.actions .btn{opacity:1}
+.t-main{font-weight:540}
+.t-sub{font-size:.745rem;color:var(--muted);margin-top:2px}
+.empty{text-align:center;padding:28px 18px;color:var(--muted);font-size:.85rem}
+.empty svg{width:30px;height:30px;opacity:.3;margin-bottom:8px;stroke-width:1.4}
+/* ============================== CHARTS ============================== */
+.chart-wrap{position:relative;width:100%}
+.chart-wrap svg{display:block;width:100%;overflow:visible}
+.tip{
+  position:absolute;pointer-events:none;opacity:0;transform:translate(-50%,-100%);
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--r);
+  box-shadow:0 6px 20px rgba(0,0,0,.14);padding:8px 10px;font-size:.78rem;
+  white-space:nowrap;z-index:12;transition:opacity .1s;
+}
+.tip b{font-weight:640;font-variant-numeric:tabular-nums}
+.tip .tip-r{display:flex;align-items:center;gap:7px;margin-top:3px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:.79rem;color:var(--ink-2)}
+.legend .li{display:flex;align-items:center;gap:8px}
+.legend .lv{color:var(--muted);font-variant-numeric:tabular-nums}
+.don-c{text-anchor:middle}
+.hitrect{fill:transparent;cursor:crosshair}
+.mark-hover{opacity:.8}
+/* ============================== MODAL ============================== */
+.overlay{position:fixed;inset:0;background:rgba(20,22,26,.42);backdrop-filter:blur(2px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .14s ease-out}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.22);width:min(560px,100%);max-height:88dvh;display:flex;flex-direction:column;animation:pop .16s ease-out}
+.modal.wide{width:min(880px,100%)}
+.modal-h{padding:16px 20px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-h h2{font-size:.98rem;font-weight:620}
+.modal-b{padding:18px 20px;overflow-y:auto}
+.modal-f{padding:12px 20px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.field{margin-bottom:13px}
+.field label{display:block;margin-bottom:5px}
+.field .hint{font-size:.74rem;color:var(--muted);margin-top:4px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.check{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--ink)}
+/* ============================== VERROU ============================== */
+.lockwrap{position:fixed;inset:0;z-index:300;background:var(--page);display:flex;align-items:center;justify-content:center;padding:22px}
+.lockbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);
+  padding:28px 26px;width:min(400px,100%);text-align:center}
+.lockbox input{margin-top:6px;text-align:center}
+.lockbox .brand-mark{margin:0 auto;display:grid}
+/* ============================== TOAST ============================== */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--ink);color:var(--page);padding:9px 15px;border-radius:var(--r);font-size:.83rem;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:pop .16s ease-out;max-width:88vw}
+.toast.err{background:var(--neg);color:#fff}
+/* ============================== MISC ============================== */
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--grid);font-size:.85rem}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-2)}
+.kv .v{font-weight:600;font-variant-numeric:tabular-nums}
+.note{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:.79rem;color:var(--ink-2);line-height:1.55}
+.note b{color:var(--ink)}
+pre.sql{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px;overflow-x:auto;font-size:.73rem;line-height:1.5;margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink-2)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync-dot.on{background:var(--pos)}
+.sync-dot.err{background:var(--warn)}
+/* ============================== RESPONSIVE ============================== */
+@media (max-width:1140px){ .g-side,.g-side2,.g-wide,.g-half{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:980px){ .g-4,.g-3{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:860px){
+  .sidebar{display:none}
+  .app{display:block}
+  .topbar{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .topbar h1{font-size:1rem}
+  .topbar>div:first-child{flex:1 1 100%;min-width:0}
+  .topbar-actions{margin-left:0;width:100%;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .topbar-actions::-webkit-scrollbar{display:none}
+  .topbar-actions .seg,.topbar-actions .btn{flex:0 0 auto}
+  .container{padding:14px 14px 92px}
+  .card{padding:14px}
+  .tw{margin:0 -14px;padding:0 14px}
+  .g-2,.g-3,.g-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g-auto{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .hero .stat-v{font-size:2.35rem}
+  .stat-v{font-size:1.22rem}
+  .fgrid{grid-template-columns:1fr}
+  .modal{width:100%;max-height:92dvh;border-radius:14px 14px 0 0;margin-top:auto;animation:sheet .2s ease-out}
+  @keyframes sheet{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+  .overlay{padding:0;align-items:flex-end}
+  #toast{bottom:calc(72px + env(safe-area-inset-bottom))}
+  .tabbar{
+    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:40;
+    background:var(--surface);border-top:1px solid var(--border);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around;
+  }
+  .tabbar button{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;border-radius:8px;color:var(--muted);font-size:.64rem;font-weight:540;cursor:pointer}
+  .tabbar button svg{width:20px;height:20px;stroke-width:1.7}
+  .tabbar button.on{color:var(--accent)}
+}
+@media (max-width:430px){
+  .g-2{grid-template-columns:1fr}
+  .hero .stat-v{font-size:2rem}
+  .legend{gap:5px 12px;font-size:.75rem}
+}
+@media print{.sidebar,.tabbar,.topbar-actions{display:none}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div id="boot" style="display:block;max-width:640px;margin:0 auto;padding:40px 20px;font:15px/1.55 system-ui,-apple-system,sans-serif;color:#1b1d21">
+  <p style="color:#8d8b85;font-size:.87rem">Chargement de l'application…</p>
+  <noscript><b>JavaScript est désactivé.</b> Activez-le dans les réglages de votre navigateur pour utiliser l'application.</noscript>
+  <div id="boot-late" style="display:none;margin-top:14px">
+    <b style="font-size:.95rem">L'application n'a pas démarré</b>
+    <p style="font-size:.86rem;color:#55575c;margin-top:8px">Deux causes possibles&nbsp;:</p>
+    <ul style="font-size:.86rem;color:#55575c;padding-left:18px;margin:8px 0">
+      <li>le fichier est ouvert depuis un aperçu d'application (messagerie, gestionnaire de fichiers) qui n'exécute pas les scripts&nbsp;: enregistrez-le puis ouvrez-le avec Chrome, Safari ou Firefox&nbsp;;</li>
+      <li>votre navigateur est trop ancien&nbsp;: mettez-le à jour.</li>
+    </ul>
+  </div>
+</div>
+<script>
+/* garde-fou compatible avec les très anciens moteurs : s'exécute même si le script principal échoue */
+(function () {
+  setTimeout(function () {
+    var b = document.getElementById("boot"), l = document.getElementById("boot-late");
+    if (b && l && b.parentNode) l.style.display = "block";
+  }, 2500);
+})();
+</script>
+<div class="app">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main>
+    <header class="topbar" id="topbar"></header>
+    <div class="container" id="view"></div>
+  </main>
+</div>
+<nav class="tabbar" id="tabbar"></nav>
+<div id="lockroot"></div>
+<div id="modal-root"></div>
+<div id="toast"></div>
+<script>
+"use strict";
+/* ==================================================================
+   PATRIMOINE — application autonome (aucune dépendance externe)
+   Données : localStorage + export/import JSON — sync Supabase optionnelle
+   ================================================================== */
+
+/* ---------------------------- UTILITAIRES ---------------------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const nb = v => { const t = (v === null || v === undefined) ? "" : v; const n = typeof t === "number" ? t : parseFloat(String(t).replace(/\s/g, "").replace(",", ".")); return isFinite(n) ? n : 0; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const esc = s => String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const nfEur0 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const nfEur2 = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nfNum = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
+const eur = (v, d = 0) => (d ? nfEur2 : nfEur0).format(Number.isFinite(v) ? v : 0);
+const eurC = (v, d = 0) => (v > 0 ? "+" : "") + eur(v, d);
+const pct = (v, d = 1) => (Number.isFinite(v) ? (v > 0 ? "+" : "") + v.toFixed(d).replace(".", ",") : "—") + " %";
+const num = (v, d = 2) => nfNum.format(Number.isFinite(v) ? +v.toFixed(d) : 0);
+function eurShort(v) {
+  const a = Math.abs(v);
+  if (a >= 1e6) return (v / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(".", ",") + " M€";
+  if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e5 ? 0 : 1).replace(".", ",") + " k€";
+  return Math.round(v) + " €";
+}
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const ymOf = d => String(d || "").slice(0, 7);
+const curYM = () => todayISO().slice(0, 7);
+const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+const MONTHS_S = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+const ymLabel = ym => { const [y, m] = String(ym).split("-"); return `${MONTHS[+m - 1]} ${y}`; };
+const ymShort = ym => { const [y, m] = String(ym).split("-"); return `${MONTHS_S[+m - 1]} ${String(y).slice(2)}`; };
+const dLabel = d => { if (!d) return "—"; const [y, m, j] = d.split("-"); return `${j} ${MONTHS_S[+m - 1]} ${y}`; };
+const ymAdd = (ym, k) => { const [y, m] = ym.split("-").map(Number); const t = new Date(Date.UTC(y, m - 1 + k, 1)); return t.toISOString().slice(0, 7); };
+const ymRange = (endYM, count) => Array.from({ length: count }, (_, i) => ymAdd(endYM, i - count + 1));
+const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+
+/* ---------------------------- ICÔNES ---------------------------- */
+const IC = {
+  dash: '<path d="M3 12h5l2-7 4 14 2-7h5"/>',
+  wallet: '<path d="M3 7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M16 12h3"/>',
+  budget: '<path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/>',
+  goal: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  biz: '<path d="M3 20h18M5 20V8l7-4 7 4v12M10 20v-5h4v5"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  edit: '<path d="M4 20h4l10-10-4-4L4 16z"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  up: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  down: '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  moon: '<path d="M20 14A8 8 0 019 3a8 8 0 108.9 11z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/>',
+  cloud: '<path d="M7 18a4 4 0 010-8 5 5 0 019.6-1.4A3.5 3.5 0 1117.5 18z"/>',
+  down_a: '<path d="M12 3v12m-5-5l5 5 5-5M5 21h14"/>',
+  up_a: '<path d="M12 21V9m-5 5l5-5 5 5M5 3h14"/>',
+  doc: '<path d="M6 3h7l5 5v13H6z"/><path d="M13 3v5h5"/>',
+  box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  empty: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>',
+  chev: '<path d="M9 6l6 6-6 6"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  filter: '<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4m8-4v4"/>',
+  home: '<path d="M4 10l8-6 8 6v10H4z"/><path d="M10 20v-6h4v6"/>',
+  pct: '<path d="M19 5L5 19"/><circle cx="7.5" cy="7.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/>',
+  euro: '<path d="M17 6a6 6 0 100 12M4 10h8M4 14h8"/>',
+  trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/>',
+  db: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  lockic: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 118 0v3"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 5H6a2 2 0 00-2 2v9"/>',
+  check: '<path d="M4 12l5 5L20 6"/>',
+  eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff: '<path d="M4 4l16 16"/><path d="M9.9 5.2A9.6 9.6 0 0112 5c6.5 0 10 6 10 6a17 17 0 01-3.3 3.9M6.3 7.1A16.6 16.6 0 002 11s3.5 6 10 6a9.7 9.7 0 004-.8"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>',
+};
+const ico = (k, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[k] || ""}</svg>`;
+
+/* ---------------------------- CATÉGORIES ---------------------------- */
+const CAT_EXP = ["Logement", "Alimentation", "Transport", "Santé", "Loisirs", "Abonnements", "Assurances", "Impôts & taxes", "Enfants", "Shopping", "Voyages", "Épargne investie", "Divers"];
+const CAT_INC = ["Salaire", "Primes", "Loyers perçus", "Dividendes & intérêts", "Remboursements", "Autres revenus"];
+const CAT_BIZ_EXP = ["Achats & fournisseurs", "Sous-traitance", "Salaires & charges", "Loyer & locaux", "Assurances", "Honoraires", "Banque & frais financiers", "Marketing & communication", "Déplacements", "Télécom & logiciels", "Impôts & taxes", "Investissement", "Autres charges"];
+const CAT_BIZ_INC = ["Ventes & prestations", "Subventions", "Produits financiers", "Apport en compte courant", "Autres produits"];
+
+const ACC_TYPES = [
+  { v: "courant", l: "Compte courant", cls: "liquidites" },
+  { v: "livret", l: "Livret (A, LDDS, LEP…)", cls: "epargne" },
+  { v: "terme", l: "Compte à terme / épargne", cls: "epargne" },
+  { v: "pea", l: "PEA", cls: "bourse" },
+  { v: "cto", l: "Compte-titres (CTO)", cls: "bourse" },
+  { v: "av", l: "Assurance-vie", cls: "av" },
+  { v: "per", l: "PER", cls: "av" },
+  { v: "pee", l: "PEE / PERCO", cls: "av" },
+  { v: "crypto", l: "Portefeuille crypto", cls: "crypto" },
+  { v: "autre", l: "Autre compte", cls: "autres" },
+];
+const HOLD_CLASSES = [
+  { v: "action", l: "Action" }, { v: "etf", l: "ETF / Tracker" }, { v: "fonds", l: "Fonds / OPCVM" },
+  { v: "obligation", l: "Obligation / Fonds €" }, { v: "crypto", l: "Crypto" }, { v: "autre", l: "Autre" },
+];
+const PROP_TYPES = [
+  { v: "rp", l: "Résidence principale" }, { v: "secondaire", l: "Résidence secondaire" },
+  { v: "locatif", l: "Immobilier locatif" }, { v: "scpi", l: "SCPI / Pierre-papier" },
+  { v: "terrain", l: "Terrain" }, { v: "autre", l: "Autre bien" },
+];
+const LOAN_TYPES = [{ v: "immo", l: "Prêt immobilier" }, { v: "conso", l: "Prêt conso" }, { v: "auto", l: "Prêt auto" }, { v: "etudiant", l: "Prêt étudiant" }, { v: "autre", l: "Autre dette" }];
+const OTHER_CATS = [{ v: "or", l: "Or & métaux" }, { v: "objet", l: "Objet de valeur" }, { v: "vehicule", l: "Véhicule" }, { v: "creance", l: "Créance (on me doit)" }, { v: "dette", l: "Dette (je dois)" }, { v: "autre", l: "Autre" }];
+const BIZ_INV_TYPES = [{ v: "titres", l: "Titres / valeurs mobilières" }, { v: "immobilier", l: "Immobilier" }, { v: "participation", l: "Participation / filiale" }, { v: "tresorerie", l: "Placement de trésorerie" }, { v: "autre", l: "Autre" }];
+const VAT_RATES = [0, 2.1, 5.5, 10, 20];
+
+/* classes d'actifs affichées (ordre = ordre des couleurs de série) */
+const CLASSES = [
+  { k: "liquidites", l: "Liquidités", c: "var(--s2)" },
+  { k: "epargne", l: "Épargne & fonds euro", c: "var(--s6)" },
+  { k: "bourse", l: "Actions & ETF", c: "var(--s3)" },
+  { k: "immobilier", l: "Immobilier", c: "var(--s1)" },
+  { k: "av", l: "Assurance-vie & PER", c: "var(--s5)" },
+  { k: "crypto", l: "Crypto", c: "var(--s4)" },
+  { k: "autres", l: "Autres actifs", c: "var(--s7)" },
+];
+const SERIES = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)", "var(--s6)", "var(--s7)"];
+const CLS = k => (CLASSES.find(c => c.k === k) || CLASSES[6]);
+
+/* ---------------------------- ÉTAT ---------------------------- */
+const LS_KEY = "patrimoine.state.v1";
+const blank = () => ({
+  version: 1,
+  updatedAt: new Date().toISOString(),
+  settings: {
+    theme: "auto", ownerName: "", hideAmounts: false,
+    lockEnabled: false, lockTimeout: 15, secDismissed: false,
+    catExp: [...CAT_EXP], catInc: [...CAT_INC],
+    catBizExp: [...CAT_BIZ_EXP], catBizInc: [...CAT_BIZ_INC],
+    rules: [], // { kw, cat, scope:'perso'|'pro' }
+    supabase: { url: "", anonKey: "", email: "", auto: true },
+  },
+  personal: { accounts: [], holdings: [], properties: [], loans: [], others: [], transactions: [], budgets: {}, goals: [], snapshots: [], allocation: {} },
+  company: {
+    name: "SARL ALPEGA", vatRegime: "encaissements", vatPeriod: "trimestriel",
+    accounts: [], transactions: [], investments: [], fixedAssets: [], invoices: [], cca: [], snapshots: [],
+  },
+});
+
+let state = blank();
+let ui = {
+  view: "apercu", sub: "", period: curYM(),
+  bizSub: "tresorerie", range: 12,
+};
+
+function migrate(s) {
+  const d = blank();
+  const out = { ...d, ...s };
+  out.settings = { ...d.settings, ...(s.settings || {}) };
+  out.settings.supabase = { ...d.settings.supabase, ...((s.settings || {}).supabase || {}) };
+  out.personal = { ...d.personal, ...(s.personal || {}) };
+  out.company = { ...d.company, ...(s.company || {}) };
+  return out;
+}
+/* ---------------------------------------------------------------
+   VERROU & CHIFFREMENT (AES-256-GCM, clé dérivée par PBKDF2)
+   Le mot de passe n'est jamais stocké : seule la clé dérivée vit
+   en mémoire, le temps de la session.
+   --------------------------------------------------------------- */
+const B64 = {
+  enc(buf) { const b = new Uint8Array(buf); let s = ""; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); },
+  dec(str) { const s = atob(str), b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; },
+};
+const Lock = {
+  key: null, salt: null, iter: 310000, timer: null,
+  available() { try { return !!(window.crypto && crypto.subtle && crypto.subtle.deriveKey); } catch (e) { return false; } },
+  active() { return !!Lock.key; },
+  async derive(pass, salt, iter) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base,
+      { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  },
+  async wrap(obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, Lock.key, new TextEncoder().encode(JSON.stringify(obj)));
+    return { enc: 1, v: 1, kdf: "PBKDF2-SHA256", iter: Lock.iter, salt: B64.enc(Lock.salt), iv: B64.enc(iv), ct: B64.enc(ct) };
+  },
+  async unwrap(env, key) {
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: B64.dec(env.iv) }, key || Lock.key, B64.dec(env.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  },
+  /* déverrouille une enveloppe avec un mot de passe ; mémorise la clé si ok */
+  async open(env, pass) {
+    const salt = B64.dec(env.salt), iter = env.iter || 310000;
+    const key = await Lock.derive(pass, salt, iter);
+    const obj = await Lock.unwrap(env, key);   // lève une exception si mot de passe erroné
+    Lock.key = key; Lock.salt = salt; Lock.iter = iter;
+    return obj;
+  },
+  async create(pass) {
+    Lock.salt = crypto.getRandomValues(new Uint8Array(16)); Lock.iter = 310000;
+    Lock.key = await Lock.derive(pass, Lock.salt, Lock.iter);
+  },
+  clear() { Lock.key = null; Lock.salt = null; },
+  /* verrouillage automatique après inactivité */
+  arm() {
+    clearTimeout(Lock.timer);
+    const min = nb(state.settings.lockTimeout);
+    if (!Lock.active() || !min) return;
+    Lock.timer = setTimeout(lockNow, min * 60000);
+  },
+};
+function readRaw() { try { return localStorage.getItem(LS_KEY); } catch (e) { return null; } }
+/* renvoie l'enveloppe chiffrée si le stockage local est verrouillé, sinon null */
+function load() {
+  const raw = readRaw();
+  if (!raw) return null;
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch (e) { console.warn("Données illisibles", e); return null; }
+  if (parsed && parsed.enc) return parsed;
+  state = migrate(parsed);
+  return null;
+}
+async function persist() {
+  try {
+    const raw = Lock.active() ? JSON.stringify(await Lock.wrap(state)) : JSON.stringify(state);
+    localStorage.setItem(LS_KEY, raw);
+  } catch (e) { toast("Sauvegarde impossible : " + e.message, true); }
+}
+let saveT = null;
+function save(sync = true) {
+  state.updatedAt = new Date().toISOString();
+  persist();
+  Lock.arm();
+  if (sync && Supa.enabled() && state.settings.supabase.auto) {
+    clearTimeout(saveT); saveT = setTimeout(() => Supa.push(true), 2500);
+  }
+}
+function lockNow() {
+  if (!Lock.active()) return;
+  clearTimeout(Lock.timer);
+  Lock.clear();
+  state = blank();
+  closeModal();
+  lockScreen({ env: JSON.parse(readRaw() || "null"), reason: "Session verrouillée" });
+}
+/* écran plein écran de déverrouillage */
+function lockScreen(opts) {
+  const env = opts.env, onOpen = opts.onOpen;
+  $("#lockroot").innerHTML = `<div class="lockwrap">
+    <form class="lockbox" id="lockform">
+      <span class="brand-mark" style="width:34px;height:34px">${ico("dash")}</span>
+      <h1 style="font-size:1.05rem;margin-top:14px">${esc(opts.title || "Patrimoine")}</h1>
+      <p class="muted" style="font-size:.83rem;margin:6px 0 18px">${esc(opts.reason || "Saisissez votre mot de passe pour accéder à vos données.")}</p>
+      <input type="password" id="lockpass" placeholder="Mot de passe" autocomplete="current-password" required>
+      <div id="lockerr" class="neg" style="font-size:.8rem;margin-top:8px;display:none"></div>
+      <button class="btn btn-primary" type="submit" style="width:100%;margin-top:14px;justify-content:center">Déverrouiller</button>
+      <p class="muted" style="font-size:.75rem;margin-top:16px">Vos données sont chiffrées sur cet appareil (AES-256).
+        Sans ce mot de passe, elles sont illisibles — y compris pour nous.</p>
+    </form></div>`;
+  document.body.style.overflow = "hidden";
+  const f = $("#lockform"), err = $("#lockerr");
+  setTimeout(() => { const i = $("#lockpass"); if (i) i.focus(); }, 80);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const btn = f.querySelector("button"); btn.disabled = true; btn.textContent = "Déchiffrement…";
+    try {
+      const obj = await Lock.open(env, $("#lockpass").value);
+      state = migrate(obj);
+      $("#lockroot").innerHTML = ""; document.body.style.overflow = "";
+      if (onOpen) await onOpen();
+      applyTheme(); touchSnapshot(); save(false); render(); Lock.arm();
+      const boot = document.getElementById("boot"); if (boot) boot.remove();
+    } catch (ex) {
+      err.style.display = "block"; err.textContent = "Mot de passe incorrect.";
+      btn.disabled = false; btn.textContent = "Déverrouiller";
+      $("#lockpass").select();
+    }
+  };
+}
+const P = () => state.personal;
+/* aucun contenu saisi : un appareil neuf doit accepter la sauvegarde distante */
+function isEmptyState() {
+  const p = state.personal, c = state.company;
+  return (p.accounts.length + p.holdings.length + p.properties.length + p.loans.length + p.others.length +
+    p.transactions.length + p.goals.length + c.accounts.length + c.transactions.length + c.investments.length +
+    c.fixedAssets.length + c.invoices.length + c.cca.length) === 0;
+}
+const C = () => state.company;
+
+/* ---------------------------- CALCULS PATRIMOINE ---------------------------- */
+const accClass = t => (ACC_TYPES.find(a => a.v === t) || { cls: "autres" }).cls;
+const holdValue = h => nb(h.qty) * nb(h.price);
+const holdCost = h => nb(h.qty) * nb(h.pru);
+const accHoldings = id => P().holdings.filter(h => h.accountId === id);
+const accTotal = a => nb(a.balance) + accHoldings(a.id).reduce((s, h) => s + holdValue(h), 0);
+
+function computePersonal() {
+  const p = P();
+  const byClass = Object.fromEntries(CLASSES.map(c => [c.k, 0]));
+  p.accounts.forEach(a => { byClass[accClass(a.type)] += accTotal(a); });
+  const immo = p.properties.reduce((s, x) => s + nb(x.value), 0);
+  byClass.immobilier += immo;
+  let otherAssets = 0, otherDebts = 0;
+  p.others.forEach(o => { if (o.kind === "debt") otherDebts += nb(o.value); else otherAssets += nb(o.value); });
+  byClass.autres += otherAssets;
+  const loans = p.loans.reduce((s, l) => s + nb(l.remaining), 0);
+  const gross = CLASSES.reduce((s, c) => s + byClass[c.k], 0);
+  const debts = loans + otherDebts;
+  const invested = p.holdings.reduce((s, h) => s + holdCost(h), 0);
+  const market = p.holdings.reduce((s, h) => s + holdValue(h), 0);
+  return {
+    byClass, gross, debts, loans, otherDebts, net: gross - debts,
+    immo, invested, market, pv: market - invested,
+    pvPct: invested > 0 ? ((market - invested) / invested) * 100 : 0,
+    rentMonthly: p.properties.reduce((s, x) => s + nb(x.rentMonthly) - nb(x.chargesMonthly), 0),
+    loanPayment: p.loans.reduce((s, l) => s + nb(l.payment), 0),
+  };
+}
+function monthFlows(txs, ym) {
+  let inc = 0, exp = 0;
+  txs.forEach(t => { if (ymOf(t.date) !== ym) return; const a = nb(t.amount); if (a >= 0) inc += a; else exp += -a; });
+  return { inc, exp, net: inc - exp, rate: inc > 0 ? ((inc - exp) / inc) * 100 : 0 };
+}
+function byCategory(txs, ym, sign = -1) {
+  const m = {};
+  txs.forEach(t => {
+    if (ym && ymOf(t.date) !== ym) return;
+    const a = nb(t.amount);
+    if (sign < 0 ? a >= 0 : a < 0) return;
+    const c = t.category || "Non catégorisé";
+    m[c] = (m[c] || 0) + Math.abs(a);
+  });
+  return Object.entries(m).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+}
+/* Snapshots mensuels : le mois courant est toujours recalculé */
+function touchSnapshot() {
+  const ym = curYM(), t = computePersonal();
+  const snaps = P().snapshots;
+  const rec = { ym, gross: Math.round(t.gross), net: Math.round(t.net), debts: Math.round(t.debts), byClass: Object.fromEntries(Object.entries(t.byClass).map(([k, v]) => [k, Math.round(v)])) };
+  const i = snaps.findIndex(s => s.ym === ym);
+  if (i >= 0) snaps[i] = rec; else snaps.push(rec);
+  snaps.sort((a, b) => a.ym.localeCompare(b.ym));
+  const c = computeCompany(), cs = C().snapshots;
+  const crec = { ym, cash: Math.round(c.cash), assets: Math.round(c.total) };
+  const j = cs.findIndex(s => s.ym === ym);
+  if (j >= 0) cs[j] = crec; else cs.push(crec);
+  cs.sort((a, b) => a.ym.localeCompare(b.ym));
+}
+function netSeries(n = 12) {
+  const snaps = P().snapshots, end = curYM();
+  const months = ymRange(end, n);
+  let last = null;
+  return months.map(ym => {
+    const s = snaps.find(x => x.ym === ym);
+    if (s) last = s;
+    return { x: ym, y: s ? s.net : (last && last.ym < ym ? last.net : null) };
+  });
+}
+
+/* ---------------------------- CALCULS SARL ---------------------------- */
+function amortOf(fa) {
+  const years = Math.max(1, nb(fa.years) || 1), amount = nb(fa.amount);
+  const annual = amount / years;
+  const start = new Date(fa.date || todayISO());
+  const elapsedY = Math.max(0, (new Date() - start) / (365.25 * 86400000));
+  const cum = Math.min(amount, annual * elapsedY);
+  return { annual, cum, vnc: Math.max(0, amount - cum), progress: amount ? cum / amount : 0 };
+}
+const invoiceTTC = i => nb(i.amountHT) * (1 + nb(i.vatRate) / 100);
+function invoiceStatus(i) {
+  if (i.status === "payee") return { k: "payee", l: "Payée", cls: "good" };
+  if (i.status === "brouillon") return { k: "brouillon", l: "Brouillon", cls: "" };
+  if (i.dateDue && i.dateDue < todayISO()) return { k: "retard", l: "En retard", cls: "crit" };
+  return { k: "envoyee", l: "En attente", cls: "warn" };
+}
+function computeCompany() {
+  const c = C();
+  const cash = c.accounts.reduce((s, a) => s + nb(a.balance), 0);
+  const inv = c.investments.reduce((s, i) => s + nb(i.value), 0);
+  const fa = c.fixedAssets.reduce((s, f) => s + amortOf(f).vnc, 0);
+  const faGross = c.fixedAssets.reduce((s, f) => s + nb(f.amount), 0);
+  const amortAnnual = c.fixedAssets.reduce((s, f) => s + amortOf(f).annual, 0);
+  const unpaid = c.invoices.filter(i => invoiceStatus(i).k === "envoyee" || invoiceStatus(i).k === "retard");
+  const receivable = unpaid.reduce((s, i) => s + invoiceTTC(i), 0);
+  const late = c.invoices.filter(i => invoiceStatus(i).k === "retard");
+  const ccaBal = c.cca.reduce((s, m) => s + nb(m.amount), 0);
+  const invCost = c.investments.reduce((s, i) => s + nb(i.cost || 0), 0);
+  return {
+    cash, inv, fa, faGross, amortAnnual, receivable, lateCount: late.length,
+    lateAmount: late.reduce((s, i) => s + invoiceTTC(i), 0),
+    ccaBal, total: cash + inv + fa, invCost, invPv: inv - invCost,
+  };
+}
+function vatPeriods(back = 6) {
+  const c = C(), per = c.vatPeriod === "mensuel" ? 1 : 3;
+  const now = new Date(); const list = [];
+  for (let k = back - 1; k >= 0; k--) {
+    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - k * per, 1));
+    const startM = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - (per - 1), 1));
+    const months = [];
+    for (let i = 0; i < per; i++) months.push(new Date(Date.UTC(startM.getUTCFullYear(), startM.getUTCMonth() + i, 1)).toISOString().slice(0, 7));
+    list.push({
+      key: months[0] + (per > 1 ? "→" + months[months.length - 1] : ""),
+      label: per === 1 ? ymLabel(months[0]) : `${ymShort(months[0])} – ${ymShort(months[months.length - 1])}`,
+      months,
+    });
+  }
+  return list;
+}
+function vatOf(months) {
+  const c = C(), onCash = c.vatRegime === "encaissements";
+  let collected = 0, deductible = 0;
+  c.invoices.forEach(i => {
+    const st = invoiceStatus(i); if (st.k === "brouillon") return;
+    const ref = onCash ? (i.datePaid || "") : (i.dateIssue || "");
+    if (onCash && st.k !== "payee") return;
+    if (!months.includes(ymOf(ref))) return;
+    collected += nb(i.amountHT) * nb(i.vatRate) / 100;
+  });
+  c.transactions.forEach(t => {
+    if (!months.includes(ymOf(t.date))) return;
+    const a = nb(t.amount);
+    if (a < 0 && t.deductible !== false && nb(t.vatRate) > 0) deductible += (-a) - (-a) / (1 + nb(t.vatRate) / 100);
+    if (a > 0 && nb(t.vatRate) > 0 && t.countVat) collected += a - a / (1 + nb(t.vatRate) / 100);
+  });
+  return { collected, deductible, due: collected - deductible };
+}
+
+/* ==================================================================
+   UI PRIMITIVES
+   ================================================================== */
+function toast(msg, err = false) {
+  const t = document.createElement("div");
+  t.className = "toast" + (err ? " err" : ""); t.textContent = msg;
+  $("#toast").appendChild(t);
+  setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = "0"; setTimeout(() => t.remove(), 320); }, err ? 4200 : 2400);
+}
+function closeModal() { $("#modal-root").innerHTML = ""; document.body.style.overflow = ""; }
+function openModal({ title, body, footer, wide = false, onMount }) {
+  const root = $("#modal-root");
+  root.innerHTML = `<div class="overlay" data-close="1"><div class="modal${wide ? " wide" : ""}" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="modal-h"><h2>${esc(title)}</h2><button class="btn btn-icon btn-ghost" style="margin-left:auto" data-close="1" aria-label="Fermer">${ico("x")}</button></div>
+    <div class="modal-b">${body}</div>
+    ${footer ? `<div class="modal-f">${footer}</div>` : ""}
+  </div></div>`;
+  document.body.style.overflow = "hidden";
+  root.addEventListener("click", e => { if (e.target.dataset.close) closeModal(); });
+  document.addEventListener("keydown", function onEsc(e) { if (e.key === "Escape") { closeModal(); document.removeEventListener("keydown", onEsc); } });
+  onMount && onMount(root);
+  const first = root.querySelector("input,select,textarea"); if (first && innerWidth > 820) setTimeout(() => first.focus(), 60);
+}
+function confirmDialog(title, msg, onYes, yesLabel = "Supprimer") {
+  openModal({
+    title, body: `<p class="sec">${esc(msg)}</p>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-danger" id="cy">${esc(yesLabel)}</button>`,
+    onMount: r => r.querySelector("#cy").onclick = () => { closeModal(); onYes(); },
+  });
+}
+/* ---- Formulaire générique ---- */
+function formModal({ title, fields, values = {}, onSubmit, wide = false, submitLabel = "Enregistrer", extra = "" }) {
+  const html = fields.map(f => {
+    if (f.type === "hidden") return "";
+    let v = values[f.key]; if (v === undefined || v === null) v = f.def; if (v === undefined || v === null) v = "";
+    const req = f.required ? " required" : "";
+    let input;
+    if (f.type === "select") {
+      input = `<select name="${f.key}"${req}>${(typeof f.options === "function" ? f.options() : f.options).map(o => {
+        const ov = typeof o === "string" ? o : o.v, ol = typeof o === "string" ? o : o.l;
+        return `<option value="${esc(ov)}"${String(ov) === String(v) ? " selected" : ""}>${esc(ol)}</option>`;
+      }).join("")}</select>`;
+    } else if (f.type === "textarea") {
+      input = `<textarea name="${f.key}" rows="2" placeholder="${esc(f.ph || "")}">${esc(v)}</textarea>`;
+    } else if (f.type === "check") {
+      input = `<label class="check"><input type="checkbox" name="${f.key}"${v ? " checked" : ""}> ${esc(f.label)}</label>`;
+      return `<div class="field">${input}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}</div>`;
+    } else {
+      const step = f.type === "number" ? ` step="${f.step || "any"}"` : "";
+      input = `<input type="${f.type || "text"}" name="${f.key}" value="${esc(v)}"${step}${req} placeholder="${esc(f.ph || "")}" ${f.type === "number" ? 'inputmode="decimal"' : ""}>`;
+    }
+    return `<div class="field"${f.half ? ' style="grid-column:auto"' : ""}><label for="${f.key}">${esc(f.label)}${f.required ? " *" : ""}</label>${input}${f.hint ? `<div class="hint">${esc(f.hint)}</div>` : ""}</div>`;
+  });
+  const body = `<form id="mf">${extra}<div class="fgrid">${html.join("")}</div></form>`;
+  openModal({
+    title, body, wide,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-primary" type="submit" form="mf">${esc(submitLabel)}</button>`,
+    onMount: r => {
+      r.querySelector("#mf").addEventListener("submit", e => {
+        e.preventDefault();
+        const fd = new FormData(e.target), out = { ...values };
+        fields.forEach(f => {
+          if (f.type === "check") out[f.key] = fd.get(f.key) === "on";
+          else if (f.type === "number") out[f.key] = nb(fd.get(f.key));
+          else { const raw = fd.get(f.key); out[f.key] = (raw === null || raw === undefined ? "" : raw).toString().trim(); }
+        });
+        closeModal(); onSubmit(out);
+      });
+    },
+  });
+}
+/* ---- Tableau ---- */
+function tableHtml(cols, rows, opts = {}) {
+  if (!rows.length) return emptyHtml(opts.empty || "Aucune donnée pour le moment.", opts.emptyAction);
+  return `<div class="tw"><table><thead><tr>${cols.map(c => `<th class="${c.r ? "r" : ""}">${esc(c.l)}</th>`).join("")}${opts.actions ? '<th class="r"></th>' : ""}</tr></thead>
+  <tbody>${rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? "r num" : ""}">${c.render(r)}</td>`).join("")}${opts.actions ? `<td class="actions">
+    <button class="btn btn-sm btn-ghost btn-icon" data-act="edit" data-id="${r.id}" aria-label="Modifier">${ico("edit")}</button>
+    <button class="btn btn-sm btn-ghost btn-icon" data-act="del" data-id="${r.id}" aria-label="Supprimer">${ico("trash")}</button></td>` : ""}</tr>`).join("")}</tbody></table></div>`;
+}
+const emptyHtml = (msg, action) => `<div class="empty">${ico("empty")}<div>${esc(msg)}</div>${action ? `<div style="margin-top:12px">${action}</div>` : ""}</div>`;
+const statHtml = (label, value, delta, cls = "") => `<div class="stat ${cls}"><div class="stat-l">${label}</div><div class="stat-v num">${value}</div>${delta ? `<div class="stat-d">${delta}</div>` : ""}</div>`;
+const money = (v, d = 0) => state.settings.hideAmounts ? "••••" : eur(v, d);
+const moneyC = (v, d = 0) => state.settings.hideAmounts ? "••••" : eurC(v, d);
+
+/* ==================================================================
+   GRAPHIQUES (SVG maison, sans librairie)
+   ================================================================== */
+const CHARTS = new Map();
+function chart(spec) {
+  const id = "c" + uid();
+  CHARTS.set(id, spec);
+  return `<div class="chart-wrap" data-cid="${id}" style="min-height:${spec.height || 210}px"></div>`;
+}
+function hydrateCharts() {
+  $$(".chart-wrap[data-cid]").forEach(el => {
+    const spec = CHARTS.get(el.dataset.cid); if (!spec) return;
+    const draw = () => {
+      const w = Math.max(240, el.clientWidth || el.parentElement.clientWidth || 320);
+      if (spec.type === "line") drawLine(el, spec, w);
+      else if (spec.type === "bars") drawBars(el, spec, w);
+      else if (spec.type === "donut") drawDonut(el, spec, w);
+    };
+    draw();
+    if (window.ResizeObserver && !el._ro) {
+      let t; el._ro = new ResizeObserver(() => { clearTimeout(t); t = setTimeout(draw, 120); });
+      el._ro.observe(el);
+    }
+  });
+}
+const tipEl = el => { let t = el.querySelector(".tip"); if (!t) { t = document.createElement("div"); t.className = "tip"; el.appendChild(t); } return t; };
+function showTip(el, x, y, html) { const t = tipEl(el); t.innerHTML = html; t.style.opacity = "1"; const w = t.offsetWidth; t.style.left = clamp(x, w / 2 + 4, el.clientWidth - w / 2 - 4) + "px"; t.style.top = Math.max(30, y - 10) + "px"; }
+const hideTip = el => { const t = el.querySelector(".tip"); if (t) t.style.opacity = "0"; };
+
+/* ---- Courbe / aire ---- */
+function drawLine(el, spec, W) {
+  const H = spec.height || 210, mL = 52, mR = 12, mT = 12, mB = 26;
+  const iw = W - mL - mR, ih = H - mT - mB;
+  const series = spec.series.filter(s => s.points.some(p => p.y !== null));
+  const labels = (spec.series[0] || { points: [] }).points.map(p => p.x);
+  const vals = series.flatMap(s => s.points.map(p => p.y)).filter(v => v !== null && Number.isFinite(v));
+  if (!vals.length) { el.innerHTML = emptyHtml(spec.empty || "Pas encore de données."); return; }
+  let min = Math.min(...vals), max = Math.max(...vals);
+  if (spec.zero || min > 0 && (max - min) / (max || 1) > .6) min = Math.min(0, min);
+  if (min === max) { max = max + Math.abs(max || 1) * .1; min = min - Math.abs(min || 1) * .1; }
+  const pad = (max - min) * .12; max += pad; min -= (min < 0 ? pad : Math.min(pad, Math.abs(min)));
+  const n = labels.length;
+  const X = i => mL + (n <= 1 ? iw / 2 : (i * iw) / (n - 1));
+  const Y = v => mT + ih - ((v - min) / (max - min)) * ih;
+  const ticks = 4, gy = [];
+  for (let i = 0; i <= ticks; i++) gy.push(min + ((max - min) * i) / ticks);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(spec.aria || "Graphique d'évolution")}">`;
+  gy.forEach(v => { const y = Y(v); svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="var(--grid)" stroke-width="1"/><text x="${mL - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)">${eurShort(v)}</text>`; });
+  if (min < 0 && max > 0) svg += `<line x1="${mL}" y1="${Y(0)}" x2="${W - mR}" y2="${Y(0)}" stroke="var(--axis)" stroke-width="1.5"/>`;
+  const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 62))));
+  labels.forEach((l, i) => { if (i % every && i !== n - 1) return; svg += `<text x="${X(i).toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${esc(spec.xfmt ? spec.xfmt(l) : l)}</text>`; });
+  series.forEach((s, si) => {
+    const pts = s.points.map((p, i) => (p.y === null ? null : [X(i), Y(p.y)])).filter(Boolean);
+    if (!pts.length) return;
+    const d = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    if (spec.area && series.length === 1) {
+      svg += `<defs><linearGradient id="g${si}${el.dataset.cid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${s.color}" stop-opacity=".22"/><stop offset="100%" stop-color="${s.color}" stop-opacity="0"/></linearGradient></defs>
+        <path d="${d} L ${pts[pts.length - 1][0].toFixed(1)} ${(mT + ih).toFixed(1)} L ${pts[0][0].toFixed(1)} ${(mT + ih).toFixed(1)} Z" fill="url(#g${si}${el.dataset.cid})"/>`;
+    }
+    svg += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if (pts.length <= 14) pts.forEach(p => { svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`; });
+  });
+  svg += `<g class="hov" opacity="0"><line y1="${mT}" y2="${mT + ih}" stroke="var(--axis)" stroke-width="1.5" stroke-dasharray="3 3"/>${series.map(s => `<circle r="5" fill="${s.color}" stroke="var(--surface)" stroke-width="2"/>`).join("")}</g>`;
+  svg += `<rect class="hitrect" x="${mL}" y="${mT}" width="${iw}" height="${ih}"/></svg>`;
+  el.innerHTML = svg + (spec.legend === false || series.length < 2 ? "" : legendHtml(series.map(s => ({ label: s.name, color: s.color }))));
+  const hit = el.querySelector(".hitrect"), hov = el.querySelector(".hov");
+  const move = e => {
+    const r = el.querySelector("svg").getBoundingClientRect();
+    const px = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) * (W / r.width);
+    const i = clamp(Math.round(((px - mL) / (iw || 1)) * (n - 1)), 0, n - 1);
+    const x = X(i);
+    hov.setAttribute("opacity", "1");
+    hov.querySelector("line").setAttribute("x1", x); hov.querySelector("line").setAttribute("x2", x);
+    const circles = [...hov.querySelectorAll("circle")];
+    let rows = "";
+    series.forEach((s, si) => {
+      const p = s.points[i];
+      const c = circles[si];
+      if (!p || p.y === null) { c.setAttribute("opacity", "0"); return; }
+      c.setAttribute("opacity", "1"); c.setAttribute("cx", x); c.setAttribute("cy", Y(p.y));
+      rows += `<div class="tip-r"><span class="dot" style="background:${s.color}"></span>${series.length > 1 ? esc(s.name) + " " : ""}<b>${spec.fmt ? spec.fmt(p.y) : money(p.y)}</b></div>`;
+    });
+    showTip(el, (x * (r.width / W)), (mT * (r.height / H)) + 4, `<b>${esc(spec.xfmt ? spec.xfmt(labels[i]) : labels[i])}</b>${rows}`);
+  };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerdown", move);
+  hit.addEventListener("pointerleave", () => { hov.setAttribute("opacity", "0"); hideTip(el); });
+}
+/* ---- Barres (simples ou empilées) ---- */
+function drawBars(el, spec, W) {
+  const H = spec.height || 210, mL = 52, mR = 12, mT = 12, mB = 26;
+  const iw = W - mL - mR, ih = H - mT - mB;
+  const groups = spec.groups;
+  if (!groups.length || !groups.some(g => g.values.some(v => v.value))) { el.innerHTML = emptyHtml(spec.empty || "Pas encore de données."); return; }
+  const totals = groups.map(g => g.values.reduce((s, v) => s + Math.max(0, v.value), 0));
+  const negTot = groups.map(g => g.values.reduce((s, v) => s + Math.min(0, v.value), 0));
+  let max = Math.max(...totals, 0), min = Math.min(...negTot, 0);
+  if (!spec.stacked) { max = Math.max(...groups.flatMap(g => g.values.map(v => v.value)), 0); min = Math.min(...groups.flatMap(g => g.values.map(v => v.value)), 0); }
+  max = max * 1.12 || 1; min = min * 1.12;
+  const Y = v => mT + ih - ((v - min) / (max - min)) * ih, base = Y(0);
+  const gw = iw / groups.length, inner = Math.min(46, gw * .62);
+  const ticks = 4; let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(spec.aria || "Graphique en barres")}">`;
+  for (let i = 0; i <= ticks; i++) { const v = min + ((max - min) * i) / ticks, y = Y(v); svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="var(--grid)" stroke-width="1"/><text x="${mL - 8}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--muted)">${eurShort(v)}</text>`; }
+  svg += `<line x1="${mL}" y1="${base.toFixed(1)}" x2="${W - mR}" y2="${base.toFixed(1)}" stroke="var(--axis)" stroke-width="1.5"/>`;
+  const nSeries = spec.stacked ? 1 : ((groups[0] && groups[0].values.length) || 1);
+  const every = Math.max(1, Math.ceil(groups.length / Math.max(2, Math.floor(iw / 58))));
+  groups.forEach((g, gi) => {
+    const cx = mL + gw * gi + gw / 2;
+    if (!(gi % every) || gi === groups.length - 1) svg += `<text x="${cx.toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${esc(spec.xfmt ? spec.xfmt(g.label) : g.label)}</text>`;
+    if (spec.stacked) {
+      let accP = 0, accN = 0;
+      g.values.forEach((v, vi) => {
+        if (!v.value) return;
+        const from = v.value > 0 ? accP : accN, to = from + v.value;
+        if (v.value > 0) accP = to; else accN = to;
+        const y1 = Y(to), y0 = Y(from), h = Math.abs(y0 - y1);
+        const top = v.value > 0 ? y1 : y0;
+        svg += barPath(cx - inner / 2, top, inner, Math.max(1, h - 2), v.value > 0 ? (accP === to ? 4 : 0) : 0, v.color, `${gi}-${vi}`);
+      });
+    } else {
+      const bw = (inner - 2 * (nSeries - 1)) / nSeries;
+      g.values.forEach((v, vi) => {
+        const x = cx - inner / 2 + vi * (bw + 2);
+        const y = v.value >= 0 ? Y(v.value) : base, h = Math.abs(Y(v.value) - base);
+        svg += barPath(x, y, bw, Math.max(1, h), 4, v.color, `${gi}-${vi}`);
+      });
+    }
+  });
+  svg += `</svg>`;
+  const legItems = ((groups[0] && groups[0].values) || []).map(v => ({ label: v.name, color: v.color }));
+  el.innerHTML = svg + (spec.legend === false || legItems.length < 2 ? "" : legendHtml(legItems));
+  el.querySelectorAll("path[data-k]").forEach(p => {
+    p.addEventListener("pointerenter", e => {
+      p.classList.add("mark-hover");
+      const [gi, vi] = p.dataset.k.split("-").map(Number), g = groups[gi], v = g.values[vi];
+      const r = el.querySelector("svg").getBoundingClientRect(), box = p.getBoundingClientRect();
+      showTip(el, box.left - r.left + box.width / 2, box.top - r.top, `<b>${esc(spec.xfmt ? spec.xfmt(g.label) : g.label)}</b><div class="tip-r"><span class="dot" style="background:${v.color}"></span>${esc(v.name)} <b>${spec.fmt ? spec.fmt(v.value) : money(v.value)}</b></div>`);
+    });
+    p.addEventListener("pointerleave", () => { p.classList.remove("mark-hover"); hideTip(el); });
+  });
+}
+function barPath(x, y, w, h, r, fill, key) {
+  r = Math.min(r, w / 2, h);
+  return `<path data-k="${key}" fill="${fill}" d="M${x} ${y + h} L${x} ${y + r} Q${x} ${y} ${x + r} ${y} L${x + w - r} ${y} Q${x + w} ${y} ${x + w} ${y + r} L${x + w} ${y + h} Z"/>`;
+}
+/* ---- Donut ---- */
+function drawDonut(el, spec, W) {
+  const items = spec.items.filter(i => i.value > 0);
+  const H = spec.height || 210;
+  if (!items.length) { el.innerHTML = emptyHtml(spec.empty || "Aucune valeur à répartir."); return; }
+  const total = items.reduce((s, i) => s + i.value, 0);
+  const size = Math.min(W, H), cx = W / 2, cy = H / 2, R = size / 2 - 6, r = R * .62;
+  const gap = items.length > 1 ? 2 : 0;
+  let a0 = -Math.PI / 2, svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(spec.aria || "Répartition")}">`;
+  items.forEach((it, i) => {
+    const ang = (it.value / total) * Math.PI * 2;
+    const gapA = Math.min(gap / R, ang * .35);
+    const s = a0 + gapA / 2, e = a0 + ang - gapA / 2;
+    svg += `<path data-i="${i}" fill="${it.color}" d="${arc(cx, cy, R, r, s, e)}"/>`;
+    a0 += ang;
+  });
+  svg += `<text class="don-c" x="${cx}" y="${cy - 2}" font-size="12" fill="var(--muted)">${esc(spec.centerLabel || "Total")}</text>
+    <text class="don-c" x="${cx}" y="${cy + 20}" font-size="17" font-weight="640" fill="var(--ink)">${esc(spec.centerValue || money(total))}</text></svg>`;
+  el.innerHTML = svg + legendHtml(items.map(i => ({ label: i.label, color: i.color, value: `${money(i.value)} · ${((i.value / total) * 100).toFixed(0)} %` })));
+  el.querySelectorAll("path[data-i]").forEach(p => {
+    p.addEventListener("pointerenter", e => {
+      p.classList.add("mark-hover");
+      const it = items[+p.dataset.i], rct = el.getBoundingClientRect(), b = p.getBoundingClientRect();
+      showTip(el, b.left - rct.left + b.width / 2, b.top - rct.top + 8, `<b>${esc(it.label)}</b><div class="tip-r"><span class="dot" style="background:${it.color}"></span><b>${money(it.value)}</b> · ${((it.value / total) * 100).toFixed(1).replace(".", ",")} %</div>`);
+    });
+    p.addEventListener("pointerleave", () => { p.classList.remove("mark-hover"); hideTip(el); });
+  });
+}
+function arc(cx, cy, R, r, s, e) {
+  const p = (rad, a) => [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+  const big = e - s > Math.PI ? 1 : 0;
+  const [x1, y1] = p(R, s), [x2, y2] = p(R, e), [x3, y3] = p(r, e), [x4, y4] = p(r, s);
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${R} ${R} 0 ${big} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L${x3.toFixed(2)} ${y3.toFixed(2)} A${r} ${r} 0 ${big} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`;
+}
+const legendHtml = items => `<div class="legend">${items.map(i => `<span class="li"><span class="dot" style="background:${i.color}"></span>${esc(i.label)}${i.value ? ` <span class="lv">${i.value}</span>` : ""}</span>`).join("")}</div>`;
+/* barres horizontales HTML (catégories) */
+function hbars(items, opts = {}) {
+  if (!items.length) return emptyHtml(opts.empty || "Aucune donnée.");
+  const max = Math.max(...items.map(i => i.value)) || 1;
+  const tot = items.reduce((s, i) => s + i.value, 0);
+  return `<div style="display:flex;flex-direction:column;gap:13px">${items.map((i, k) => {
+    const c = i.color || SERIES[k % SERIES.length];
+    return `<div class="meter">
+      <div class="meter-h"><span class="meter-l"><span class="dot" style="background:${c}"></span><span>${esc(i.label)}</span></span>
+        <span class="meter-v">${money(i.value)}</span></div>
+      <div class="bar"><span style="width:${((i.value / max) * 100).toFixed(1)}%;background:${c}"></span></div>
+      ${opts.share !== false && tot ? `<div class="meter-f"><span>${((i.value / tot) * 100).toFixed(1).replace(".", ",")} % du total</span><span>${esc(i.sub || "")}</span></div>` : ""}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+/* ==================================================================
+   CRUD GÉNÉRIQUE
+   ================================================================== */
+const listAt = path => { const [a, b] = path.split("."); return state[a][b]; };
+const ED = {};
+function editItem(path, id) {
+  const spec = ED[path]; if (!spec) return;
+  const list = listAt(path), item = id ? list.find(x => x.id === id) : {};
+  formModal({
+    title: (id ? "Modifier — " : "Ajouter — ") + spec.title,
+    fields: typeof spec.fields === "function" ? spec.fields(item) : spec.fields,
+    values: item, wide: spec.wide,
+    onSubmit(v) {
+      if (spec.clean) v = spec.clean(v) || v;
+      if (id) Object.assign(item, v); else { v.id = uid(); list.push(v); }
+      if (spec.after) spec.after(v);
+      save(); render(); toast(id ? "Modification enregistrée" : "Ajouté");
+    },
+  });
+}
+function delItem(path, id) {
+  const list = listAt(path), i = list.findIndex(x => x.id === id); if (i < 0) return;
+  confirmDialog("Confirmer la suppression", (ED[path] && ED[path].delMsg) || "Cette entrée sera définitivement supprimée.", () => {
+    const [rm] = list.splice(i, 1);
+    if (ED[path] && ED[path].onDelete) ED[path].onDelete(rm);
+    save(); render(); toast("Supprimé");
+  });
+}
+const addBtn = (path, label = "Ajouter") => `<button class="btn btn-primary btn-sm" data-add="${path}">${ico("plus")}${esc(label)}</button>`;
+const wrapList = (path, html) => `<div data-list="${path}">${html}</div>`;
+
+/* ==================================================================
+   NAVIGATION / SHELL
+   ================================================================== */
+const NAV = [
+  { g: "Position", items: [{ k: "apercu", l: "Vue d'ensemble", i: "dash" }] },
+  {
+    g: "Patrimoine", items: [
+      { k: "comptes", l: "Comptes & épargne", i: "wallet", c: () => P().accounts.length },
+      { k: "titres", l: "Titres & enveloppes", i: "budget", c: () => P().holdings.length },
+      { k: "immobilier", l: "Immobilier", i: "home", c: () => P().properties.length },
+      { k: "divers", l: "Crypto & divers", i: "box", c: () => P().others.length },
+      { k: "dettes", l: "Dettes & crédits", i: "pct", c: () => P().loans.length },
+      { k: "alpega", l: "SARL ALPEGA", i: "biz" },
+    ]
+  },
+  {
+    g: "Pilotage", items: [
+      { k: "budget", l: "Budget mensuel", i: "euro" },
+      { k: "objectifs", l: "Objectifs", i: "goal", c: () => P().goals.length },
+      { k: "historique", l: "Historique", i: "trend", c: () => P().snapshots.length },
+    ]
+  },
+  { g: "Système", items: [{ k: "reglages", l: "Données & réglages", i: "db" }] },
+];
+const NAV_FLAT = () => NAV.flatMap(g => g.items);
+const TABS = ["apercu", "comptes", "budget", "alpega"];
+
+function navItemHtml(n) {
+  const c = n.c ? n.c() : null;
+  return `<button class="nav-link${ui.view === n.k ? " on" : ""}" data-nav="${n.k}">${ico(n.i)}<span>${esc(n.l)}</span>${c ? `<span class="cnt">${c}</span>` : ""}</button>`;
+}
+function renderShell() {
+  const t = computePersonal();
+  $("#sidebar").innerHTML = `
+    <div class="brand"><span class="brand-mark">${ico("dash")}</span>
+      <span><span class="brand-t">Patrimoine</span><span class="brand-s">${esc(state.settings.ownerName || "Espace personnel")}</span></span></div>
+    ${NAV.map(g => `<div class="nav-group">${esc(g.g)}</div>${g.items.map(navItemHtml).join("")}`).join("")}
+    <div class="side-foot">
+      Patrimoine net<span class="v">${money(t.net)}</span>
+      <span class="sync-dot ${Supa.status()}"></span> ${P().snapshots.length} point(s) · ${Supa.label()}
+    </div>`;
+  $("#tabbar").innerHTML = TABS.map(k => {
+    const n = NAV_FLAT().find(x => x.k === k);
+    const l = { apercu: "Aperçu", comptes: "Comptes", budget: "Budget", alpega: "ALPEGA" }[k];
+    return `<button class="${ui.view === k ? "on" : ""}" data-nav="${k}">${ico(n.i)}<span>${esc(l)}</span></button>`;
+  }).join("") + `<button class="${TABS.includes(ui.view) ? "" : "on"}" data-act="nav-more">${ico("menu")}<span>Plus</span></button>`;
+}
+function navMoreModal() {
+  const body = NAV.map(g => {
+    const items = g.items.map(n => `<button class="nav-link${ui.view === n.k ? " on" : ""}" data-nav="${n.k}" style="padding-left:8px;border-radius:8px">${ico(n.i)}<span>${esc(n.l)}</span>${n.c && n.c() ? `<span class="cnt">${n.c()}</span>` : ""}</button>`).join("");
+    return `<div class="nav-group" style="padding-left:0">${esc(g.g)}</div>${items}`;
+  }).join("");
+  openModal({ title: "Sections", body });
+}
+function topbar(title, sub, actions = "") {
+  $("#topbar").innerHTML = `<div style="min-width:0"><h1>${esc(title)}</h1>${sub ? `<div class="topbar-sub">${sub}</div>` : ""}</div>
+    <div class="topbar-actions">${actions}
+      ${Lock.active() ? `<button class="btn btn-icon btn-ghost" data-act="lock-now" aria-label="Verrouiller" title="Verrouiller l'application">${ico("lockic")}</button>` : ""}
+      <button class="btn btn-icon btn-ghost" data-act="hide" aria-label="Masquer les montants" title="Masquer les montants">${ico(state.settings.hideAmounts ? "eyeoff" : "eye")}</button>
+      <button class="btn btn-icon btn-ghost" data-act="theme" aria-label="Changer de thème" title="Thème clair / sombre">${ico(isDark() ? "sun" : "moon")}</button>
+    </div>`;
+}
+const isDark = () => {
+  if (state.settings.theme === "dark") return true;
+  if (state.settings.theme !== "auto") return false;
+  try { return matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) { return false; }
+};
+function applyTheme() {
+  const t = state.settings.theme;
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+}
+function periodNav(ym, target = "period") {
+  return `<div class="row" style="gap:4px">
+    <button class="btn btn-icon btn-ghost" data-per="prev" style="transform:rotate(180deg)" aria-label="Mois précédent">${ico("chev")}</button>
+    <span class="num" style="font-weight:600;font-size:.88rem;min-width:120px;text-align:center">${esc(ymLabel(ym))}</span>
+    <button class="btn btn-icon btn-ghost" data-per="next" aria-label="Mois suivant" ${ym >= curYM() ? "disabled style=opacity:.35" : ""}>${ico("chev")}</button>
+  </div>`;
+}
+const segHtml = (items, cur, attr) => `<div class="seg">${items.map(i => `<button class="${cur === i.k ? "on" : ""}" data-${attr}="${i.k}">${esc(i.l)}</button>`).join("")}</div>`;
+
+/* ==================================================================
+   VUE — TABLEAU DE BORD
+   ================================================================== */
+function viewApercu() {
+  const t = computePersonal(), c = computeCompany();
+  const snaps = P().snapshots;
+  const prev = snaps.filter(s => s.ym < curYM()).slice(-1)[0];
+  const delta = prev ? t.net - prev.net : null;
+  const deltaPct = prev && prev.net ? (delta / Math.abs(prev.net)) * 100 : null;
+  const f = monthFlows(P().transactions, curYM());
+  const last6 = ymRange(curYM(), 6).map(m => monthFlows(P().transactions, m)).filter(x => x.inc || x.exp);
+  const avgSave = last6.length ? last6.reduce((s, x) => s + x.net, 0) / last6.length : 0;
+  const avgRate = last6.length ? last6.reduce((s, x) => s + x.rate, 0) / last6.length : 0;
+  const classItems = CLASSES.map(cl => ({ label: cl.l, value: t.byClass[cl.k], color: cl.c })).filter(i => i.value > 0);
+  const lines = P().accounts.length + P().holdings.length + P().properties.length + P().others.filter(o => o.kind !== "debt").length;
+  const first = snaps[0], series = netSeries(+ui.range);
+
+  topbar("Vue d'ensemble", `Situation au ${dLabel(todayISO())}`,
+    segHtml([{ k: "6", l: "6 m" }, { k: "12", l: "12 m" }, { k: "24", l: "24 m" }, { k: "36", l: "36 m" }], String(ui.range), "range"));
+
+  $("#view").innerHTML = `
+  <div class="grid g-side">
+    <div class="card hero" style="justify-content:space-between">
+      <div class="eyebrow">Patrimoine net</div>
+      <div class="stat-v serif">${money(t.net)}</div>
+      <div class="row" style="gap:10px;margin:12px 0 18px">
+        ${delta === null ? '<span class="pill flat">Premier relevé</span><span class="muted" style="font-size:.8rem">l\'historique démarre ce mois-ci</span>'
+      : `<span class="pill ${delta >= 0 ? "up" : "down"}">${moneyC(delta)}${deltaPct !== null ? ` · ${pct(deltaPct)}` : ""}</span>
+             <span class="muted" style="font-size:.8rem">depuis le ${dLabel((prev.ym) + "-01")}</span>`}
+      </div>
+      <div class="meter" style="margin-bottom:12px">
+        <div class="meter-h"><span class="meter-l">Actif brut</span><span class="meter-v">${money(t.gross)}</span></div>
+        <div class="bar"><span style="width:100%;background:var(--line)"></span></div>
+      </div>
+      <div class="meter">
+        <div class="meter-h"><span class="meter-l">Passif</span><span class="meter-v neg">− ${money(t.debts)}</span></div>
+        <div class="bar"><span style="width:${t.gross ? clamp((t.debts / t.gross) * 100, 0, 100) : 0}%;background:var(--neg)"></span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Évolution</h2><div class="right muted" style="font-size:.75rem">${first ? `${dLabel(first.ym + "-01")} → ${dLabel(todayISO())}` : "en construction"}</div></div>
+      ${chart({ type: "line", area: true, height: 236, series: [{ name: "Patrimoine net", color: "var(--line)", points: series }], xfmt: ymShort, empty: "Un point d'historique est enregistré chaque mois." })}
+    </div>
+  </div>
+
+  <div class="grid g-4" style="margin-top:14px">
+    ${statHtml("Actif brut", money(t.gross), `${lines} ligne(s)`)}
+    ${statHtml("Passif total", `<span class="neg">${money(t.debts)}</span>`, `${P().loans.length} crédit(s) en cours`)}
+    ${statHtml("Épargne mensuelle", `<span class="${avgSave >= 0 ? "pos" : "neg"}">${money(avgSave)}</span>`, avgRate ? `Taux d'épargne ${avgRate.toFixed(1).replace(".", ",")} %` : "moyenne sur 6 mois")}
+    ${statHtml("Plus-value latente", `<span class="${t.pv >= 0 ? "pos" : "neg"}">${moneyC(t.pv)}</span>`, t.invested ? `${pct(t.pvPct)} sur ${money(t.invested)} investis` : "aucune ligne de titres")}
+  </div>
+
+  <div class="grid g-side2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h2>Répartition par classe d'actif</h2></div>
+      ${chart({ type: "donut", height: 216, items: classItems, centerLabel: "Actif brut", centerValue: money(t.gross), empty: "Ajoutez vos comptes et vos biens." })}
+    </div>
+    ${allocCard(t)}
+  </div>
+
+  <div class="grid g-half" style="margin-top:14px">
+    <div class="card">
+      <div class="card-h"><h2>Budget — ${esc(ymLabel(curYM()))}</h2><div class="right"><button class="btn-link" data-nav="budget">Ouvrir le budget</button></div></div>
+      <div class="grid g-3" style="gap:10px;margin-bottom:16px">
+        ${statHtml("Revenus", money(f.inc))}
+        ${statHtml("Dépenses", money(f.exp))}
+        ${statHtml("Solde", `<span class="${f.net >= 0 ? "pos" : "neg"}">${money(f.net)}</span>`, f.inc ? `${f.rate.toFixed(0)} % épargnés` : "")}
+      </div>
+      ${hbars(byCategory(P().transactions, curYM()).slice(0, 5).map((x, i) => ({ ...x, color: SERIES[i % SERIES.length] })), { empty: "Aucune dépense saisie ce mois-ci.", share: false })}
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-h"><h2>SARL ALPEGA</h2><div class="right"><button class="btn-link" data-nav="alpega">Ouvrir</button></div></div>
+        <div class="kv"><span class="k">Trésorerie</span><span class="v">${money(c.cash)}</span></div>
+        <div class="kv"><span class="k">Encours clients</span><span class="v">${money(c.receivable)}${c.lateCount ? ` <span class="badge crit">${c.lateCount} en retard</span>` : ""}</span></div>
+        <div class="kv"><span class="k">Investissements & immobilisations</span><span class="v">${money(c.inv + c.fa)}</span></div>
+        <div class="kv"><span class="k">Compte courant d'associé</span><span class="v ${c.ccaBal >= 0 ? "" : "neg"}">${money(c.ccaBal)}</span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h2>Objectifs</h2><div class="right"><button class="btn-link" data-nav="objectifs">Tous</button></div></div>
+        ${P().goals.length ? P().goals.slice(0, 3).map(g => goalRow(g)).join('<div style="height:14px"></div>')
+      : emptyHtml("Aucun objectif défini.", `<button class="btn btn-primary btn-sm" data-add="personal.goals">${ico("plus")}Créer un objectif</button>`)}
+      </div>
+    </div>
+  </div>`;
+}
+/* ---- Allocation cible ---- */
+function allocCard(t) {
+  const alloc = P().allocation || {};
+  const share = k => (t.gross ? (t.byClass[k] / t.gross) * 100 : 0);
+  const keys = CLASSES.filter(cl => nb(alloc[cl.k]) > 0 || share(cl.k) >= 2);
+  const hasTarget = CLASSES.some(cl => nb(alloc[cl.k]) > 0);
+  if (!hasTarget) {
+    return `<div class="card"><div class="card-h"><h2>Écart à l'allocation cible</h2></div>
+      ${emptyHtml("Définissez la répartition visée par classe d'actif : l'écart en euros vous indique quoi renforcer ou alléger.",
+      `<button class="btn btn-primary btn-sm" data-act="alloc">${ico("target")}Définir mon allocation</button>`)}</div>`;
+  }
+  const gross = t.gross || 0;
+  const rows = keys.map(cl => {
+    const cur = t.byClass[cl.k], tgt = nb(alloc[cl.k]);
+    const curPct = gross ? (cur / gross) * 100 : 0;
+    const gap = (gross * tgt) / 100 - cur;
+    return { cl, cur, tgt, curPct, gap };
+  }).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+  const scale = Math.max(...rows.map(r => Math.max(r.curPct, r.tgt)), 10) * 1.15;
+  const tol = gross * 0.02;
+  return `<div class="card"><div class="card-h"><h2>Écart à l'allocation cible</h2>
+    <div class="right"><button class="btn-link" data-act="alloc">Régler</button></div></div>
+    <div style="display:flex;flex-direction:column;gap:15px">
+    ${rows.map(r => `<div class="meter">
+      <div class="meter-h"><span class="meter-l"><span class="dot" style="background:${r.cl.c}"></span><span>${esc(r.cl.l)}</span></span>
+        <span class="meter-v ${Math.abs(r.gap) <= tol ? "muted" : r.gap > 0 ? "" : "neg"}">${Math.abs(r.gap) <= tol ? "aligné" : moneyC(r.gap)}</span></div>
+      <div class="bar"><span style="width:${clamp((r.curPct / scale) * 100, 0, 100).toFixed(1)}%;background:${r.cl.c}"></span>
+        <i class="tick" style="left:${clamp((r.tgt / scale) * 100, 0, 100).toFixed(1)}%"></i></div>
+      <div class="meter-f"><span>${r.curPct.toFixed(1).replace(".", ",")} % · cible ${num(r.tgt, 1)} %</span>
+        <span>${Math.abs(r.gap) <= tol ? "" : r.gap > 0 ? "à renforcer" : "à alléger"}</span></div>
+    </div>`).join("")}
+    </div></div>`;
+}
+function allocModal() {
+  const alloc = P().allocation || {};
+  openModal({
+    title: "Allocation cible par classe d'actif",
+    body: `<div class="note" style="margin-bottom:14px">Indiquez la part visée (en %) pour chaque classe. Le total devrait atteindre 100 %.</div>
+      <form id="af">${CLASSES.map(cl => `<div class="field" style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <label style="flex:1;display:flex;align-items:center;gap:8px;margin:0"><span class="dot" style="background:${cl.c}"></span>${esc(cl.l)}</label>
+        <input type="number" step="any" inputmode="decimal" name="${cl.k}" value="${nb(alloc[cl.k]) || ""}" placeholder="0" style="width:110px" data-alloc>
+      </div>`).join("")}</form>
+      <div class="kv"><span class="k">Total</span><span class="v" id="alloc-total">0 %</span></div>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-primary" type="submit" form="af">Enregistrer</button>`,
+    onMount: r => {
+      const upd = () => {
+        const tot = [...r.querySelectorAll("[data-alloc]")].reduce((s, i) => s + nb(i.value), 0);
+        const el = r.querySelector("#alloc-total");
+        el.textContent = num(tot, 1) + " %";
+        el.className = "v " + (Math.abs(tot - 100) < 0.5 ? "pos" : tot > 100 ? "neg" : "muted");
+      };
+      r.querySelectorAll("[data-alloc]").forEach(i => i.oninput = upd); upd();
+      r.querySelector("#af").onsubmit = e => {
+        e.preventDefault();
+        const out = {};
+        CLASSES.forEach(cl => { const v = nb(new FormData(e.target).get(cl.k)); if (v > 0) out[cl.k] = v; });
+        P().allocation = out; closeModal(); save(); render(); toast("Allocation cible enregistrée");
+      };
+    },
+  });
+}
+function goalCurrent(g) {
+  if (g.accountIds && g.accountIds.length) return P().accounts.filter(a => g.accountIds.includes(a.id)).reduce((s, a) => s + accTotal(a), 0);
+  return nb(g.current);
+}
+function goalRow(g) {
+  const cur = goalCurrent(g), tgt = nb(g.target), p = tgt > 0 ? clamp((cur / tgt) * 100, 0, 100) : 0;
+  const left = tgt - cur, days = g.deadline ? daysBetween(todayISO(), g.deadline) : null;
+  const perMonth = days && days > 0 && left > 0 ? left / (days / 30.44) : null;
+  return `<div>
+    <div class="row" style="justify-content:space-between;gap:8px;margin-bottom:6px">
+      <span style="font-weight:560">${esc(g.name)}</span>
+      <span class="num" style="font-size:.85rem"><b>${money(cur)}</b> <span class="muted">/ ${money(tgt)}</span></span>
+    </div>
+    <div class="bar"><span style="width:${p}%;background:${p >= 100 ? "var(--good)" : "var(--accent)"}"></span></div>
+    <div class="row muted" style="justify-content:space-between;font-size:.76rem;margin-top:5px">
+      <span>${p.toFixed(0)} %${g.deadline ? ` · échéance ${dLabel(g.deadline)}` : ""}</span>
+      <span>${p >= 100 ? "Objectif atteint 🎉" : perMonth ? `${money(perMonth)} / mois requis` : left > 0 ? `${money(left)} restants` : ""}</span>
+    </div></div>`;
+}
+
+/* ==================================================================
+   VUE — PATRIMOINE
+   ================================================================== */
+function sectionView(title, sub, addPath, addLabel, body) {
+  topbar(title, sub, addPath ? addBtn(addPath, addLabel) : "");
+  $("#view").innerHTML = body;
+}
+function viewComptes() {
+  const t = computePersonal(), accs = P().accounts;
+  const tot = accs.reduce((s, a) => s + accTotal(a), 0);
+  sectionView("Comptes & épargne", `${accs.length} compte(s) · ${money(tot)}`, "personal.accounts", "Compte", `
+    <div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("Total des comptes", money(tot))}
+      ${statHtml("Liquidités", money(t.byClass.liquidites))}
+      ${statHtml("Épargne & fonds euro", money(t.byClass.epargne))}
+      ${statHtml("Assurance-vie & PER", money(t.byClass.av))}
+    </div>` + patComptes());
+}
+function viewTitres() {
+  const t = computePersonal();
+  sectionView("Titres & enveloppes", `${P().holdings.length} ligne(s) · ${money(t.market)}`, "personal.holdings", "Ligne", patBourse(t));
+}
+function viewImmobilier() {
+  const t = computePersonal();
+  sectionView("Immobilier", `${P().properties.length} bien(s) · net ${money(t.immo - t.loans)}`, "personal.properties", "Bien", patImmo(t));
+}
+function viewDivers() {
+  sectionView("Crypto & divers", `${P().others.length} élément(s)`, "personal.others", "Élément", patAutres());
+}
+function viewDettes() {
+  const t = computePersonal();
+  sectionView("Dettes & crédits", `${P().loans.length} crédit(s) · ${money(t.loans)} restant dû`, "personal.loans", "Crédit", patCredits(t));
+}
+/* ---- Historique des relevés ---- */
+function viewHistorique() {
+  const snaps = [...P().snapshots].sort((a, b) => b.ym.localeCompare(a.ym));
+  const cur = snaps[0], win = ymAdd(curYM(), -12);
+  const y1 = P().snapshots.find(s => s.ym >= win && s.ym < curYM());
+  const varY = cur && y1 ? cur.net - y1.net : null;
+  const best = [...P().snapshots].map((s, i, arr) => ({ s, d: i ? s.net - arr[i - 1].net : null })).filter(x => x.d !== null).sort((a, b) => b.d - a.d)[0];
+  topbar("Historique", `${snaps.length} relevé(s) mensuel(s)`,
+    `<button class="btn btn-sm" data-act="hist-add">${ico("plus")}Point manuel</button>`);
+  $("#view").innerHTML = `
+  <div class="grid g-4" style="margin-bottom:14px">
+    ${statHtml("Patrimoine net", money(cur ? cur.net : 0), cur ? ymLabel(cur.ym) : "")}
+    ${statHtml("Variation sur 12 mois", varY === null ? "—" : `<span class="${varY >= 0 ? "pos" : "neg"}">${moneyC(varY)}</span>`, y1 ? `depuis ${ymLabel(y1.ym)}` : "pas encore d'antériorité")}
+    ${statHtml("Meilleur mois", best ? `<span class="pos">${moneyC(best.d)}</span>` : "—", best ? ymLabel(best.s.ym) : "")}
+    ${statHtml("Relevés enregistrés", String(snaps.length), "un point par mois d'utilisation")}
+  </div>
+  <div class="card"><div class="card-h"><h2>Courbe du patrimoine net</h2>
+    <div class="right">${segHtml([{ k: "12", l: "12 m" }, { k: "24", l: "24 m" }, { k: "36", l: "36 m" }, { k: "60", l: "5 ans" }], String(ui.range), "range")}</div></div>
+    ${chart({ type: "line", area: true, height: 250, xfmt: ymShort, series: [{ name: "Patrimoine net", color: "var(--line)", points: netSeries(+ui.range) }], empty: "L'historique se construit automatiquement." })}
+  </div>
+  <div class="card" style="margin-top:14px"><div class="card-h"><h2>Relevés mensuels</h2></div>
+    ${snaps.length ? `<div class="tw"><table><thead><tr><th>Mois</th><th class="r">Actif brut</th><th class="r">Passif</th><th class="r">Patrimoine net</th><th class="r">Variation</th><th class="r"></th></tr></thead><tbody>
+      ${snaps.map((sn, i) => {
+        const prev = snaps[i + 1], d = prev ? sn.net - prev.net : null;
+        const dp = prev && prev.net ? (d / Math.abs(prev.net)) * 100 : null;
+        return `<tr><td class="t-main">${esc(ymLabel(sn.ym))}${sn.ym === curYM() ? ' <span class="badge info">en cours</span>' : ""}</td>
+          <td class="r num">${money(sn.gross)}</td><td class="r num">${money(sn.debts || 0)}</td>
+          <td class="r num"><b>${money(sn.net)}</b></td>
+          <td class="r num">${d === null ? '<span class="muted">—</span>' : `<span class="${d >= 0 ? "pos" : "neg"}">${moneyC(d)}${dp !== null ? `<div class="t-sub ${d >= 0 ? "pos" : "neg"}">${pct(dp)}</div>` : ""}</span>`}</td>
+          <td class="actions">${sn.ym === curYM() ? "" : `<button class="btn btn-sm btn-ghost btn-icon" data-act="hist-del" data-ym="${sn.ym}" aria-label="Supprimer">${ico("trash")}</button>`}</td></tr>`;
+      }).join("")}</tbody></table></div>` : emptyHtml("Aucun relevé pour l'instant.")}
+    <div class="note" style="margin-top:12px">Le relevé du mois en cours est recalculé automatiquement à chaque ouverture. Vous pouvez ajouter des points antérieurs pour reconstituer votre historique.</div>
+  </div>`;
+}
+function histModal() {
+  formModal({
+    title: "Point d'historique",
+    fields: [
+      { key: "ym", label: "Mois", type: "month", required: true, def: ymAdd(curYM(), -1) },
+      { key: "gross", label: "Actif brut (€)", type: "number", required: true },
+      { key: "debts", label: "Passif / dettes (€)", type: "number" },
+    ],
+    onSubmit(v) {
+      const rec = { ym: v.ym, gross: nb(v.gross), debts: nb(v.debts), net: nb(v.gross) - nb(v.debts) };
+      if (rec.ym === curYM()) return toast("Le mois en cours est calculé automatiquement", true);
+      const arr = P().snapshots, i = arr.findIndex(x => x.ym === rec.ym);
+      if (i >= 0) arr[i] = rec; else arr.push(rec);
+      arr.sort((a, b) => a.ym.localeCompare(b.ym));
+      save(); render(); toast("Relevé enregistré");
+    },
+  });
+}
+function patComptes() {
+  const accs = P().accounts;
+  const groups = {};
+  accs.forEach(a => { const k = accClass(a.type); (groups[k] = groups[k] || []).push(a); });
+  return wrapList("personal.accounts", `<div class="card"><div class="card-h"><h2>Comptes & enveloppes</h2>
+      <div class="right"><span class="badge">${money(accs.reduce((s, a) => s + accTotal(a), 0))} au total</span></div></div>
+    ${tableHtml([
+    { l: "Compte", render: a => `<div class="t-main">${esc(a.name)}</div><div class="t-sub">${esc((ACC_TYPES.find(x => x.v === a.type) || {}).l || "")}${a.institution ? " · " + esc(a.institution) : ""}</div>` },
+    { l: "Espèces", r: 1, render: a => money(nb(a.balance)) },
+    { l: "Titres", r: 1, render: a => { const h = accHoldings(a.id); return h.length ? money(h.reduce((s, x) => s + holdValue(x), 0)) : '<span class="muted">—</span>'; } },
+    { l: "Taux", r: 1, render: a => (nb(a.rate) ? num(nb(a.rate), 2) + " %" : '<span class="muted">—</span>') },
+    { l: "Total", r: 1, render: a => `<b>${money(accTotal(a))}</b>` },
+  ], accs, { actions: true, empty: "Aucun compte enregistré.", emptyAction: addBtn("personal.accounts", "Ajouter un compte") })}</div>`);
+}
+function patBourse(t) {
+  const hs = P().holdings;
+  const accName = id => (P().accounts.find(a => a.id === id) || {}).name || "—";
+  const byLine = hs.map((h, i) => ({ label: h.name, value: holdValue(h), color: SERIES[i % 8] })).filter(x => x.value > 0).sort((a, b) => b.value - a.value);
+  return `<div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("Valorisation", money(t.market), `<span class="muted">${hs.length} ligne(s)</span>`)}
+      ${statHtml("Montant investi", money(t.invested))}
+      ${statHtml("Plus/moins-value", `<span class="${t.pv >= 0 ? "pos" : "neg"}">${moneyC(t.pv)}</span>`, `<span class="${t.pv >= 0 ? "pos" : "neg"}">${pct(t.pvPct)}</span>`)}
+      ${statHtml("Meilleure ligne", (() => { const b = hs.map(h => ({ h, g: holdCost(h) ? (holdValue(h) - holdCost(h)) / holdCost(h) * 100 : 0 })).sort((a, b2) => b2.g - a.g)[0]; return b ? `<span style="font-size:1.1rem">${esc(b.h.name)}</span>` : "—"; })(),
+    (() => { const b = hs.map(h => ({ h, g: holdCost(h) ? (holdValue(h) - holdCost(h)) / holdCost(h) * 100 : 0 })).sort((a, b2) => b2.g - a.g)[0]; return b ? `<span class="${b.g >= 0 ? "pos" : "neg"}">${pct(b.g)}</span>` : ""; })())}
+    </div>
+    <div class="grid g-wide">
+      ${wrapList("personal.holdings", `<div class="card"><div class="card-h"><h2>Portefeuille</h2></div>
+      ${tableHtml([
+      { l: "Ligne", render: h => `<div class="t-main">${esc(h.name)}${h.ticker ? ` <span class="muted">${esc(h.ticker)}</span>` : ""}</div><div class="t-sub">${esc((HOLD_CLASSES.find(c => c.v === h.class) || {}).l || "")} · ${esc(accName(h.accountId))}</div>` },
+      { l: "Qté", r: 1, render: h => num(nb(h.qty), 4) },
+      { l: "PRU", r: 1, render: h => money(nb(h.pru), 2) },
+      { l: "Cours", r: 1, render: h => money(nb(h.price), 2) },
+      { l: "Valeur", r: 1, render: h => `<b>${money(holdValue(h))}</b>` },
+      { l: "+/- value", r: 1, render: h => { const pv = holdValue(h) - holdCost(h), p = holdCost(h) ? (pv / holdCost(h)) * 100 : 0; return `<span class="${pv >= 0 ? "pos" : "neg"}">${moneyC(pv)}<div class="t-sub ${pv >= 0 ? "pos" : "neg"}">${pct(p)}</div></span>`; } },
+    ], hs, { actions: true, empty: "Aucune ligne en portefeuille.", emptyAction: addBtn("personal.holdings", "Ajouter une ligne") })}
+      <div class="note" style="margin-top:12px">Les cours sont saisis manuellement (application 100 % hors-ligne). Mettez-les à jour quand vous le souhaitez : l'historique du patrimoine suivra.</div></div>`)}
+      <div class="card"><div class="card-h"><h2>Répartition du portefeuille</h2></div>
+        ${chart({ type: "donut", height: 220, items: byLine, centerLabel: "Portefeuille", centerValue: money(t.market) })}</div>
+    </div>`;
+}
+function patImmo(t) {
+  const props = P().properties;
+  const loanFor = pid => P().loans.filter(l => l.propertyId === pid).reduce((s, l) => s + nb(l.remaining), 0);
+  return wrapList("personal.properties", `<div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("Valeur des biens", money(t.immo), `<span class="muted">${props.length} bien(s)</span>`)}
+      ${statHtml("Capital restant dû", money(t.loans))}
+      ${statHtml("Valeur nette", money(t.immo - t.loans))}
+      ${statHtml("Cash-flow locatif", `<span class="${t.rentMonthly - t.loanPayment >= 0 ? "pos" : "neg"}">${money(t.rentMonthly - t.loanPayment)}</span>`, `<span class="muted">loyers nets − mensualités</span>`)}
+    </div>
+    <div class="card"><div class="card-h"><h2>Biens immobiliers</h2></div>
+    ${tableHtml([
+    { l: "Bien", render: p => `<div class="t-main">${esc(p.name)}</div><div class="t-sub">${esc((PROP_TYPES.find(x => x.v === p.type) || {}).l || "")}${p.buyDate ? " · acquis le " + dLabel(p.buyDate) : ""}</div>` },
+    { l: "Valeur", r: 1, render: p => money(nb(p.value)) },
+    { l: "Crédit", r: 1, render: p => (loanFor(p.id) ? money(loanFor(p.id)) : '<span class="muted">—</span>') },
+    { l: "Net", r: 1, render: p => `<b>${money(nb(p.value) - loanFor(p.id))}</b>` },
+    { l: "Loyer net", r: 1, render: p => (nb(p.rentMonthly) ? money(nb(p.rentMonthly) - nb(p.chargesMonthly)) : '<span class="muted">—</span>') },
+    { l: "Rendement", r: 1, render: p => { const base = nb(p.buyPrice) || nb(p.value); const r = base ? ((nb(p.rentMonthly) - nb(p.chargesMonthly)) * 12 / base) * 100 : 0; return r ? num(r, 2) + " %" : '<span class="muted">—</span>'; } },
+  ], props, { actions: true, empty: "Aucun bien immobilier.", emptyAction: addBtn("personal.properties", "Ajouter un bien") })}</div>`);
+}
+function patCredits(t) {
+  const loans = P().loans;
+  const propName = id => (P().properties.find(p => p.id === id) || {}).name || "";
+  return wrapList("personal.loans", `<div class="grid g-3" style="margin-bottom:14px">
+      ${statHtml("Capital restant dû", money(t.loans))}
+      ${statHtml("Mensualités", money(t.loanPayment) + " <span style='font-size:.8rem;font-weight:500' class='muted'>/mois</span>")}
+      ${statHtml("Coût annuel des intérêts (est.)", money(loans.reduce((s, l) => s + nb(l.remaining) * nb(l.rate) / 100, 0)))}
+    </div>
+    <div class="card"><div class="card-h"><h2>Crédits & dettes</h2></div>
+    ${tableHtml([
+    { l: "Crédit", render: l => `<div class="t-main">${esc(l.name)}</div><div class="t-sub">${esc((LOAN_TYPES.find(x => x.v === l.type) || {}).l || "")}${propName(l.propertyId) ? " · " + esc(propName(l.propertyId)) : ""}</div>` },
+    { l: "Montant initial", r: 1, render: l => money(nb(l.initial)) },
+    { l: "Restant dû", r: 1, render: l => `<b>${money(nb(l.remaining))}</b>` },
+    { l: "Remboursé", r: 1, render: l => { const p = nb(l.initial) ? clamp((1 - nb(l.remaining) / nb(l.initial)) * 100, 0, 100) : 0; return `<div style="min-width:90px"><div class="bar"><span style="width:${p}%"></span></div><div class="t-sub">${p.toFixed(0)} %</div></div>`; } },
+    { l: "Taux", r: 1, render: l => (nb(l.rate) ? num(nb(l.rate), 2) + " %" : "—") },
+    { l: "Mensualité", r: 1, render: l => money(nb(l.payment)) },
+    { l: "Fin", r: 1, render: l => (l.endDate ? dLabel(l.endDate) : '<span class="muted">—</span>') },
+  ], loans, { actions: true, empty: "Aucun crédit enregistré.", emptyAction: addBtn("personal.loans", "Ajouter un crédit") })}</div>`);
+}
+function patAutres() {
+  const os = P().others;
+  return wrapList("personal.others", `<div class="card"><div class="card-h"><h2>Autres actifs & dettes</h2>
+    <div class="right"><span class="badge">${money(os.reduce((s, o) => s + (o.kind === "debt" ? -nb(o.value) : nb(o.value)), 0))} net</span></div></div>
+    ${tableHtml([
+    { l: "Élément", render: o => `<div class="t-main">${esc(o.name)}</div><div class="t-sub">${esc((OTHER_CATS.find(c => c.v === o.category) || {}).l || "")}</div>` },
+    { l: "Nature", render: o => (o.kind === "debt" ? '<span class="badge crit">Dette</span>' : '<span class="badge good">Actif</span>') },
+    { l: "Valeur", r: 1, render: o => `<b class="${o.kind === "debt" ? "neg" : ""}">${o.kind === "debt" ? "− " : ""}${money(nb(o.value))}</b>` },
+    { l: "Note", render: o => `<span class="muted">${esc(o.notes || "")}</span>` },
+  ], os, { actions: true, empty: "Or, véhicules, objets de valeur, créances ou dettes diverses.", emptyAction: addBtn("personal.others", "Ajouter un élément") })}</div>`);
+}
+
+/* ==================================================================
+   VUE — BUDGET
+   ================================================================== */
+function viewBudget() {
+  const ym = ui.period, txs = P().transactions;
+  const f = monthFlows(txs, ym);
+  const months = ymRange(curYM(), 12);
+  const groups = months.map(m => { const g = monthFlows(txs, m); return { label: m, values: [{ name: "Revenus", value: g.inc, color: "var(--s4)" }, { name: "Dépenses", value: -g.exp, color: "var(--s3)" }] }; });
+  const cats = byCategory(txs, ym).map((x, i) => ({ ...x, color: SERIES[i % 8] }));
+  const budgets = state.personal.budgets || {};
+  const budgetRows = Object.entries(budgets).filter(([, v]) => nb(v) > 0).map(([c, v]) => {
+    const found = cats.find(x => x.label === c); const spent = found ? found.value : 0;
+    return { cat: c, budget: nb(v), spent, p: nb(v) ? (spent / nb(v)) * 100 : 0 };
+  }).sort((a, b) => b.p - a.p);
+  const q = (ui.q || "").toLowerCase();
+  const list = txs.filter(t => ymOf(t.date) === ym)
+    .filter(t => !q || (t.label || "").toLowerCase().includes(q) || (t.category || "").toLowerCase().includes(q))
+    .filter(t => !ui.catFilter || t.category === ui.catFilter)
+    .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.id > a.id ? 1 : -1));
+  const accName = id => (P().accounts.find(a => a.id === id) || {}).name || "";
+
+  topbar("Budget", `${esc(ymLabel(ym))} · ${list.length} opération(s)`,
+    `${periodNav(ym)}<button class="btn btn-sm" data-act="csv-perso">${ico("down_a")}Import CSV</button>${addBtn("personal.transactions", "Opération")}`);
+
+  $("#view").innerHTML = `
+  <div class="grid g-4" style="margin-bottom:14px">
+    ${statHtml("Revenus", money(f.inc), `<span class="muted">${ymLabel(ym)}</span>`)}
+    ${statHtml("Dépenses", money(f.exp), `<span class="muted">${cats.length} catégorie(s)</span>`)}
+    ${statHtml("Reste / épargne", `<span class="${f.net >= 0 ? "pos" : "neg"}">${money(f.net)}</span>`)}
+    ${statHtml("Taux d'épargne", f.inc ? f.rate.toFixed(0) + " %" : "—", `<div class="bar" style="margin-top:6px"><span style="width:${clamp(f.rate, 0, 100)}%;background:${f.rate >= 0 ? "var(--good)" : "var(--crit)"}"></span></div>`)}
+  </div>
+  <div class="grid g-wide">
+    <div class="card"><div class="card-h"><h2>Revenus & dépenses — 12 mois</h2></div>
+      ${chart({ type: "bars", height: 240, groups, xfmt: ymShort, fmt: v => money(Math.abs(v)), empty: "Saisissez ou importez vos premières opérations." })}
+    </div>
+    <div class="card"><div class="card-h"><h2>Dépenses par catégorie</h2><div class="right"><span class="badge">${esc(ymShort(ym))}</span></div></div>
+      ${hbars(cats.slice(0, 9), { empty: "Aucune dépense ce mois-ci." })}
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="card-h"><h2>Budgets mensuels</h2>
+    <div class="right"><button class="btn btn-sm" data-act="budgets">${ico("edit")}Définir</button></div></div>
+    ${budgetRows.length ? `<div class="grid g-2" style="gap:14px 24px">${budgetRows.map(b => `<div>
+        <div class="row" style="justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:.86rem;font-weight:540">${esc(b.cat)}</span>
+          <span class="num" style="font-size:.83rem"><b class="${b.p > 100 ? "neg" : ""}">${money(b.spent)}</b> <span class="muted">/ ${money(b.budget)}</span></span></div>
+        <div class="bar"><span style="width:${clamp(b.p, 0, 100)}%;background:${b.p > 100 ? "var(--crit)" : b.p > 85 ? "var(--warn)" : "var(--good)"}"></span></div>
+        <div class="t-sub">${b.p > 100 ? `Dépassé de ${money(b.spent - b.budget)}` : `${money(b.budget - b.spent)} restants · ${b.p.toFixed(0)} %`}</div>
+      </div>`).join("")}</div>` : emptyHtml("Aucun budget défini. Fixez un plafond mensuel par catégorie pour suivre vos dépenses.", `<button class="btn btn-primary btn-sm" data-act="budgets">${ico("plus")}Définir mes budgets</button>`)}
+  </div>
+  ${wrapList("personal.transactions", `<div class="card" style="margin-top:14px">
+    <div class="card-h"><h2>Opérations</h2><div class="right">
+      <input id="q" placeholder="Rechercher…" value="${esc(ui.q || "")}" style="width:170px;padding:6px 10px;font-size:.83rem">
+      <select class="inline-select" id="catf"><option value="">Toutes catégories</option>${[...state.settings.catInc, ...state.settings.catExp].map(c => `<option${ui.catFilter === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select>
+    </div></div>
+    ${tableHtml([
+    { l: "Date", render: t => `<span class="num">${dLabel(t.date)}</span>` },
+    { l: "Libellé", render: t => `<div class="t-main">${esc(t.label)}</div>${t.note ? `<div class="t-sub">${esc(t.note)}</div>` : ""}` },
+    { l: "Catégorie", render: t => `<span class="badge">${esc(t.category || "Non catégorisé")}</span>` },
+    { l: "Compte", render: t => `<span class="muted">${esc(accName(t.accountId))}</span>` },
+    { l: "Montant", r: 1, render: t => `<b class="${nb(t.amount) >= 0 ? "pos" : ""}">${moneyC(nb(t.amount), 2)}</b>` },
+  ], list, { actions: true, empty: "Aucune opération pour ce mois.", emptyAction: addBtn("personal.transactions", "Ajouter une opération") })}
+  </div>`)}`;
+
+  const qi = $("#q"); if (qi) { qi.oninput = e => { ui.q = e.target.value; const v = e.target.value; renderView(); const n = $("#q"); if (n) { n.focus(); n.setSelectionRange(v.length, v.length); } }; }
+  const cf = $("#catf"); if (cf) cf.onchange = e => { ui.catFilter = e.target.value; renderView(); };
+}
+function budgetsModal() {
+  const b = state.personal.budgets || {};
+  const spent = Object.fromEntries(byCategory(P().transactions, ui.period).map(x => [x.label, x.value]));
+  openModal({
+    title: "Budgets mensuels par catégorie", wide: true,
+    body: `<form id="bf"><div class="fgrid">${state.settings.catExp.map(c => `<div class="field">
+      <label>${esc(c)} <span class="muted">· dépensé ${money(spent[c] || 0)}</span></label>
+      <input type="number" step="any" inputmode="decimal" name="${esc(c)}" value="${nb(b[c]) || ""}" placeholder="0 = pas de budget"></div>`).join("")}</div></form>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-primary" type="submit" form="bf">Enregistrer</button>`,
+    onMount: r => r.querySelector("#bf").onsubmit = e => {
+      e.preventDefault();
+      const fd = new FormData(e.target), out = {};
+      state.settings.catExp.forEach(c => { const v = nb(fd.get(c)); if (v > 0) out[c] = v; });
+      state.personal.budgets = out; closeModal(); save(); render(); toast("Budgets enregistrés");
+    },
+  });
+}
+
+/* ==================================================================
+   IMPORT CSV
+   ================================================================== */
+function parseCSV(text) {
+  text = text.replace(/^﻿/, "");
+  const firstLine = (text.split(/\r?\n/).find(l => l.trim()) || "");
+  const cand = [";", ",", "\t", "|"];
+  const sep = cand.map(s => [s, (firstLine.match(new RegExp("\\" + s, "g")) || []).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], cur = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === sep) { row.push(cur); cur = ""; }
+    else if (ch === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+    else if (ch !== "\r") cur += ch;
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== "")).map(r => r.map(c => c.trim()));
+}
+function parseDateFR(s) {
+  s = String(s || "").trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+  if (m) { let y = m[3]; if (y.length === 2) y = (+y > 60 ? "19" : "20") + y; return `${y}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`; }
+  const d = new Date(s); return isNaN(d) ? "" : d.toISOString().slice(0, 10);
+}
+function parseAmount(s) {
+  s = String(s || "").replace(/[^\d,.\-+]/g, "").trim();
+  if (!s) return 0;
+  if (s.includes(",") && s.includes(".")) s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  else if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  const v = parseFloat(s); return Number.isFinite(v) ? v : 0;
+}
+function autoCategory(label, scope) {
+  const l = String(label || "").toLowerCase();
+  const rules = (state.settings.rules || []).filter(r => !r.scope || r.scope === scope);
+  for (const r of rules) if (r.kw && l.includes(String(r.kw).toLowerCase())) return r.cat;
+  return "";
+}
+function importCsvModal(scope) {
+  const isPro = scope === "pro";
+  openModal({
+    title: `Importer un relevé CSV — ${isPro ? "SARL ALPEGA" : "personnel"}`, wide: true,
+    body: `<div class="note" style="margin-bottom:14px">Exportez le relevé depuis votre banque au format CSV, puis chargez-le ici. Les colonnes sont détectées automatiquement — vous pouvez les corriger avant l'import.</div>
+      <div class="field"><label>Fichier CSV</label><input type="file" id="csvf" accept=".csv,text/csv,text/plain"></div>
+      <div id="csvcfg"></div>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-primary" id="csvgo" disabled>Importer</button>`,
+    onMount: r => {
+      let rows = [], head = [], hasHeader = true;
+      r.querySelector("#csvf").onchange = e => {
+        const file = e.target.files[0]; if (!file) return;
+        const rd = new FileReader();
+        rd.onload = () => {
+          rows = parseCSV(rd.result);
+          if (!rows.length) { toast("Fichier vide ou illisible", true); return; }
+          head = rows[0];
+          hasHeader = head.some(c => /date|libell|lib\.|montant|d[ée]bit|cr[ée]dit|description|op[ée]ration/i.test(c));
+          const cols = head.map((h, i) => ({ v: String(i), l: (hasHeader ? h : "Colonne " + (i + 1)) || "Colonne " + (i + 1) }));
+          const guess = re => { const i = head.findIndex(h => re.test(h)); return i < 0 ? "" : String(i); };
+          const sample = rows.slice(hasHeader ? 1 : 0, (hasHeader ? 1 : 0) + 4);
+          r.querySelector("#csvcfg").innerHTML = `
+            <div class="fgrid">
+              <div class="field"><label>Colonne date</label><select id="cd">${cols.map(c => `<option value="${c.v}"${c.v === (guess(/date/i) || "0") ? " selected" : ""}>${esc(c.l)}</option>`).join("")}</select></div>
+              <div class="field"><label>Colonne libellé</label><select id="cl">${cols.map(c => `<option value="${c.v}"${c.v === (guess(/libell|description|op[ée]ration|nature/i) || "1") ? " selected" : ""}>${esc(c.l)}</option>`).join("")}</select></div>
+              <div class="field"><label>Colonne montant</label><select id="ca"><option value="">— utiliser débit / crédit —</option>${cols.map(c => `<option value="${c.v}"${c.v === guess(/montant|amount/i) ? " selected" : ""}>${esc(c.l)}</option>`).join("")}</select></div>
+              <div class="field"><label>Débit (dépenses)</label><select id="cdeb"><option value="">—</option>${cols.map(c => `<option value="${c.v}"${c.v === guess(/d[ée]bit/i) ? " selected" : ""}>${esc(c.l)}</option>`).join("")}</select></div>
+              <div class="field"><label>Crédit (revenus)</label><select id="ccre"><option value="">—</option>${cols.map(c => `<option value="${c.v}"${c.v === guess(/cr[ée]dit/i) ? " selected" : ""}>${esc(c.l)}</option>`).join("")}</select></div>
+              <div class="field"><label>Compte de destination</label><select id="cacc"><option value="">— aucun —</option>${(isPro ? C().accounts : P().accounts).map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select></div>
+            </div>
+            <div class="field"><label class="check"><input type="checkbox" id="chead"${hasHeader ? " checked" : ""}> La première ligne contient les en-têtes</label></div>
+            <div class="field"><label class="check"><input type="checkbox" id="cinv"> Inverser le signe des montants</label></div>
+            <h3 style="margin:14px 0 8px">Aperçu du fichier</h3>
+            <div class="tw"><table><tbody>${sample.map(rw => `<tr>${rw.map(c => `<td style="font-size:.78rem">${esc(c.slice(0, 26))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+            <div class="note" style="margin-top:12px">${rows.length - (hasHeader ? 1 : 0)} ligne(s) détectée(s). Les catégories seront devinées grâce à vos règles de catégorisation (Réglages).</div>`;
+          r.querySelector("#csvgo").disabled = false;
+        };
+        rd.readAsText(file, "utf-8");
+      };
+      r.querySelector("#csvgo").onclick = () => {
+        const gv = id => r.querySelector(id).value;
+        const skip = r.querySelector("#chead").checked ? 1 : 0, inv = r.querySelector("#cinv").checked ? -1 : 1;
+        const ci = { d: +gv("#cd"), l: +gv("#cl"), a: gv("#ca"), deb: gv("#cdeb"), cre: gv("#ccre"), acc: gv("#cacc") };
+        let n = 0;
+        const target = isPro ? C().transactions : P().transactions;
+        rows.slice(skip).forEach(rw => {
+          const date = parseDateFR(rw[ci.d]); if (!date) return;
+          let amount = 0;
+          if (ci.a !== "") amount = parseAmount(rw[+ci.a]);
+          else {
+            const deb = ci.deb !== "" ? Math.abs(parseAmount(rw[+ci.deb])) : 0;
+            const cre = ci.cre !== "" ? Math.abs(parseAmount(rw[+ci.cre])) : 0;
+            amount = cre - deb;
+          }
+          amount *= inv;
+          if (!amount) return;
+          const label = String(rw[ci.l] || "Opération").slice(0, 120);
+          target.push({ id: uid(), date, label, amount, category: autoCategory(label, scope) || (amount >= 0 ? (isPro ? "Ventes & prestations" : "Autres revenus") : (isPro ? "Autres charges" : "Divers")), accountId: ci.acc || "", imported: true });
+          n++;
+        });
+        closeModal(); save(); render(); toast(`${n} opération(s) importée(s)`);
+      };
+    },
+  });
+}
+
+/* ==================================================================
+   VUE — OBJECTIFS & PROJECTIONS
+   ================================================================== */
+function viewObjectifs() {
+  const t = computePersonal();
+  const goals = P().goals;
+  const last6 = ymRange(curYM(), 6).map(m => monthFlows(P().transactions, m)).filter(x => x.inc || x.exp);
+  const avgSave = last6.length ? last6.reduce((s, x) => s + x.net, 0) / last6.length : 0;
+  if (!ui.sim) ui.sim = { initial: Math.round(t.net > 0 ? t.net : 10000), monthly: Math.round(Math.max(0, avgSave)), rate: 5, years: 15 };
+
+  topbar("Objectifs & projections", `${goals.length} objectif(s) · épargne moyenne ${money(avgSave)}/mois`, addBtn("personal.goals", "Objectif"));
+  $("#view").innerHTML = `
+  ${wrapList("personal.goals", `<div class="card"><div class="card-h"><h2>Mes objectifs</h2></div>
+    ${goals.length ? `<div class="grid g-2" style="gap:18px 24px">${goals.map(g => `<div style="position:relative">
+        <div style="position:absolute;top:-4px;right:0">
+          <button class="btn btn-sm btn-ghost btn-icon" data-act="edit" data-id="${g.id}">${ico("edit")}</button>
+          <button class="btn btn-sm btn-ghost btn-icon" data-act="del" data-id="${g.id}">${ico("trash")}</button>
+        </div>${goalRow(g)}</div>`).join("")}</div>`
+      : emptyHtml("Définissez un objectif : apport immobilier, épargne de précaution, achat…", addBtn("personal.goals", "Créer un objectif"))}
+  </div>`)}
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-h"><h2>Simulateur d'épargne (intérêts composés)</h2></div>
+    <div class="grid g-4" style="gap:12px;margin-bottom:16px">
+      <div class="field" style="margin:0"><label>Capital de départ</label><input type="number" id="s-initial" value="${ui.sim.initial}" step="any" inputmode="decimal"></div>
+      <div class="field" style="margin:0"><label>Versement mensuel</label><input type="number" id="s-monthly" value="${ui.sim.monthly}" step="any" inputmode="decimal"></div>
+      <div class="field" style="margin:0"><label>Rendement annuel (%)</label><input type="number" id="s-rate" value="${ui.sim.rate}" step="any" inputmode="decimal"></div>
+      <div class="field" style="margin:0"><label>Durée (années)</label><input type="number" id="s-years" value="${ui.sim.years}" step="1" inputmode="numeric"></div>
+    </div>
+    <div id="simres"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-h"><h2>Projection du patrimoine net</h2><span class="badge info">hypothèse : ${money(avgSave)}/mois épargnés</span></div>
+    ${chart({
+      type: "line", height: 230, area: false, xfmt: x => x, empty: "Ajoutez vos actifs et quelques mois d'opérations.",
+      series: [
+        { name: "Rendement 3 %/an", color: "var(--s3)", points: projection(t.net, avgSave, 3, 10) },
+        { name: "Rendement 5 %/an", color: "var(--line)", points: projection(t.net, avgSave, 5, 10) },
+        { name: "Sans rendement", color: "var(--s4)", points: projection(t.net, avgSave, 0, 10) },
+      ],
+    })}
+    <div class="note" style="margin-top:12px">Projection indicative calculée à partir de votre patrimoine net actuel et de votre épargne mensuelle moyenne sur 6 mois. Elle ne constitue pas un conseil en investissement.</div>
+  </div>`;
+  ["initial", "monthly", "rate", "years"].forEach(k => {
+    const el = $("#s-" + k); if (!el) return;
+    el.oninput = () => { ui.sim[k] = nb(el.value); renderSim(); };
+  });
+  renderSim();
+}
+function projection(start, monthly, rate, years) {
+  const y0 = new Date().getFullYear(); const out = []; let v = start;
+  for (let y = 0; y <= years; y++) {
+    if (y) for (let m = 0; m < 12; m++) v = v * (1 + rate / 100 / 12) + monthly;
+    out.push({ x: String(y0 + y), y: Math.round(v) });
+  }
+  return out;
+}
+function renderSim() {
+  const s = ui.sim, years = clamp(Math.round(nb(s.years)) || 1, 1, 60);
+  const pts = [], inv = []; let v = nb(s.initial), paid = nb(s.initial);
+  const y0 = new Date().getFullYear();
+  for (let y = 0; y <= years; y++) {
+    if (y) for (let m = 0; m < 12; m++) { v = v * (1 + nb(s.rate) / 100 / 12) + nb(s.monthly); paid += nb(s.monthly); }
+    pts.push({ x: String(y0 + y), y: Math.round(v) }); inv.push({ x: String(y0 + y), y: Math.round(paid) });
+  }
+  const gain = v - paid;
+  const el = $("#simres"); if (!el) return;
+  el.innerHTML = `<div class="grid g-3" style="gap:12px;margin-bottom:14px">
+      ${statHtml(`Capital dans ${years} an(s)`, money(v))}
+      ${statHtml("Total versé", money(paid))}
+      ${statHtml("Intérêts générés", `<span class="pos">${money(gain)}</span>`, `<span class="muted">${paid ? ((gain / paid) * 100).toFixed(0) : 0} % du capital versé</span>`)}
+    </div>
+    ${chart({ type: "line", height: 230, zero: true, series: [{ name: "Capital avec rendement", color: "var(--line)", points: pts }, { name: "Versements cumulés", color: "var(--s1)", points: inv }] })}`;
+  hydrateCharts();
+}
+
+/* ==================================================================
+   VUE — SARL ALPEGA
+   ================================================================== */
+const BIZ_SUB = [
+  { k: "tresorerie", l: "Trésorerie" }, { k: "charges", l: "Dépenses & charges" },
+  { k: "invest", l: "Investissements" }, { k: "factures", l: "Factures" },
+  { k: "tva", l: "TVA" }, { k: "cca", l: "Compte courant" },
+];
+function viewAlpega() {
+  const c = computeCompany();
+  const addMap = { charges: "company.transactions", invest: "company.investments", factures: "company.invoices", cca: "company.cca", tresorerie: "company.accounts" };
+  const add = addMap[ui.bizSub];
+  const labels = { "company.transactions": "Opération", "company.investments": "Investissement", "company.invoices": "Facture", "company.cca": "Mouvement", "company.accounts": "Compte pro" };
+  topbar(C().name || "SARL ALPEGA", `Trésorerie ${money(c.cash)} · Actif ${money(c.total)} · Encours clients ${money(c.receivable)}`,
+    (add ? addBtn(add, labels[add]) : "") + segHtml(BIZ_SUB, ui.bizSub, "bizsub"));
+  const V = { tresorerie: bizTreso, charges: bizCharges, invest: bizInvest, factures: bizFactures, tva: bizTva, cca: bizCca }[ui.bizSub];
+  $("#view").innerHTML = V(c);
+}
+function cashSeries(n = 12) {
+  const c = C(), months = ymRange(curYM(), n);
+  const end = c.accounts.reduce((s, a) => s + nb(a.balance), 0);
+  const flows = Object.fromEntries(months.map(m => [m, c.transactions.filter(t => ymOf(t.date) === m).reduce((s, t) => s + nb(t.amount), 0)]));
+  const out = []; let v = end;
+  for (let i = months.length - 1; i >= 0; i--) { out.unshift({ x: months[i], y: Math.round(v) }); v -= flows[months[i]] || 0; }
+  return out;
+}
+function bizTreso(c) {
+  const f = monthFlows(C().transactions, ui.period);
+  const y = new Date().getFullYear();
+  const yearTx = C().transactions.filter(t => (t.date || "").startsWith(String(y)));
+  const yearIn = yearTx.filter(t => nb(t.amount) > 0).reduce((s, t) => s + nb(t.amount), 0);
+  const yearOut = yearTx.filter(t => nb(t.amount) < 0).reduce((s, t) => s - nb(t.amount), 0);
+  return `<div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("Trésorerie disponible", money(c.cash), `<span class="muted">${C().accounts.length} compte(s)</span>`)}
+      ${statHtml("Encaissements " + ymShort(ui.period), money(f.inc))}
+      ${statHtml("Décaissements " + ymShort(ui.period), money(f.exp))}
+      ${statHtml("Résultat de trésorerie", `<span class="${f.net >= 0 ? "pos" : "neg"}">${money(f.net)}</span>`, `<span class="muted">${y} : ${eurC(yearIn - yearOut)}</span>`)}
+    </div>
+    <div class="card"><div class="card-h"><h2>Évolution de la trésorerie — 12 mois</h2></div>
+      ${chart({ type: "line", area: true, height: 240, zero: true, xfmt: ymShort, series: [{ name: "Trésorerie", color: "var(--line)", points: cashSeries(12) }], empty: "Ajoutez vos comptes et vos opérations." })}
+      <div class="note" style="margin-top:12px">La courbe est reconstituée à partir du solde actuel de vos comptes et des opérations saisies.</div>
+    </div>
+    ${wrapList("company.accounts", `<div class="card" style="margin-top:14px"><div class="card-h"><h2>Comptes de la société</h2></div>
+      ${tableHtml([
+        { l: "Compte", render: a => `<div class="t-main">${esc(a.name)}</div><div class="t-sub">${esc(a.institution || "")}${a.iban ? " · " + esc(a.iban) : ""}</div>` },
+        { l: "Type", render: a => `<span class="badge">${esc(a.type || "Compte courant")}</span>` },
+        { l: "Solde", r: 1, render: a => `<b>${money(nb(a.balance))}</b>` },
+      ], C().accounts, { actions: true, empty: "Aucun compte professionnel enregistré.", emptyAction: addBtn("company.accounts", "Ajouter un compte") })}</div>`)}
+    <div class="card" style="margin-top:14px"><div class="card-h"><h2>Bilan simplifié</h2></div>
+      <div class="grid g-2" style="gap:24px">
+        <div><h3 style="margin-bottom:8px">Actif</h3>
+          <div class="kv"><span class="k">Trésorerie</span><span class="v">${money(c.cash)}</span></div>
+          <div class="kv"><span class="k">Investissements</span><span class="v">${money(c.inv)}</span></div>
+          <div class="kv"><span class="k">Immobilisations (VNC)</span><span class="v">${money(c.fa)}</span></div>
+          <div class="kv"><span class="k">Créances clients</span><span class="v">${money(c.receivable)}</span></div>
+          <div class="kv"><span class="k"><b>Total actif</b></span><span class="v">${money(c.total + c.receivable)}</span></div>
+        </div>
+        <div><h3 style="margin-bottom:8px">Engagements</h3>
+          <div class="kv"><span class="k">Compte courant d'associé</span><span class="v">${money(c.ccaBal)}</span></div>
+          <div class="kv"><span class="k">TVA de la période</span><span class="v">${money(vatOf(vatPeriods(1)[0].months).due)}</span></div>
+          <div class="kv"><span class="k">Factures en retard</span><span class="v ${c.lateCount ? "neg" : ""}">${money(c.lateAmount)}</span></div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:14px">Vue de gestion simplifiée, destinée au pilotage. Elle ne remplace pas la comptabilité officielle de la société.</div>
+    </div>`;
+}
+function bizCharges() {
+  const txs = C().transactions, ym = ui.period;
+  const months = ymRange(curYM(), 12);
+  const groups = months.map(m => { const g = monthFlows(txs, m); return { label: m, values: [{ name: "Produits", value: g.inc, color: "var(--s4)" }, { name: "Charges", value: -g.exp, color: "var(--s3)" }] }; });
+  const cats = byCategory(txs, ym).map((x, i) => ({ ...x, color: SERIES[i % 8] }));
+  const yearCats = byCategory(txs.filter(t => (t.date || "").startsWith(String(new Date().getFullYear()))), null).slice(0, 8).map((x, i) => ({ ...x, color: SERIES[i % 8] }));
+  const list = txs.filter(t => ymOf(t.date) === ym).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const accName = id => (C().accounts.find(a => a.id === id) || {}).name || "";
+  return `<div class="grid g-wide" style="margin-bottom:14px">
+      <div class="card"><div class="card-h"><h2>Produits & charges — 12 mois</h2></div>
+        ${chart({ type: "bars", height: 240, groups, xfmt: ymShort, fmt: v => money(Math.abs(v)), empty: "Aucune opération enregistrée." })}</div>
+      <div class="card"><div class="card-h"><h2>Charges par catégorie</h2><div class="right"><span class="badge">${esc(ymShort(ym))}</span></div></div>
+        ${hbars(cats.slice(0, 8), { empty: "Aucune charge ce mois-ci." })}</div>
+    </div>
+    <div class="card" style="margin-bottom:14px"><div class="card-h"><h2>Charges cumulées ${new Date().getFullYear()}</h2></div>
+      ${hbars(yearCats, { empty: "Aucune charge cette année." })}</div>
+    ${wrapList("company.transactions", `<div class="card"><div class="card-h"><h2>Opérations — ${esc(ymLabel(ym))}</h2>
+      <div class="right"><button class="btn btn-sm" data-act="csv-pro">${ico("down_a")}Import CSV</button></div></div>
+      ${tableHtml([
+        { l: "Date", render: t => `<span class="num">${dLabel(t.date)}</span>` },
+        { l: "Libellé", render: t => `<div class="t-main">${esc(t.label)}</div>${t.note ? `<div class="t-sub">${esc(t.note)}</div>` : ""}` },
+        { l: "Catégorie", render: t => `<span class="badge">${esc(t.category || "Non catégorisé")}</span>` },
+        { l: "Compte", render: t => `<span class="muted">${esc(accName(t.accountId))}</span>` },
+        { l: "TVA", r: 1, render: t => (nb(t.vatRate) ? num(nb(t.vatRate), 1) + " %" : '<span class="muted">—</span>') },
+        { l: "Montant", r: 1, render: t => `<b class="${nb(t.amount) >= 0 ? "pos" : ""}">${moneyC(nb(t.amount), 2)}</b>` },
+      ], list, { actions: true, empty: "Aucune opération sur ce mois.", emptyAction: addBtn("company.transactions", "Ajouter une opération") })}</div>`)}`;
+}
+function bizInvest(c) {
+  const inv = C().investments, fas = C().fixedAssets;
+  const items = inv.map((i, k) => ({ label: i.name, value: nb(i.value), color: SERIES[k % 8] })).filter(x => x.value > 0);
+  return `<div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("Investissements", money(c.inv), `<span class="muted">${inv.length} ligne(s)</span>`)}
+      ${statHtml("Plus/moins-value", `<span class="${c.invPv >= 0 ? "pos" : "neg"}">${moneyC(c.invPv)}</span>`, `<span class="muted">coût ${money(c.invCost)}</span>`)}
+      ${statHtml("Immobilisations (VNC)", money(c.fa), `<span class="muted">brut ${money(c.faGross)}</span>`)}
+      ${statHtml("Dotation aux amortissements", money(c.amortAnnual) + " <span style='font-size:.8rem;font-weight:500' class='muted'>/an</span>")}
+    </div>
+    <div class="grid g-wide">
+      ${wrapList("company.investments", `<div class="card"><div class="card-h"><h2>Portefeuille d'investissements</h2></div>
+        ${tableHtml([
+          { l: "Investissement", render: i => `<div class="t-main">${esc(i.name)}</div><div class="t-sub">${esc((BIZ_INV_TYPES.find(t => t.v === i.type) || {}).l || "")}${i.date ? " · " + dLabel(i.date) : ""}</div>` },
+          { l: "Coût", r: 1, render: i => money(nb(i.cost)) },
+          { l: "Valeur", r: 1, render: i => `<b>${money(nb(i.value))}</b>` },
+          { l: "+/- value", r: 1, render: i => { const pv = nb(i.value) - nb(i.cost); return `<span class="${pv >= 0 ? "pos" : "neg"}">${moneyC(pv)}</span>`; } },
+        ], inv, { actions: true, empty: "Aucun investissement enregistré.", emptyAction: addBtn("company.investments", "Ajouter un investissement") })}</div>`)}
+      <div class="card"><div class="card-h"><h2>Répartition</h2></div>
+        ${chart({ type: "donut", height: 210, items, centerLabel: "Investi", centerValue: money(c.inv) })}</div>
+    </div>
+    ${wrapList("company.fixedAssets", `<div class="card" style="margin-top:14px"><div class="card-h"><h2>Immobilisations & amortissements</h2>
+      <div class="right">${addBtn("company.fixedAssets", "Immobilisation")}</div></div>
+      ${tableHtml([
+        { l: "Immobilisation", render: f => `<div class="t-main">${esc(f.name)}</div><div class="t-sub">${f.date ? "acquise le " + dLabel(f.date) : ""} · ${nb(f.years)} an(s)</div>` },
+        { l: "Valeur d'achat", r: 1, render: f => money(nb(f.amount)) },
+        { l: "Dotation", r: 1, render: f => money(amortOf(f).annual) + " /an" },
+        { l: "Amorti", r: 1, render: f => { const a = amortOf(f); return `<div style="min-width:90px"><div class="bar"><span style="width:${clamp(a.progress * 100, 0, 100)}%"></span></div><div class="t-sub">${money(a.cum)} · ${(a.progress * 100).toFixed(0)} %</div></div>`; } },
+        { l: "VNC", r: 1, render: f => `<b>${money(amortOf(f).vnc)}</b>` },
+      ], fas, { actions: true, empty: "Matériel, véhicule, agencement… suivez ici vos immobilisations et leur amortissement linéaire.", emptyAction: addBtn("company.fixedAssets", "Ajouter une immobilisation") })}
+      <div class="note" style="margin-top:12px">Amortissement linéaire calculé au prorata du temps écoulé depuis la date d'acquisition. Estimation de gestion — votre expert-comptable reste la référence.</div></div>`)}`;
+}
+function bizFactures(c) {
+  const invs = [...C().invoices].sort((a, b) => (b.dateIssue || "").localeCompare(a.dateIssue || ""));
+  const y = String(new Date().getFullYear());
+  const caYear = C().invoices.filter(i => (i.dateIssue || "").startsWith(y) && i.status !== "brouillon").reduce((s, i) => s + nb(i.amountHT), 0);
+  const caPaid = C().invoices.filter(i => i.status === "payee" && (i.datePaid || i.dateIssue || "").startsWith(y)).reduce((s, i) => s + nb(i.amountHT), 0);
+  return `<div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml(`CA facturé ${y} (HT)`, money(caYear))}
+      ${statHtml(`CA encaissé ${y} (HT)`, money(caPaid))}
+      ${statHtml("Encours clients (TTC)", money(c.receivable))}
+      ${statHtml("En retard", `<span class="${c.lateCount ? "neg" : ""}">${money(c.lateAmount)}</span>`, `<span class="muted">${c.lateCount} facture(s)</span>`)}
+    </div>
+    ${wrapList("company.invoices", `<div class="card"><div class="card-h"><h2>Factures clients</h2></div>
+      ${tableHtml([
+        { l: "N°", render: i => `<div class="t-main">${esc(i.number || "—")}</div><div class="t-sub">${dLabel(i.dateIssue)}</div>` },
+        { l: "Client", render: i => `<div class="t-main">${esc(i.client)}</div>${i.label ? `<div class="t-sub">${esc(i.label)}</div>` : ""}` },
+        { l: "Échéance", render: i => `<span class="num">${i.dateDue ? dLabel(i.dateDue) : "—"}</span>` },
+        { l: "HT", r: 1, render: i => money(nb(i.amountHT), 2) },
+        { l: "TVA", r: 1, render: i => `${num(nb(i.vatRate), 1)} %<div class="t-sub">${money(nb(i.amountHT) * nb(i.vatRate) / 100, 2)}</div>` },
+        { l: "TTC", r: 1, render: i => `<b>${money(invoiceTTC(i), 2)}</b>` },
+        { l: "Statut", render: i => { const s = invoiceStatus(i); return `<span class="badge ${s.cls}">${s.l}</span>${s.k !== "payee" && s.k !== "brouillon" ? `<button class="btn btn-sm btn-ghost" data-act="paid" data-id="${i.id}" style="margin-left:6px">Encaisser</button>` : ""}`; } },
+      ], invs, { actions: true, empty: "Aucune facture enregistrée.", emptyAction: addBtn("company.invoices", "Créer une facture") })}</div>`)}`;
+}
+function bizTva() {
+  const c = C(), periods = vatPeriods(6).reverse();
+  const cur = periods[0], v = vatOf(cur.months);
+  return `<div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("TVA collectée", money(v.collected), `<span class="muted">${esc(cur.label)}</span>`)}
+      ${statHtml("TVA déductible", money(v.deductible))}
+      ${statHtml(v.due >= 0 ? "TVA à décaisser" : "Crédit de TVA", `<span class="${v.due >= 0 ? "" : "pos"}">${money(Math.abs(v.due))}</span>`)}
+      ${statHtml("Régime", c.vatRegime === "encaissements" ? "Encaissements" : "Débits", `<span class="muted">déclaration ${c.vatPeriod === "mensuel" ? "mensuelle" : "trimestrielle"}</span>`)}
+    </div>
+    <div class="card"><div class="card-h"><h2>Paramètres de TVA</h2></div>
+      <div class="grid g-2" style="gap:0 16px">
+        <div class="field"><label>Exigibilité de la TVA</label>
+          <select data-set="company.vatRegime"><option value="encaissements"${c.vatRegime === "encaissements" ? " selected" : ""}>Sur les encaissements (prestations de services)</option><option value="debits"${c.vatRegime === "debits" ? " selected" : ""}>Sur les débits (livraisons de biens / option)</option></select>
+          <div class="hint">Encaissements : la TVA est due à la date de paiement de la facture. Débits : à la date d'émission.</div></div>
+        <div class="field"><label>Périodicité de déclaration</label>
+          <select data-set="company.vatPeriod"><option value="trimestriel"${c.vatPeriod === "trimestriel" ? " selected" : ""}>Trimestrielle</option><option value="mensuel"${c.vatPeriod === "mensuel" ? " selected" : ""}>Mensuelle</option></select></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px"><div class="card-h"><h2>Historique des périodes</h2></div>
+      <div class="tw"><table><thead><tr><th>Période</th><th class="r">Collectée</th><th class="r">Déductible</th><th class="r">Solde</th></tr></thead><tbody>
+      ${periods.map(p => { const x = vatOf(p.months); return `<tr><td class="t-main">${esc(p.label)}</td>
+        <td class="r num">${money(x.collected, 2)}</td><td class="r num">${money(x.deductible, 2)}</td>
+        <td class="r num"><b class="${x.due > 0 ? "" : "pos"}">${x.due >= 0 ? money(x.due, 2) + " à payer" : money(-x.due, 2) + " de crédit"}</b></td></tr>`; }).join("")}
+      </tbody></table></div>
+      <div class="note" style="margin-top:12px">La TVA déductible provient des opérations de dépense pour lesquelles vous avez renseigné un taux. Chiffres indicatifs à confronter à votre comptabilité.</div>
+    </div>`;
+}
+function bizCca(c) {
+  const mv = [...C().cca].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  let run = c.ccaBal; const withBal = mv.map(m => { const r = { ...m, bal: run }; run -= nb(m.amount); return r; });
+  const apports = C().cca.filter(m => nb(m.amount) > 0).reduce((s, m) => s + nb(m.amount), 0);
+  const retraits = C().cca.filter(m => nb(m.amount) < 0).reduce((s, m) => s - nb(m.amount), 0);
+  return `<div class="grid g-3" style="margin-bottom:14px">
+      ${statHtml("Solde du compte courant", `<span class="${c.ccaBal >= 0 ? "" : "neg"}">${money(c.ccaBal)}</span>`, `<span class="muted">${c.ccaBal >= 0 ? "la société vous doit" : "vous devez à la société"}</span>`)}
+      ${statHtml("Total des apports", money(apports))}
+      ${statHtml("Total des retraits", money(retraits))}
+    </div>
+    ${wrapList("company.cca", `<div class="card"><div class="card-h"><h2>Mouvements du compte courant d'associé</h2></div>
+      ${tableHtml([
+        { l: "Date", render: m => `<span class="num">${dLabel(m.date)}</span>` },
+        { l: "Libellé", render: m => `<div class="t-main">${esc(m.label)}</div>` },
+        { l: "Nature", render: m => (nb(m.amount) >= 0 ? '<span class="badge good">Apport</span>' : '<span class="badge warn">Retrait</span>') },
+        { l: "Montant", r: 1, render: m => `<b class="${nb(m.amount) >= 0 ? "pos" : ""}">${moneyC(nb(m.amount), 2)}</b>` },
+        { l: "Solde après", r: 1, render: m => `<span class="muted">${money(m.bal, 2)}</span>` },
+      ], withBal, { actions: true, empty: "Aucun mouvement. Enregistrez ici vos apports et retraits en compte courant.", emptyAction: addBtn("company.cca", "Ajouter un mouvement") })}
+      <div class="note" style="margin-top:12px">Un compte courant d'associé débiteur (solde négatif) est interdit pour un gérant de SARL : surveillez ce solde.</div></div>`)}`;
+}
+
+/* ==================================================================
+   VUE — RÉGLAGES
+   ================================================================== */
+function viewReglages() {
+  const s = state.settings, sup = s.supabase, sess = Supa.session();
+  const size = (() => { try { return (localStorage.getItem(LS_KEY) || "").length; } catch (e) { return 0; } })();
+  const counts = { Comptes: P().accounts.length, Titres: P().holdings.length, Biens: P().properties.length, Crédits: P().loans.length, Opérations: P().transactions.length, "Objectifs": P().goals.length, "Opérations SARL": C().transactions.length, Factures: C().invoices.length };
+  topbar("Données & réglages", "Personnalisation, sauvegardes et synchronisation");
+  $("#view").innerHTML = `
+  <div class="grid g-half">
+    <div class="stack">
+      <div class="card"><div class="card-h"><h2>Profil & affichage</h2></div>
+        <div class="field"><label>Nom affiché</label><input id="own" value="${esc(s.ownerName)}" placeholder="Ex. Alex"></div>
+        <div class="field"><label>Thème</label><select data-set="settings.theme">
+          <option value="auto"${s.theme === "auto" ? " selected" : ""}>Automatique (système)</option>
+          <option value="light"${s.theme === "light" ? " selected" : ""}>Clair</option>
+          <option value="dark"${s.theme === "dark" ? " selected" : ""}>Sombre</option></select></div>
+        <div class="field"><label class="check"><input type="checkbox" id="hideamt"${s.hideAmounts ? " checked" : ""}> Masquer les montants (mode discrétion)</label></div>
+        <div class="field"><label>Nom de la société</label><input id="cname" value="${esc(C().name)}"></div>
+      </div>
+      <div class="card"><div class="card-h"><h2>Mes données</h2><div class="right"><span class="badge">${(size / 1024).toFixed(0)} Ko</span></div></div>
+        <div class="row" style="margin-bottom:14px">
+          <button class="btn btn-primary btn-sm" data-act="export-json">${ico("up_a")}Exporter (JSON)</button>
+          <button class="btn btn-sm" data-act="import-json">${ico("down_a")}Importer (JSON)</button>
+          <button class="btn btn-sm" data-act="export-csv-perso">${ico("doc")}CSV perso</button>
+          <button class="btn btn-sm" data-act="export-csv-pro">${ico("doc")}CSV SARL</button>
+        </div>
+        <div class="tw"><table><tbody>${Object.entries(counts).map(([k, v]) => `<tr><td>${esc(k)}</td><td class="r num">${v}</td></tr>`).join("")}</tbody></table></div>
+        <div class="note" style="margin:14px 0">Vos données sont stockées <b>uniquement dans ce navigateur</b>. Exportez régulièrement votre sauvegarde JSON, ou activez la synchronisation ci-contre pour les retrouver sur tous vos appareils.</div>
+        <button class="btn btn-danger btn-sm" data-act="reset">${ico("trash")}Effacer toutes les données</button>
+      </div>
+      <div class="card"><div class="card-h"><h2>Catégories</h2></div>
+        <div class="fgrid">
+          <div class="field"><label>Dépenses personnelles</label><textarea id="cat-exp" rows="7">${esc(s.catExp.join("\n"))}</textarea><div class="hint">Une catégorie par ligne</div></div>
+          <div class="field"><label>Revenus personnels</label><textarea id="cat-inc" rows="7">${esc(s.catInc.join("\n"))}</textarea></div>
+          <div class="field"><label>Charges SARL</label><textarea id="cat-bexp" rows="7">${esc(s.catBizExp.join("\n"))}</textarea></div>
+          <div class="field"><label>Produits SARL</label><textarea id="cat-binc" rows="7">${esc(s.catBizInc.join("\n"))}</textarea></div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-act="cats-save">Enregistrer les catégories</button>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card"><div class="card-h"><h2>Sécurité & confidentialité</h2>
+        <div class="right"><span class="badge ${s.lockEnabled ? "good" : "warn"}">${s.lockEnabled ? "Chiffré" : "Non chiffré"}</span></div></div>
+        ${s.lockEnabled ? `
+          <div class="kv"><span class="k">Chiffrement local</span><span class="v">AES-256-GCM</span></div>
+          <div class="kv"><span class="k">Dérivation du mot de passe</span><span class="v">PBKDF2-SHA256 · 310 000 tours</span></div>
+          <div class="kv"><span class="k">Sauvegarde en ligne</span><span class="v">Chiffrée de bout en bout</span></div>
+          <div class="field" style="margin-top:14px"><label>Verrouillage automatique après inactivité</label>
+            <select data-set="settings.lockTimeout">
+              ${[{ v: 0, l: "Jamais" }, { v: 5, l: "5 minutes" }, { v: 15, l: "15 minutes" }, { v: 30, l: "30 minutes" }, { v: 60, l: "1 heure" }]
+        .map(o => `<option value="${o.v}"${nb(s.lockTimeout) === o.v ? " selected" : ""}>${o.l}</option>`).join("")}
+            </select></div>
+          <div class="row">
+            <button class="btn btn-sm" data-act="lock-now">${ico("lockic")}Verrouiller maintenant</button>
+            <button class="btn btn-sm" data-act="lock-change">Changer le mot de passe</button>
+            <button class="btn btn-sm btn-danger" data-act="lock-off">Désactiver</button>
+          </div>`
+      : `<div class="note" style="margin-bottom:14px">Activez le verrouillage pour <b>chiffrer vos données sur cet appareil</b> et, si la synchronisation est active, <b>chiffrer aussi la sauvegarde en ligne de bout en bout</b>. L'application demandera ce mot de passe à chaque ouverture.</div>
+         <button class="btn btn-primary btn-sm" data-act="lock-on">${ico("lockic")}Activer le verrouillage</button>
+         ${Lock.available() ? "" : '<div class="note" style="margin-top:12px;color:var(--neg)">Chiffrement indisponible : ouvrez l\'application via une adresse https (ou en local), pas depuis un aperçu d\'application.</div>'}`}
+      </div>
+
+      <div class="card"><div class="card-h"><h2>Synchronisation (Supabase)</h2>
+        <div class="right"><span class="badge ${sess ? "good" : ""}">${sess ? "Connecté" : Supa.configured() ? "Non connecté" : "Inactive"}</span></div></div>
+        ${sess ? `
+          <div class="kv"><span class="k">Compte</span><span class="v">${esc(sup.email)}</span></div>
+          <div class="kv"><span class="k">Projet</span><span class="v" style="font-weight:500;font-size:.8rem">${esc(sup.url.replace("https://", ""))}</span></div>
+          <div class="kv"><span class="k">Dernière synchronisation</span><span class="v">${sup.lastSync ? new Date(sup.lastSync).toLocaleString("fr-FR") : "—"}</span></div>
+          <div class="kv"><span class="k">Contenu envoyé</span><span class="v">${s.lockEnabled ? "Chiffré (illisible côté serveur)" : "En clair (protégé par votre compte)"}</span></div>
+          <div class="row" style="margin-top:14px">
+            <button class="btn btn-primary btn-sm" data-act="supa-push">${ico("up_a")}Envoyer</button>
+            <button class="btn btn-sm" data-act="supa-pull">${ico("down_a")}Récupérer</button>
+            <button class="btn btn-sm btn-ghost" data-act="supa-signout">Déconnexion</button>
+          </div>
+          <div class="field" style="margin-top:12px"><label class="check"><input type="checkbox" id="sb-auto"${sup.auto ? " checked" : ""}> Synchroniser automatiquement à chaque modification</label></div>`
+      : `<div class="note" style="margin-bottom:14px">Retrouvez vos données sur tous vos appareils. Supabase est gratuit pour cet usage ; l'assistant vous guide en trois étapes (2 à 3 minutes).</div>
+         <button class="btn btn-primary btn-sm" data-act="supa-wizard">${ico("cloud")}${Supa.configured() ? "Reprendre la configuration" : "Configurer la synchronisation"}</button>`}
+      </div>
+
+      <div class="card"><div class="card-h"><h2>Catégorisation automatique</h2>
+        <div class="right"><button class="btn btn-sm btn-primary" data-act="rule-add">${ico("plus")}Règle</button></div></div>
+        <div class="note" style="margin-bottom:12px">À l'import CSV, si le libellé contient le mot-clé, la catégorie est appliquée automatiquement.</div>
+        ${s.rules.length ? `<div class="tw"><table><thead><tr><th>Mot-clé</th><th>Catégorie</th><th>Portée</th><th></th></tr></thead><tbody>
+          ${s.rules.map((r, i) => `<tr><td class="t-main">${esc(r.kw)}</td><td>${esc(r.cat)}</td><td><span class="badge">${r.scope === "pro" ? "SARL" : "Perso"}</span></td>
+            <td class="actions"><button class="btn btn-sm btn-ghost btn-icon" data-act="rule-del" data-i="${i}">${ico("trash")}</button></td></tr>`).join("")}
+        </tbody></table></div>` : emptyHtml("Aucune règle. Ex. : « carrefour » → Alimentation.")}
+      </div>
+      <div class="card"><div class="card-h"><h2>À propos</h2></div>
+        <p class="sec" style="font-size:.85rem">Application autonome de gestion de patrimoine — fonctionne hors-ligne, sans compte et sans dépendance externe. Ajoutez-la à votre écran d'accueil depuis le menu de partage de votre navigateur pour l'utiliser comme une application mobile.</p>
+        <div class="kv" style="margin-top:10px"><span class="k">Version des données</span><span class="v">v${state.version}</span></div>
+        <div class="kv"><span class="k">Dernière modification</span><span class="v">${new Date(state.updatedAt).toLocaleString("fr-FR")}</span></div>
+      </div>
+    </div>
+  </div>`;
+  const bind = (id, fn) => { const el = $(id); if (el) el.onchange = fn; };
+  bind("#own", e => { state.settings.ownerName = e.target.value.trim(); save(); render(); });
+  bind("#cname", e => { C().name = e.target.value.trim() || "SARL ALPEGA"; save(); render(); });
+  bind("#hideamt", e => { state.settings.hideAmounts = e.target.checked; save(); render(); });
+  bind("#sb-auto", e => { state.settings.supabase.auto = e.target.checked; save(false); });
+}
+
+/* ==================================================================
+   ÉDITEURS (formulaires)
+   ================================================================== */
+const accOptions = () => [{ v: "", l: "— aucun —" }, ...P().accounts.map(a => ({ v: a.id, l: a.name }))];
+const bizAccOptions = () => [{ v: "", l: "— aucun —" }, ...C().accounts.map(a => ({ v: a.id, l: a.name }))];
+const allCats = () => [...state.settings.catExp, ...state.settings.catInc];
+const allBizCats = () => [...state.settings.catBizExp, ...state.settings.catBizInc];
+const sensFields = item => ([
+  { key: "sens", label: "Type", type: "select", options: [{ v: "depense", l: "Dépense" }, { v: "revenu", l: "Revenu" }], def: nb(item.amount) >= 0 && item.id ? "revenu" : "depense" },
+  { key: "amountAbs", label: "Montant (€)", type: "number", required: true, def: item.id ? Math.abs(nb(item.amount)) : "" },
+]);
+const cleanSens = v => { v.amount = v.sens === "revenu" ? Math.abs(nb(v.amountAbs)) : -Math.abs(nb(v.amountAbs)); delete v.amountAbs; delete v.sens; return v; };
+
+ED["personal.accounts"] = {
+  title: "Compte", delMsg: "Le compte et ses lignes de titres associées seront supprimés.",
+  fields: [
+    { key: "name", label: "Nom du compte", required: true, ph: "Ex. Livret A — Boursorama" },
+    { key: "type", label: "Type", type: "select", options: ACC_TYPES, required: true },
+    { key: "institution", label: "Établissement", ph: "Ex. Crédit Agricole" },
+    { key: "balance", label: "Solde / espèces (€)", type: "number", def: 0 },
+    { key: "rate", label: "Taux annuel (%)", type: "number", hint: "Facultatif" },
+    { key: "notes", label: "Note", type: "textarea" },
+  ],
+  onDelete: a => { P().holdings = P().holdings.filter(h => h.accountId !== a.id); },
+};
+ED["personal.holdings"] = {
+  title: "Ligne de portefeuille",
+  fields: [
+    { key: "name", label: "Nom", required: true, ph: "Ex. MSCI World" },
+    { key: "ticker", label: "Code / ISIN", ph: "Ex. IWDA" },
+    { key: "accountId", label: "Enveloppe", type: "select", options: accOptions },
+    { key: "class", label: "Classe d'actif", type: "select", options: HOLD_CLASSES },
+    { key: "qty", label: "Quantité", type: "number", required: true },
+    { key: "pru", label: "Prix de revient unitaire (€)", type: "number" },
+    { key: "price", label: "Cours actuel (€)", type: "number", required: true },
+  ],
+};
+ED["personal.properties"] = {
+  title: "Bien immobilier",
+  fields: [
+    { key: "name", label: "Nom du bien", required: true, ph: "Ex. Appartement Lyon 3e" },
+    { key: "type", label: "Type", type: "select", options: PROP_TYPES },
+    { key: "value", label: "Valeur estimée (€)", type: "number", required: true },
+    { key: "buyPrice", label: "Prix d'achat (€)", type: "number" },
+    { key: "buyDate", label: "Date d'acquisition", type: "date" },
+    { key: "rentMonthly", label: "Loyer mensuel (€)", type: "number" },
+    { key: "chargesMonthly", label: "Charges mensuelles (€)", type: "number", hint: "Taxe foncière, copro, assurance…" },
+    { key: "notes", label: "Note", type: "textarea" },
+  ],
+};
+ED["personal.loans"] = {
+  title: "Crédit",
+  fields: [
+    { key: "name", label: "Intitulé", required: true, ph: "Ex. Prêt appartement Lyon" },
+    { key: "type", label: "Type", type: "select", options: LOAN_TYPES },
+    { key: "propertyId", label: "Bien financé", type: "select", options: () => [{ v: "", l: "— aucun —" }, ...P().properties.map(p => ({ v: p.id, l: p.name }))] },
+    { key: "initial", label: "Montant emprunté (€)", type: "number" },
+    { key: "remaining", label: "Capital restant dû (€)", type: "number", required: true },
+    { key: "rate", label: "Taux (%)", type: "number" },
+    { key: "payment", label: "Mensualité (€)", type: "number" },
+    { key: "endDate", label: "Fin du prêt", type: "date" },
+  ],
+};
+ED["personal.others"] = {
+  title: "Actif ou dette",
+  fields: [
+    { key: "name", label: "Intitulé", required: true },
+    { key: "kind", label: "Nature", type: "select", options: [{ v: "asset", l: "Actif" }, { v: "debt", l: "Dette" }] },
+    { key: "category", label: "Catégorie", type: "select", options: OTHER_CATS },
+    { key: "value", label: "Valeur (€)", type: "number", required: true },
+    { key: "notes", label: "Note", type: "textarea" },
+  ],
+};
+ED["personal.transactions"] = {
+  title: "Opération",
+  fields: item => ([
+    { key: "date", label: "Date", type: "date", required: true, def: todayISO() },
+    ...sensFields(item),
+    { key: "label", label: "Libellé", required: true, ph: "Ex. Courses Carrefour" },
+    { key: "category", label: "Catégorie", type: "select", options: allCats },
+    { key: "accountId", label: "Compte", type: "select", options: accOptions },
+    { key: "note", label: "Note", type: "textarea" },
+  ]),
+  clean: cleanSens,
+};
+ED["personal.goals"] = {
+  title: "Objectif",
+  fields: [
+    { key: "name", label: "Nom de l'objectif", required: true, ph: "Ex. Apport résidence principale" },
+    { key: "target", label: "Montant cible (€)", type: "number", required: true },
+    { key: "current", label: "Montant déjà atteint (€)", type: "number", hint: "Ignoré si un compte est associé" },
+    { key: "accountId", label: "Compte associé", type: "select", options: accOptions, hint: "Le montant sera lu automatiquement" },
+    { key: "deadline", label: "Échéance", type: "date" },
+  ],
+  clean: v => { v.accountIds = v.accountId ? [v.accountId] : []; return v; },
+};
+ED["company.accounts"] = {
+  title: "Compte professionnel",
+  fields: [
+    { key: "name", label: "Nom du compte", required: true, ph: "Ex. Compte courant Qonto" },
+    { key: "institution", label: "Banque" },
+    { key: "type", label: "Type", type: "select", options: ["Compte courant", "Compte épargne", "Compte à terme", "Autre"] },
+    { key: "balance", label: "Solde (€)", type: "number", required: true },
+    { key: "iban", label: "IBAN (facultatif)" },
+  ],
+};
+ED["company.transactions"] = {
+  title: "Opération société",
+  fields: item => ([
+    { key: "date", label: "Date", type: "date", required: true, def: todayISO() },
+    ...sensFields(item),
+    { key: "label", label: "Libellé", required: true },
+    { key: "category", label: "Catégorie", type: "select", options: allBizCats },
+    { key: "accountId", label: "Compte", type: "select", options: bizAccOptions },
+    { key: "vatRate", label: "Taux de TVA (%)", type: "select", options: VAT_RATES.map(v => ({ v, l: v + " %" })), def: 20 },
+    { key: "countVat", label: "Compter la TVA de cette recette comme TVA collectée", type: "check", hint: "À cocher uniquement pour une recette qui ne correspond pas à une facture déjà enregistrée (sinon la TVA serait comptée deux fois)." },
+    { key: "note", label: "Note", type: "textarea" },
+  ]),
+  clean: v => { cleanSens(v); v.vatRate = nb(v.vatRate); return v; },
+};
+ED["company.investments"] = {
+  title: "Investissement société",
+  fields: [
+    { key: "name", label: "Intitulé", required: true },
+    { key: "type", label: "Type", type: "select", options: BIZ_INV_TYPES },
+    { key: "cost", label: "Montant investi (€)", type: "number", required: true },
+    { key: "value", label: "Valeur actuelle (€)", type: "number", required: true },
+    { key: "date", label: "Date d'investissement", type: "date" },
+    { key: "note", label: "Note", type: "textarea" },
+  ],
+};
+ED["company.fixedAssets"] = {
+  title: "Immobilisation",
+  fields: [
+    { key: "name", label: "Désignation", required: true, ph: "Ex. Véhicule utilitaire" },
+    { key: "date", label: "Date d'acquisition", type: "date", required: true, def: todayISO() },
+    { key: "amount", label: "Valeur d'achat HT (€)", type: "number", required: true },
+    { key: "years", label: "Durée d'amortissement (années)", type: "number", required: true, def: 5 },
+    { key: "note", label: "Note", type: "textarea" },
+  ],
+};
+ED["company.invoices"] = {
+  title: "Facture client",
+  fields: [
+    { key: "number", label: "Numéro", ph: "Ex. F2026-014" },
+    { key: "client", label: "Client", required: true },
+    { key: "label", label: "Objet" },
+    { key: "dateIssue", label: "Date d'émission", type: "date", required: true, def: todayISO() },
+    { key: "dateDue", label: "Échéance", type: "date" },
+    { key: "amountHT", label: "Montant HT (€)", type: "number", required: true },
+    { key: "vatRate", label: "Taux de TVA (%)", type: "select", options: VAT_RATES.map(v => ({ v, l: v + " %" })), def: 20 },
+    { key: "status", label: "Statut", type: "select", options: [{ v: "brouillon", l: "Brouillon" }, { v: "envoyee", l: "Envoyée" }, { v: "payee", l: "Payée" }], def: "envoyee" },
+    { key: "datePaid", label: "Date de paiement", type: "date", hint: "Requise pour la TVA sur encaissements" },
+  ],
+  clean: v => { v.vatRate = nb(v.vatRate); if (v.status === "payee" && !v.datePaid) v.datePaid = todayISO(); return v; },
+};
+ED["company.cca"] = {
+  title: "Mouvement de compte courant",
+  fields: item => ([
+    { key: "date", label: "Date", type: "date", required: true, def: todayISO() },
+    { key: "sens", label: "Nature", type: "select", options: [{ v: "apport", l: "Apport (je prête à la société)" }, { v: "retrait", l: "Retrait (remboursement)" }], def: nb(item.amount) < 0 ? "retrait" : "apport" },
+    { key: "amountAbs", label: "Montant (€)", type: "number", required: true, def: item.id ? Math.abs(nb(item.amount)) : "" },
+    { key: "label", label: "Libellé", required: true, ph: "Ex. Apport en trésorerie" },
+  ]),
+  clean: v => { v.amount = v.sens === "retrait" ? -Math.abs(nb(v.amountAbs)) : Math.abs(nb(v.amountAbs)); delete v.amountAbs; delete v.sens; return v; },
+};
+
+/* ==================================================================
+   SYNCHRONISATION SUPABASE (optionnelle)
+   ================================================================== */
+const SESS_KEY = "patrimoine.supabase.session";
+const Supa = {
+  cfg: () => state.settings.supabase,
+  session() { try { return JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch (e) { return null; } },
+  setSession(s) { try { s ? localStorage.setItem(SESS_KEY, JSON.stringify(s)) : localStorage.removeItem(SESS_KEY); } catch (e) { } },
+  configured() { const c = Supa.cfg(); return !!(c.url && c.anonKey); },
+  enabled() { return Supa.configured() && !!Supa.session(); },
+  status() { return Supa.enabled() ? "on" : Supa.configured() ? "err" : ""; },
+  label() { return Supa.enabled() ? "Synchronisé" : Supa.configured() ? "Non connecté" : "Données locales"; },
+  headers(auth = true) {
+    const c = Supa.cfg(), s = Supa.session();
+    const h = { apikey: c.anonKey, "Content-Type": "application/json" };
+    if (auth && s) h.Authorization = "Bearer " + s.access_token;
+    return h;
+  },
+  async auth(path, body) {
+    const c = Supa.cfg();
+    const r = await fetch(c.url + "/auth/v1/" + path, { method: "POST", headers: Supa.headers(false), body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const m = j.error_description || j.msg || j.message || j.error || ("Erreur " + r.status);
+      if (/invalid login/i.test(m)) throw new Error("E-mail ou mot de passe incorrect.");
+      if (/not confirmed/i.test(m)) throw new Error("Compte non confirmé : ouvrez l'e-mail de confirmation envoyé par Supabase.");
+      if (/already registered/i.test(m)) throw new Error("Ce compte existe déjà : utilisez « Se connecter ».");
+      throw new Error(m);
+    }
+    return j;
+  },
+  /* vérifie l'URL, la clé et la présence de la table */
+  async test() {
+    const c = Supa.cfg();
+    if (!/^https:\/\/.+/.test(c.url)) throw new Error("L'URL doit commencer par https:// et se terminer par .supabase.co");
+    if (!c.anonKey || c.anonKey.length < 30) throw new Error("La clé anon semble incomplète.");
+    let r;
+    try { r = await fetch(c.url + "/rest/v1/patrimoine?select=user_id&limit=1", { headers: Supa.headers(false) }); }
+    catch (e) { throw new Error("Projet injoignable : vérifiez l'URL (et votre connexion)."); }
+    if (r.status === 401 || r.status === 403) throw new Error("Clé anon refusée : recopiez la clé « anon public » (Settings → API).");
+    if (r.status === 404) throw new Error("Table absente : exécutez le script SQL de l'étape 2 dans le SQL Editor.");
+    if (!r.ok) throw new Error("Réponse inattendue du projet (" + r.status + ").");
+    return true;
+  },
+  async signIn(email, password) {
+    const j = await Supa.auth("token?grant_type=password", { email, password });
+    Supa.setSession({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id });
+    state.settings.supabase.email = email; save(false);
+    await Supa.pull(true);
+  },
+  async signUp(email, password) {
+    const j = await Supa.auth("signup", { email, password });
+    if (j.access_token) {
+      Supa.setSession({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id });
+      state.settings.supabase.email = email; save(false);
+      await Supa.push(true);
+      return "Compte créé et connecté.";
+    }
+    return "Compte créé : confirmez l'e-mail reçu, puis connectez-vous.";
+  },
+  async recover(email) {
+    await Supa.auth("recover", { email });
+    return "E-mail de réinitialisation envoyé (il concerne le compte Supabase, pas le mot de passe de chiffrement).";
+  },
+  async refresh() {
+    const s = Supa.session(); if (!s) throw new Error("Session absente");
+    const j = await Supa.auth("token?grant_type=refresh_token", { refresh_token: s.refresh_token });
+    Supa.setSession({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id });
+  },
+  signOut() { Supa.setSession(null); render(); toast("Déconnecté de la synchronisation"); },
+  async rest(url, opts, retry = true) {
+    const r = await fetch(url, opts);
+    if (r.status === 401 && retry) { await Supa.refresh(); opts.headers = Supa.headers(); return Supa.rest(url, opts, false); }
+    if (!r.ok) {
+      const txt = (await r.text()).slice(0, 160);
+      if (r.status === 404 || /PGRST205|does not exist/i.test(txt)) throw new Error("Table « patrimoine » absente : exécutez le script SQL.");
+      throw new Error("Supabase " + r.status + " : " + txt);
+    }
+    return r;
+  },
+  async push(silent = false) {
+    if (!Supa.enabled()) { if (!silent) toast("Connectez-vous à la synchronisation d'abord", true); return; }
+    const c = Supa.cfg(), s = Supa.session();
+    try {
+      const payload = Lock.active() ? await Lock.wrap(state) : state;
+      await Supa.rest(c.url + "/rest/v1/patrimoine", {
+        method: "POST", headers: Object.assign({}, Supa.headers(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+        body: JSON.stringify({ user_id: s.user_id, data: payload, updated_at: state.updatedAt }),
+      });
+      state.settings.supabase.lastSync = new Date().toISOString();
+      persist();
+      if (!silent) { render(); toast("Sauvegarde envoyée" + (Lock.active() ? " (chiffrée)" : "")); }
+    } catch (e) { if (!silent) toast(e.message, true); else console.warn(e); }
+  },
+  async pull(silent = false) {
+    if (!Supa.enabled()) { if (!silent) toast("Connectez-vous à la synchronisation d'abord", true); return; }
+    const c = Supa.cfg(), s = Supa.session();
+    try {
+      const r = await Supa.rest(c.url + "/rest/v1/patrimoine?select=data,updated_at&user_id=eq." + s.user_id, { headers: Supa.headers() });
+      const rows = await r.json();
+      if (!rows.length) { await Supa.push(true); return; }
+      const remote = rows[0];
+      if (!remote.data) return;
+      if (isEmptyState()) return void await Supa.apply(remote.data, silent);   // appareil neuf
+      const rAt = new Date(remote.updated_at || 0), lAt = new Date(state.updatedAt || 0);
+      if (rAt <= lAt) {
+        if (silent) return;
+        if (rAt.getTime() === lAt.getTime()) return toast("Déjà à jour");
+        return confirmDialog("Sauvegarde en ligne plus ancienne",
+          "Vos données locales sont plus récentes que la sauvegarde en ligne. Voulez-vous quand même restaurer la version en ligne ? Les modifications locales seront perdues.",
+          () => Supa.apply(remote.data), "Restaurer");
+      }
+      await Supa.apply(remote.data, silent);
+    } catch (e) { if (!silent) toast(e.message, true); else console.warn(e); }
+  },
+  /* applique une charge distante, chiffrée ou non */
+  async apply(data, silent) {
+    if (data && data.enc) {
+      if (Lock.active()) {
+        try { state = migrate(await Lock.unwrap(data)); }
+        catch (e) { return toast("Sauvegarde chiffrée avec un autre mot de passe.", true); }
+      } else {
+        state.settings.lockEnabled = true;
+        return lockScreen({ env: data, reason: "Sauvegarde chiffrée : saisissez votre mot de passe de chiffrement." });
+      }
+    } else {
+      if (!data.version) return;
+      state = migrate(data);
+    }
+    state.settings.supabase.lastSync = new Date().toISOString();
+    save(false); render();
+    if (!silent) toast("Données récupérées");
+  },
+};
+
+/* ==================================================================
+   ASSISTANT DE SYNCHRONISATION
+   ================================================================== */
+const SQL_SCRIPT = `create table if not exists public.patrimoine (
+  user_id uuid primary key references auth.users on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.patrimoine enable row level security;
+create policy "patrimoine_owner" on public.patrimoine
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
+
+function copyText(txt, okMsg) {
+  const done = () => toast(okMsg || "Copié");
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt).then(done, () => fallback());
+  } catch (e) { }
+  fallback();
+  function fallback() {
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { toast("Copie impossible : sélectionnez le texte manuellement", true); }
+    ta.remove();
+  }
+}
+function supaWizard() {
+  const c = Supa.cfg();
+  openModal({
+    title: "Configurer la synchronisation", wide: true,
+    body: `
+      <div class="eyebrow" style="margin-bottom:8px">Étape 1 — créer le projet</div>
+      <div class="note" style="margin-bottom:12px">Créez un compte gratuit sur <b>supabase.com</b>, puis un projet (région Europe de préférence).
+        Ouvrez ensuite <b>Settings → API</b> et recopiez les deux valeurs ci-dessous.</div>
+      <div class="field"><label>URL du projet</label><input id="w-url" value="${esc(c.url)}" placeholder="https://xxxxxxxx.supabase.co" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><label>Clé anon (public)</label><input id="w-key" value="${esc(c.anonKey)}" placeholder="eyJhbGciOi…" autocapitalize="off" spellcheck="false">
+        <div class="hint">Cette clé est publique par conception : l'accès aux données est verrouillé par votre compte et les règles RLS créées à l'étape 2.</div></div>
+
+      <div class="eyebrow" style="margin:20px 0 8px">Étape 2 — créer la table</div>
+      <div class="note" style="margin-bottom:10px">Dans Supabase, ouvrez <b>SQL Editor → New query</b>, collez ce script et cliquez sur <b>Run</b>. Il crée la table et interdit à quiconque d'autre d'y accéder.</div>
+      <pre class="sql" id="w-sql">${esc(SQL_SCRIPT)}</pre>
+      <button class="btn btn-sm" id="w-copy" style="margin-top:8px">${ico("copy")}Copier le script</button>
+      <button class="btn btn-sm" id="w-test" style="margin-top:8px">${ico("check")}Tester la connexion</button>
+      <div id="w-status" style="margin-top:10px;font-size:.82rem"></div>
+
+      <div class="eyebrow" style="margin:20px 0 8px">Étape 3 — votre compte</div>
+      <div class="fgrid">
+        <div class="field"><label>E-mail</label><input id="w-mail" type="email" value="${esc(c.email)}" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label>Mot de passe du compte</label><input id="w-pwd" type="password" autocomplete="new-password"></div>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary btn-sm" id="w-signin">Se connecter</button>
+        <button class="btn btn-sm" id="w-signup">Créer le compte</button>
+        <button class="btn-link" id="w-forgot" style="margin-left:auto">Mot de passe oublié</button>
+      </div>
+      <div class="note" style="margin-top:14px">${state.settings.lockEnabled
+        ? "Le verrouillage étant actif, la sauvegarde envoyée sera <b>chiffrée de bout en bout</b> : Supabase n'en verra qu'un bloc illisible."
+        : "Pensez à activer le verrouillage (carte Sécurité) pour chiffrer aussi la sauvegarde en ligne de bout en bout."}</div>`,
+    footer: `<button class="btn" data-close="1">Fermer</button>`,
+    onMount: r => {
+      const st = r.querySelector("#w-status");
+      const say = (msg, cls) => { st.innerHTML = `<span class="${cls || ""}">${esc(msg)}</span>`; };
+      const readCfg = () => {
+        state.settings.supabase.url = r.querySelector("#w-url").value.trim().replace(/\/+$/, "");
+        state.settings.supabase.anonKey = r.querySelector("#w-key").value.trim();
+        save(false);
+      };
+      r.querySelector("#w-copy").onclick = () => copyText(SQL_SCRIPT, "Script SQL copié");
+      r.querySelector("#w-test").onclick = async () => {
+        readCfg(); say("Test en cours…", "muted");
+        try { await Supa.test(); say("✓ Projet joignable, clé valide, table présente.", "pos"); }
+        catch (e) { say("✗ " + e.message, "neg"); }
+      };
+      const run = async (fn, btn) => {
+        readCfg();
+        const mail = r.querySelector("#w-mail").value.trim(), pwd = r.querySelector("#w-pwd").value;
+        if (!Supa.configured()) return say("Renseignez d'abord l'URL et la clé anon.", "neg");
+        if (!mail || !pwd) return say("E-mail et mot de passe requis.", "neg");
+        if (pwd.length < 6) return say("Le mot de passe du compte doit faire au moins 6 caractères.", "neg");
+        btn.disabled = true; say("Connexion…", "muted");
+        try { const m = await fn(mail, pwd); closeModal(); render(); toast(m || "Synchronisation activée"); }
+        catch (e) { say("✗ " + e.message, "neg"); }
+        finally { btn.disabled = false; }
+      };
+      r.querySelector("#w-signin").onclick = e => run(async (m, p) => { await Supa.signIn(m, p); return "Connecté — données synchronisées"; }, e.target);
+      r.querySelector("#w-signup").onclick = e => run((m, p) => Supa.signUp(m, p), e.target);
+      r.querySelector("#w-forgot").onclick = async () => {
+        readCfg();
+        const mail = r.querySelector("#w-mail").value.trim();
+        if (!Supa.configured() || !mail) return say("Renseignez l'URL, la clé et votre e-mail.", "neg");
+        try { say(await Supa.recover(mail), "pos"); } catch (e) { say("✗ " + e.message, "neg"); }
+      };
+    },
+  });
+}
+
+/* ==================================================================
+   VERROU : activation, changement, désactivation
+   ================================================================== */
+function lockOnModal() {
+  if (!Lock.available()) return toast("Chiffrement indisponible ici : ouvrez l'application via https ou en local.", true);
+  openModal({
+    title: "Activer le verrouillage",
+    body: `<div class="note" style="margin-bottom:14px">Vos données seront <b>chiffrées sur cet appareil</b> (AES-256-GCM) et, si la synchronisation est active, la sauvegarde en ligne le sera aussi de bout en bout.
+      <br><br><b>Ce mot de passe ne peut pas être réinitialisé.</b> Perdu, vos données sont définitivement illisibles : exportez une sauvegarde JSON avant d'activer.</div>
+      <form id="lf">
+        <div class="field"><label>Mot de passe de chiffrement</label><input type="password" id="p1" autocomplete="new-password" required>
+          <div class="hint">12 caractères minimum recommandés. Ne réutilisez pas le mot de passe de votre compte Supabase.</div></div>
+        <div class="field"><label>Confirmation</label><input type="password" id="p2" autocomplete="new-password" required></div>
+        <div class="field"><label class="check"><input type="checkbox" id="ack"> J'ai noté ce mot de passe en lieu sûr et compris qu'il est irrécupérable.</label></div>
+        <div id="lerr" class="neg" style="font-size:.8rem;display:none"></div>
+      </form>`,
+    footer: `<button class="btn" data-close="1">Annuler</button>
+      <button class="btn" id="l-export">${ico("up_a")}Exporter d'abord</button>
+      <button class="btn btn-primary" type="submit" form="lf">Activer</button>`,
+    onMount: r => {
+      r.querySelector("#l-export").onclick = exportJson;
+      r.querySelector("#lf").onsubmit = async e => {
+        e.preventDefault();
+        const p1 = r.querySelector("#p1").value, p2 = r.querySelector("#p2").value, err = r.querySelector("#lerr");
+        const fail = m => { err.style.display = "block"; err.textContent = m; };
+        if (p1.length < 8) return fail("Le mot de passe doit faire au moins 8 caractères.");
+        if (p1 !== p2) return fail("Les deux saisies ne correspondent pas.");
+        if (!r.querySelector("#ack").checked) return fail("Confirmez que le mot de passe est conservé en lieu sûr.");
+        err.style.display = "none";
+        await Lock.create(p1);
+        state.settings.lockEnabled = true;
+        if (!nb(state.settings.lockTimeout)) state.settings.lockTimeout = 15;
+        save(false); await persist();
+        if (Supa.enabled()) await Supa.push(true);
+        closeModal(); render(); Lock.arm();
+        toast("Verrouillage activé — données chiffrées");
+      };
+    },
+  });
+}
+function lockChangeModal() {
+  openModal({
+    title: "Changer le mot de passe de chiffrement",
+    body: `<form id="lf">
+        <div class="field"><label>Mot de passe actuel</label><input type="password" id="p0" autocomplete="current-password" required></div>
+        <div class="field"><label>Nouveau mot de passe</label><input type="password" id="p1" autocomplete="new-password" required></div>
+        <div class="field"><label>Confirmation</label><input type="password" id="p2" autocomplete="new-password" required></div>
+        <div id="lerr" class="neg" style="font-size:.8rem;display:none"></div>
+      </form>
+      <div class="note" style="margin-top:12px">Les autres appareils devront saisir le nouveau mot de passe à leur prochaine synchronisation.</div>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-primary" type="submit" form="lf">Changer</button>`,
+    onMount: r => {
+      r.querySelector("#lf").onsubmit = async e => {
+        e.preventDefault();
+        const err = r.querySelector("#lerr"), fail = m => { err.style.display = "block"; err.textContent = m; };
+        const p0 = r.querySelector("#p0").value, p1 = r.querySelector("#p1").value, p2 = r.querySelector("#p2").value;
+        if (p1.length < 8) return fail("Le nouveau mot de passe doit faire au moins 8 caractères.");
+        if (p1 !== p2) return fail("Les deux saisies ne correspondent pas.");
+        try { await Lock.open(JSON.parse(readRaw()), p0); } catch (ex) { return fail("Mot de passe actuel incorrect."); }
+        await Lock.create(p1);
+        save(false); await persist();
+        if (Supa.enabled()) await Supa.push(true);
+        closeModal(); render(); toast("Mot de passe modifié");
+      };
+    },
+  });
+}
+function lockOffModal() {
+  openModal({
+    title: "Désactiver le verrouillage",
+    body: `<div class="note" style="margin-bottom:14px">Vos données seront de nouveau stockées <b>en clair</b> dans ce navigateur, et la sauvegarde en ligne cessera d'être chiffrée de bout en bout.</div>
+      <form id="lf"><div class="field"><label>Mot de passe actuel</label><input type="password" id="p0" required></div>
+      <div id="lerr" class="neg" style="font-size:.8rem;display:none"></div></form>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-danger" type="submit" form="lf">Désactiver</button>`,
+    onMount: r => {
+      r.querySelector("#lf").onsubmit = async e => {
+        e.preventDefault();
+        const err = r.querySelector("#lerr");
+        try { await Lock.open(JSON.parse(readRaw()), r.querySelector("#p0").value); }
+        catch (ex) { err.style.display = "block"; err.textContent = "Mot de passe incorrect."; return; }
+        Lock.clear();
+        state.settings.lockEnabled = false;
+        save(false); await persist();
+        if (Supa.enabled()) await Supa.push(true);
+        closeModal(); render(); toast("Verrouillage désactivé");
+      };
+    },
+  });
+}
+
+/* ==================================================================
+   EXPORT / IMPORT
+   ================================================================== */
+function download(name, content, type = "application/json") {
+  const url = URL.createObjectURL(new Blob([content], { type: type + ";charset=utf-8" }));
+  const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 500);
+}
+function exportJson() {
+  download(`patrimoine-${todayISO()}.json`, JSON.stringify(state, null, 2));
+  toast("Sauvegarde exportée");
+}
+function importJson() {
+  const inp = document.createElement("input"); inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const data = JSON.parse(rd.result);
+        if (!data || !data.personal) throw new Error("Format invalide");
+        confirmDialog("Remplacer les données", "Toutes les données actuelles de ce navigateur seront remplacées par le contenu du fichier.", () => {
+          state = migrate(data); save(); render(); toast("Données importées");
+        }, "Remplacer");
+      } catch (e) { toast("Fichier illisible : " + e.message, true); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+function exportCsv(scope) {
+  const pro = scope === "pro";
+  const txs = pro ? C().transactions : P().transactions;
+  const accs = pro ? C().accounts : P().accounts;
+  const accName = id => (accs.find(a => a.id === id) || {}).name || "";
+  const head = ["Date", "Libellé", "Catégorie", "Compte", "Montant", ...(pro ? ["Taux TVA"] : [])];
+  const rows = [...txs].sort((a, b) => (a.date || "").localeCompare(b.date || "")).map(t => [
+    t.date, t.label, t.category || "", accName(t.accountId), String(nb(t.amount)).replace(".", ","), ...(pro ? [String(nb(t.vatRate))] : []),
+  ]);
+  const csv = [head, ...rows].map(r => r.map(c => `"${String(c === null || c === undefined ? "" : c).replace(/"/g, '""')}"`).join(";")).join("\n");
+  download(`operations-${pro ? "alpega" : "perso"}-${todayISO()}.csv`, "﻿" + csv, "text/csv");
+  toast("Export CSV généré");
+}
+
+/* ==================================================================
+   ROUTEUR & ÉVÉNEMENTS
+   ================================================================== */
+const VIEWS = {
+  apercu: viewApercu, comptes: viewComptes, titres: viewTitres, immobilier: viewImmobilier,
+  divers: viewDivers, dettes: viewDettes, alpega: viewAlpega, budget: viewBudget,
+  objectifs: viewObjectifs, historique: viewHistorique, reglages: viewReglages,
+};
+const ALIAS = { dashboard: "apercu", patrimoine: "comptes", bourse: "titres", credits: "dettes", autres: "divers" };
+const resolveView = v => (VIEWS[v] ? v : ALIAS[v] || null);
+function renderView() {
+  (VIEWS[ui.view] || viewApercu)();
+  if (!state.settings.lockEnabled && !state.settings.secDismissed && Lock.available() && location.protocol !== "file:") {
+    const b = document.createElement("div");
+    b.className = "card";
+    b.style.cssText = "border-color:var(--warn);display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px";
+    b.innerHTML = `<span style="color:var(--warn);display:flex">${ico("lockic")}</span>
+      <div style="flex:1;min-width:210px"><b style="font-size:.9rem">Vos données ne sont pas encore chiffrées</b>
+        <div class="t-sub">Choisissez un mot de passe : l'application n'affichera rien sans lui, et vos données resteront illisibles pour tout autre visiteur.</div></div>
+      <button class="btn btn-primary btn-sm" data-act="lock-on">${ico("lockic")}Choisir un mot de passe</button>
+      <button class="btn btn-sm btn-ghost" data-act="sec-later">Plus tard</button>`;
+    const v = $("#view"); v.insertBefore(b, v.firstChild);
+  }
+  hydrateCharts();
+}
+function render() { applyTheme(); renderShell(); renderView(); }
+function go(view) {
+  closeModal();
+  ui.view = resolveView(view) || "apercu"; ui.q = ""; ui.catFilter = "";
+  location.hash = ui.view;
+  try { scrollTo(0, 0); } catch (e) { }
+  render();
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-nav],[data-add],[data-act],[data-bizsub],[data-range],[data-per]");
+  if (!el) return;
+  const d = el.dataset;
+  if (d.nav) return go(d.nav);
+  if (d.bizsub) { ui.bizSub = d.bizsub; return render(); }
+  if (d.range) { ui.range = +d.range; return render(); }
+  if (d.per) { ui.period = ymAdd(ui.period, d.per === "next" ? 1 : -1); if (ui.period > curYM()) ui.period = curYM(); return render(); }
+  if (d.add) return editItem(d.add, null);
+  const listEl = el.closest("[data-list]"); const path = listEl ? listEl.dataset.list : "";
+  switch (d.act) {
+    case "edit": return editItem(path, d.id);
+    case "del": return delItem(path, d.id);
+    case "paid": { const i = C().invoices.find(x => x.id === d.id); if (i) { i.status = "payee"; i.datePaid = todayISO(); save(); render(); toast("Facture encaissée"); } return; }
+    case "theme": state.settings.theme = isDark() ? "light" : "dark"; save(); return render();
+    case "hide": state.settings.hideAmounts = !state.settings.hideAmounts; save(); return render();
+    case "budgets": return budgetsModal();
+    case "alloc": return allocModal();
+    case "nav-more": return navMoreModal();
+    case "hist-add": return histModal();
+    case "hist-del": return confirmDialog("Supprimer le relevé", "Ce point d'historique sera supprimé de la courbe.", () => {
+      P().snapshots = P().snapshots.filter(x => x.ym !== d.ym); save(); render(); toast("Relevé supprimé");
+    });
+    case "csv-perso": return importCsvModal("perso");
+    case "csv-pro": return importCsvModal("pro");
+    case "export-json": return exportJson();
+    case "import-json": return importJson();
+    case "export-csv-perso": return exportCsv("perso");
+    case "export-csv-pro": return exportCsv("pro");
+    case "reset": return confirmDialog("Tout effacer", "Toutes vos données locales seront définitivement supprimées. Pensez à exporter une sauvegarde avant.", () => {
+      state = blank(); save(); render(); toast("Données effacées");
+    }, "Tout effacer");
+    case "cats-save": {
+      const g = id => ($("#" + id).value || "").split("\n").map(s => s.trim()).filter(Boolean);
+      state.settings.catExp = g("cat-exp"); state.settings.catInc = g("cat-inc");
+      state.settings.catBizExp = g("cat-bexp"); state.settings.catBizInc = g("cat-binc");
+      save(); render(); return toast("Catégories enregistrées");
+    }
+    case "rule-add": return formModal({
+      title: "Règle de catégorisation",
+      fields: [
+        { key: "kw", label: "Mot-clé contenu dans le libellé", required: true, ph: "Ex. carrefour" },
+        { key: "scope", label: "Portée", type: "select", options: [{ v: "perso", l: "Personnel" }, { v: "pro", l: "SARL ALPEGA" }] },
+        { key: "cat", label: "Catégorie à appliquer", type: "select", options: () => [...allCats(), ...allBizCats()] },
+      ],
+      onSubmit(v) { state.settings.rules.push(v); save(); render(); toast("Règle ajoutée"); },
+    });
+    case "rule-del": state.settings.rules.splice(+d.i, 1); save(); render(); return toast("Règle supprimée");
+    case "supa-wizard": return supaWizard();
+    case "lock-on": return lockOnModal();
+    case "sec-later": state.settings.secDismissed = true; save(); render(); return;
+    case "lock-off": return lockOffModal();
+    case "lock-change": return lockChangeModal();
+    case "lock-now": return lockNow();
+    case "supa-push": return void Supa.push();
+    case "supa-pull": return void Supa.pull();
+    case "supa-signout": return Supa.signOut();
+  }
+});
+document.addEventListener("change", e => {
+  const el = e.target.closest("[data-set]"); if (!el) return;
+  const [a, b] = el.dataset.set.split(".");
+  state[a][b] = el.value; save(); render();
+});
+addEventListener("hashchange", () => { const v = resolveView(location.hash.slice(1)); if (v && v !== ui.view) { ui.view = v; render(); } });
+addEventListener("keydown", e => {
+  if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
+    const map = { budget: "personal.transactions", comptes: "personal.accounts", titres: "personal.holdings", immobilier: "personal.properties", dettes: "personal.loans", divers: "personal.others", objectifs: "personal.goals", alpega: { tresorerie: "company.accounts", charges: "company.transactions", invest: "company.investments", factures: "company.invoices", cca: "company.cca" }[ui.bizSub] };
+    const p = map[ui.view]; if (p) { e.preventDefault(); editItem(p, null); }
+  }
+});
+try {
+  const mq = matchMedia("(prefers-color-scheme: dark)");
+  const onScheme = () => { if (state.settings.theme === "auto") render(); };
+  if (mq.addEventListener) mq.addEventListener("change", onScheme);
+  else if (mq.addListener) mq.addListener(onScheme);
+} catch (e) { /* navigateur sans matchMedia : thème fixe */ }
+
+/* ==================================================================
+   DÉMARRAGE
+   ================================================================== */
+function installManifest() {
+  try {
+    const icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3f66'/%3E%3Cpath d='M14 42l11-13 9 8 16-19' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+    const mf = { name: "Patrimoine — " + (C().name || "SARL ALPEGA"), short_name: "Patrimoine", start_url: location.href.split("#")[0], display: "standalone", background_color: "#f9f9f7", theme_color: "#2a78d6", icons: [{ src: icon, sizes: "any", type: "image/svg+xml", purpose: "any" }] };
+    const l = document.createElement("link"); l.rel = "manifest";
+    l.href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: "application/manifest+json" }));
+    document.head.appendChild(l);
+  } catch (e) { }
+}
+function fatal(msg) {
+  const box = document.getElementById("boot");
+  if (box) {
+    box.style.display = "block";
+    box.innerHTML = '<h1 style="font-size:1.05rem;margin-bottom:8px">L\'application n\'a pas pu démarrer</h1>'
+      + '<p style="font-size:.87rem;color:#55575c;margin-bottom:12px">Votre navigateur a refusé une partie du code. Essayez de mettre à jour votre navigateur, ou ouvrez le fichier avec Chrome / Safari / Firefox à jour.</p>'
+      + '<pre style="font-size:.72rem;white-space:pre-wrap;background:#f2f0eb;border:1px solid #e4e1da;border-radius:8px;padding:10px;overflow:auto">' + String(msg).replace(/</g, "&lt;") + "</pre>";
+  }
+}
+addEventListener("error", e => fatal((e && e.message) || "Erreur inconnue"));
+async function init() {
+  installManifest();
+  const env = load();                       // enveloppe chiffrée le cas échéant
+  const h = resolveView(location.hash.slice(1)); if (h) ui.view = h;
+  applyTheme();
+  if (env) {                                // stockage verrouillé : rien n'est affiché avant déverrouillage
+    const boot = document.getElementById("boot"); if (boot) boot.remove();
+    return lockScreen({ env, reason: "Application verrouillée. Saisissez votre mot de passe de chiffrement." });
+  }
+  touchSnapshot();
+  save(false);
+  render();
+  const boot = document.getElementById("boot"); if (boot) boot.remove();
+  if (Supa.enabled()) Supa.pull(true);
+}
+/* verrouillage automatique : toute interaction repousse l'échéance */
+["pointerdown", "keydown"].forEach(ev => addEventListener(ev, () => { if (Lock.active()) Lock.arm(); }, { passive: true }));
+addEventListener("visibilitychange", () => { if (!document.hidden && Lock.active()) Lock.arm(); });
+try { const boot0 = init(); if (boot0 && boot0.catch) boot0.catch(e => fatal((e && e.stack) || e)); }
+catch (e) { fatal((e && e.stack) || e); }
+</script>
+</body>
+</html>
