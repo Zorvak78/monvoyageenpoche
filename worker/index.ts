@@ -1,40 +1,45 @@
 /**
- * Cloudflare Pages Function — porte d'entrée de l'espace privé.
+ * Worker Cloudflare — sert le site public et garde l'espace privé.
  *
- * Tout ce qui vit sous /prive/ n'est servi qu'après une connexion réussie :
- * sans session valide, le serveur ne renvoie jamais le contenu, seulement
- * le formulaire de connexion.
+ * Tout ce qui se trouve sous /prive/ est embarqué dans ce Worker : ces pages
+ * ne sont pas des fichiers statiques, elles n'existent nulle part sur le
+ * réseau tant qu'une session valide n'a pas été présentée.
  *
- * Configuration requise côté Cloudflare Pages (Settings → Variables) :
- *   - PRIVE_USER     : votre identifiant
- *   - PRIVE_PASSWORD : votre mot de passe (à créer en « Secret »)
- * Changer le mot de passe invalide automatiquement les sessions ouvertes.
+ * Variables à définir dans le tableau de bord Cloudflare (Settings → Variables) :
+ *   - PRIVE_USER     : identifiant de connexion
+ *   - PRIVE_PASSWORD : mot de passe (type « Secret »)
+ * Changer le mot de passe invalide immédiatement les sessions ouvertes.
  */
+import hubHtml from "../private/hub.html";
+import appHtml from "../private/patrimoine.html";
+import { onRequestPost as sendRecap } from "../functions/api/send-recap";
 
-interface Env {
+export interface Env {
+  ASSETS: Fetcher;
   PRIVE_USER?: string;
   PRIVE_PASSWORD?: string;
+  RESEND_API_KEY?: string;
+  FROM_EMAIL?: string;
 }
 
 const COOKIE = "espace_session";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 jours
 const enc = new TextEncoder();
 
-/* ---------- signature de session (HMAC-SHA256) ---------- */
+/* ---------- session signée (HMAC-SHA256) ---------- */
 const b64url = (buf: ArrayBuffer) => {
   const b = new Uint8Array(buf);
   let s = "";
   for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
-async function keyFrom(secret: string) {
-  return crypto.subtle.importKey("raw", enc.encode("espace-prive:" + secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-}
+const keyFrom = (secret: string) =>
+  crypto.subtle.importKey("raw", enc.encode("espace-prive:" + secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
 async function sign(payload: string, secret: string) {
   const sig = await crypto.subtle.sign("HMAC", await keyFrom(secret), enc.encode(payload));
   return payload + "." + b64url(sig);
 }
-/* comparaison à durée constante : ne révèle pas où la différence se trouve */
+/* comparaison à durée constante : ne révèle pas où se situe la différence */
 function safeEqual(a: string, b: string) {
   if (typeof a !== "string" || typeof b !== "string") return false;
   const len = Math.max(a.length, b.length);
@@ -42,37 +47,40 @@ function safeEqual(a: string, b: string) {
   for (let i = 0; i < len; i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
   return diff === 0;
 }
-async function issue(user: string, secret: string) {
-  const exp = Math.floor(Date.now() / 1000) + MAX_AGE;
-  return sign(`${encodeURIComponent(user)}.${exp}`, secret);
-}
+const issue = (user: string, secret: string) =>
+  sign(`${encodeURIComponent(user)}.${Math.floor(Date.now() / 1000) + MAX_AGE}`, secret);
 async function valid(token: string | null, secret: string) {
   if (!token) return false;
   const i = token.lastIndexOf(".");
   if (i < 0) return false;
   const payload = token.slice(0, i);
-  const expected = await sign(payload, secret);
-  if (!safeEqual(token, expected)) return false;
+  if (!safeEqual(token, await sign(payload, secret))) return false;
   const exp = Number(payload.split(".")[1] || 0);
   return Number.isFinite(exp) && exp * 1000 > Date.now();
 }
-const cookieOf = (req: Request, name: string) => {
-  const raw = req.headers.get("Cookie") || "";
-  for (const part of raw.split(";")) {
+function cookieOf(req: Request, name: string) {
+  for (const part of (req.headers.get("Cookie") || "").split(";")) {
     const [k, ...v] = part.trim().split("=");
     if (k === name) return v.join("=");
   }
   return null;
-};
-/* la cible de redirection doit rester interne à l'espace privé */
+}
+/* la redirection après connexion doit rester interne à l'espace privé */
 const safeNext = (v: string | null) => (v && /^\/prive(\/|$)/.test(v) && !v.startsWith("//") ? v : "/prive/");
+
+const SEC_HEADERS = {
+  "Cache-Control": "no-store",
+  "X-Robots-Tag": "noindex, nofollow",
+  "Referrer-Policy": "no-referrer",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+};
+const html = (body: string, status = 200, extra: Record<string, string> = {}) =>
+  new Response(body, { status, headers: { "Content-Type": "text/html; charset=utf-8", ...SEC_HEADERS, ...extra } });
 
 /* ---------- page de connexion ---------- */
 function loginPage(opts: { error?: string; next?: string; notice?: string } = {}) {
-  const err = opts.error
-    ? `<p style="color:var(--neg);font-size:.83rem;margin-top:12px">${opts.error}</p>` : "";
-  const notice = opts.notice
-    ? `<p style="color:var(--muted);font-size:.8rem;margin-top:12px">${opts.notice}</p>` : "";
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
   return `<!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow"><title>Espace privé</title>
@@ -91,7 +99,6 @@ body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;bac
 .box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:30px 28px;width:min(390px,100%);
  box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .mark{width:36px;height:36px;border-radius:9px;background:var(--accent);display:grid;place-items:center;margin-bottom:18px}
-.mark svg{width:20px;height:20px}
 h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.6rem;letter-spacing:-.01em}
 p.sub{margin:6px 0 22px;color:var(--muted);font-size:.84rem}
 label{display:block;font-size:.78rem;font-weight:520;color:var(--ink-2);margin:0 0 5px}
@@ -104,99 +111,80 @@ button{width:100%;padding:10px;border:none;border-radius:8px;background:var(--ac
  font-weight:560;cursor:pointer}
 @media (prefers-color-scheme:dark){button{color:#101215}}
 button:hover{filter:brightness(1.1)}
+.msg{font-size:.83rem;margin-top:12px}.err{color:var(--neg)}.note{color:var(--muted);font-size:.8rem}
 .foot{margin-top:20px;font-size:.75rem;color:var(--muted);line-height:1.5}
 </style></head><body>
 <form class="box" method="POST" action="/prive/login">
-  <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round">
+  <div class="mark"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round">
     <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 118 0v3"/></svg></div>
   <h1>Espace privé</h1>
   <p class="sub">Cet espace est réservé. Identifiez-vous pour continuer.</p>
-  <input type="hidden" name="next" value="${(opts.next || "/prive/").replace(/"/g, "&quot;")}">
+  <input type="hidden" name="next" value="${esc(opts.next || "/prive/")}">
   <label for="u">Identifiant</label>
   <input id="u" name="user" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" required autofocus>
   <label for="p">Mot de passe</label>
   <input id="p" name="password" type="password" autocomplete="current-password" required>
   <label class="check"><input type="checkbox" name="remember" value="1" checked> Rester connecté 30 jours</label>
   <button type="submit">Entrer</button>
-  ${err}${notice}
+  ${opts.error ? `<p class="msg err">${esc(opts.error)}</p>` : ""}
+  ${opts.notice ? `<p class="msg note">${esc(opts.notice)}</p>` : ""}
   <p class="foot">Connexion chiffrée. Aucune donnée n'est accessible sans identification.</p>
 </form></body></html>`;
 }
-const htmlResponse = (body: string, status = 200, extra: Record<string, string> = {}) =>
-  new Response(body, {
-    status,
-    headers: Object.assign({
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store",
-      "X-Robots-Tag": "noindex, nofollow",
-      "Referrer-Policy": "no-referrer",
-      "X-Frame-Options": "DENY",
-      "X-Content-Type-Options": "nosniff",
-    }, extra),
-  });
 
-/* ---------- middleware ---------- */
-export const onRequest: PagesFunction<Env> = async (context) => {
-  const { request, env, next } = context;
-  const url = new URL(request.url);
-  const path = url.pathname;
+/* ---------- espace privé ---------- */
+const PAGES: Record<string, string> = {
+  "/prive": hubHtml,
+  "/prive/": hubHtml,
+  "/prive/patrimoine": appHtml,
+  "/prive/patrimoine/": appHtml,
+};
 
-  if (!/^\/prive(\/|$)/.test(path)) return next();          // site public : inchangé
-
+async function handlePrive(request: Request, env: Env, url: URL): Promise<Response> {
   const user = env.PRIVE_USER || "";
   const password = env.PRIVE_PASSWORD || "";
   if (!user || !password) {
-    return htmlResponse(loginPage({
+    return html(loginPage({
       error: "Espace non configuré.",
-      notice: "Définissez les variables PRIVE_USER et PRIVE_PASSWORD dans Cloudflare Pages (Settings → Variables and Secrets), puis redéployez.",
+      notice: "Définissez PRIVE_USER et PRIVE_PASSWORD dans les variables du Worker (Settings → Variables and Secrets), puis redéployez.",
     }), 503);
   }
 
-  /* déconnexion */
+  const path = url.pathname;
+
   if (path === "/prive/logout") {
     return new Response(null, {
       status: 302,
-      headers: {
-        Location: "/prive/login",
-        "Set-Cookie": `${COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/prive; Max-Age=0`,
-        "Cache-Control": "no-store",
-      },
+      headers: { Location: "/prive/login", "Cache-Control": "no-store",
+        "Set-Cookie": `${COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/prive; Max-Age=0` },
     });
   }
 
   const authenticated = await valid(cookieOf(request, COOKIE), password);
 
-  /* formulaire de connexion */
   if (path === "/prive/login") {
-    if (request.method === "GET") {
+    if (request.method === "GET" || request.method === "HEAD") {
       if (authenticated) return Response.redirect(new URL(safeNext(url.searchParams.get("next")), url).toString(), 302);
-      return htmlResponse(loginPage({ next: safeNext(url.searchParams.get("next")) }));
+      return html(loginPage({ next: safeNext(url.searchParams.get("next")) }));
     }
     if (request.method === "POST") {
       const form = await request.formData();
-      const u = String(form.get("user") || "");
-      const p = String(form.get("password") || "");
       const dest = safeNext(String(form.get("next") || ""));
-      const ok = safeEqual(u, user) && safeEqual(p, password);
+      const ok = safeEqual(String(form.get("user") || ""), user) && safeEqual(String(form.get("password") || ""), password);
       if (!ok) {
-        await new Promise((r) => setTimeout(r, 700));        // ralentit les essais répétés
-        return htmlResponse(loginPage({ error: "Identifiant ou mot de passe incorrect.", next: dest }), 401);
+        await new Promise((r) => setTimeout(r, 700));           // ralentit les essais répétés
+        return html(loginPage({ error: "Identifiant ou mot de passe incorrect.", next: dest }), 401);
       }
-      const token = await issue(u, password);
       const persist = form.get("remember") ? `; Max-Age=${MAX_AGE}` : "";
       return new Response(null, {
         status: 303,
-        headers: {
-          Location: dest,
-          "Set-Cookie": `${COOKIE}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/prive${persist}`,
-          "Cache-Control": "no-store",
-        },
+        headers: { Location: dest, "Cache-Control": "no-store",
+          "Set-Cookie": `${COOKIE}=${await issue(user, password)}; HttpOnly; Secure; SameSite=Lax; Path=/prive${persist}` },
       });
     }
     return new Response("Méthode non autorisée", { status: 405 });
   }
 
-  /* tout le reste de l'espace privé */
   if (!authenticated) {
     if (request.method !== "GET" && request.method !== "HEAD") return new Response("Non autorisé", { status: 401 });
     const back = new URL("/prive/login", url);
@@ -204,11 +192,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return Response.redirect(back.toString(), 302);
   }
 
-  const res = await next();
-  const out = new Response(res.body, res);
-  out.headers.set("Cache-Control", "no-store");
-  out.headers.set("X-Robots-Tag", "noindex, nofollow");
-  out.headers.set("Referrer-Policy", "no-referrer");
-  out.headers.set("X-Frame-Options", "DENY");
-  return out;
+  const page = PAGES[path];
+  if (page) return html(page);
+  return html(`<!doctype html><meta charset="utf-8"><title>Introuvable</title>
+    <body style="font:15px system-ui;padding:40px;max-width:520px;margin:0 auto">
+    <h1 style="font-size:1.1rem">Page introuvable</h1>
+    <p><a href="/prive/">Retour à l'espace privé</a></p></body>`, 404);
+}
+
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url);
+
+    if (/^\/prive(\/|$)/.test(url.pathname)) return handlePrive(request, env, url);
+
+    /* point d'API du site public (récap de voyage par e-mail) */
+    if (url.pathname === "/api/send-recap" && request.method === "POST") {
+      return sendRecap({ request, env, waitUntil: ctx.waitUntil.bind(ctx) } as never);
+    }
+
+    return env.ASSETS.fetch(request);
+  },
 };
