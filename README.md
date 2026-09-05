@@ -45,28 +45,33 @@ Feel free to check [our documentation](https://docs.astro.build) or jump into ou
 ## Espace privé
 
 Tout ce qui se trouve sous `/prive/` est protégé par identifiant et mot de passe,
-vérifiés côté serveur par `functions/_middleware.ts` : sans session valide, aucune
-page n'est transmise (pas même le code de l'application).
+vérifiés par le Worker (`worker/index.ts`). Ces pages ne sont **pas** des fichiers
+statiques : elles sont embarquées dans le Worker (`private/*.html`) et ne sont
+transmises qu'après une connexion réussie.
 
 ### Mise en service
 
-1. Créer un projet **Cloudflare Pages** connecté à ce dépôt
-   (commande de build `npm run build`, dossier de sortie `dist`).
-2. Dans **Settings → Variables and Secrets**, définir :
-   - `PRIVE_USER` — l'identifiant de connexion ;
-   - `PRIVE_PASSWORD` — le mot de passe (type *Secret*).
-3. Redéployer. L'espace est alors accessible sur `https://<projet>.pages.dev/prive/`.
+Le Worker est déployé par `npx wrangler deploy` (configuration : `wrangler.toml`).
+Dans le tableau de bord Cloudflare, **Settings → Variables and Secrets**, définir :
 
+- `PRIVE_USER` — identifiant de connexion (Text) ;
+- `PRIVE_PASSWORD` — mot de passe (**Secret**).
+
+Puis redéployer. L'espace est accessible sur `/prive/`.
 Changer `PRIVE_PASSWORD` invalide immédiatement toutes les sessions ouvertes.
+
+> Le champ `name` de `wrangler.toml` doit correspondre au nom du Worker créé
+> dans le tableau de bord, sinon un second Worker serait créé au déploiement.
 
 ### Ajouter une rubrique
 
-Créer `public/prive/<nom>/index.html` : la protection s'applique automatiquement.
-Ajouter ensuite une carte dans `public/prive/index.html` pour y accéder.
+1. Créer `private/<nom>.html` ;
+2. l'importer dans `worker/index.ts` et l'ajouter à la table `PAGES` ;
+3. ajouter une carte dans `private/hub.html`.
 
-### Développement local
+### Essai en local
 
 ```sh
 npm run build
-npx wrangler pages dev dist --binding PRIVE_USER=test PRIVE_PASSWORD=test
+npx wrangler dev --var PRIVE_USER:test --var PRIVE_PASSWORD:test
 ```

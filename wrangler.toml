@@ -1,0 +1,19 @@
+# Configuration du Worker qui sert le site et garde l'espace privé.
+#
+# Le nom doit correspondre au Worker créé dans le tableau de bord Cloudflare ;
+# s'il diffère, remplacez-le ici (sinon un second Worker serait créé).
+name = "monvoyageenpoche"
+main = "worker/index.ts"
+compatibility_date = "2026-01-01"
+
+# Le site public construit par Astro est servi tel quel.
+# Les pages privées, elles, ne sont PAS des fichiers statiques : elles sont
+# embarquées dans le Worker et ne sortent qu'après une connexion réussie.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# Permet d'importer un fichier .html comme une chaîne de caractères.
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
