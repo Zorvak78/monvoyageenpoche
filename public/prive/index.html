@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Espace privé</title>
+<meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101215" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Espace privé">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3f66'/%3E%3Cpath d='M22 30v-6a10 10 0 0120 0v6' fill='none' stroke='%23fff' stroke-width='5'/%3E%3Crect x='16' y='30' width='32' height='22' rx='5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3f66'/%3E%3Cpath d='M22 30v-6a10 10 0 0120 0v6' fill='none' stroke='%23fff' stroke-width='5'/%3E%3Crect x='16' y='30' width='32' height='22' rx='5' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme:light;
+  --page:#f7f6f3;--surface:#fdfcfa;--surface-2:#f2f0eb;--ink:#1b1d21;--ink-2:#55575c;--muted:#8d8b85;
+  --border:#e4e1da;--border-strong:#d4d0c7;--accent:#1f3f66;--accent-soft:rgba(31,63,102,.07);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  color-scheme:dark;
+  --page:#101215;--surface:#16181b;--surface-2:#1e2126;--ink:#f2f1ee;--ink-2:#b3b2ae;--muted:#8b8a86;
+  --border:#262a2f;--border-strong:#363b42;--accent:#8fb0d8;--accent-soft:rgba(143,176,216,.12);
+}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);
+  font:14.5px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:40px 22px 60px}
+header{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:34px}
+.mark{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex:0 0 auto}
+.mark svg{width:20px;height:20px}
+h1{margin:0;font-family:var(--serif);font-weight:400;font-size:1.9rem;letter-spacing:-.015em}
+.sub{color:var(--muted);font-size:.83rem;margin-top:3px}
+.logout{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:8px;
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--ink-2);text-decoration:none;font-size:.83rem}
+.logout:hover{background:var(--surface-2);color:var(--ink)}
+.eyebrow{font-size:.685rem;text-transform:uppercase;letter-spacing:.1em;font-weight:650;color:var(--muted);margin:0 0 12px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;
+  text-decoration:none;color:inherit;box-shadow:0 1px 2px rgba(27,29,33,.04);transition:border-color .15s,transform .06s}
+a.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.card .ic{width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);
+  display:grid;place-items:center;margin-bottom:12px}
+.card .ic svg{width:17px;height:17px}
+.card h2{margin:0;font-size:.98rem;font-weight:620}
+.card p{margin:5px 0 0;font-size:.83rem;color:var(--ink-2);line-height:1.5}
+.card.soon{opacity:.6}
+.tag{display:inline-block;margin-top:10px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:2px 8px}
+footer{margin-top:38px;font-size:.76rem;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:16px}
+@media (max-width:560px){.wrap{padding:26px 16px 48px}h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 118 0v3"/></svg></span>
+    <div>
+      <h1>Espace privé</h1>
+      <div class="sub">Vos activités personnelles, accessibles uniquement après identification.</div>
+    </div>
+    <a class="logout" href="/prive/logout">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 17l5-5-5-5M20 12H9M12 3H6a2 2 0 00-2 2v14a2 2 0 002 2h6"/></svg>
+      Se déconnecter</a>
+  </header>
+
+  <p class="eyebrow">Vos outils</p>
+  <div class="grid">
+    <!-- Pour ajouter une rubrique : dupliquer cette carte et créer le dossier
+         public/prive/<nom>/index.html — la protection s'applique automatiquement. -->
+    <a class="card" href="/prive/patrimoine/">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12h5l2-7 4 14 2-7h5"/></svg></span>
+      <h2>Patrimoine</h2>
+      <p>Comptes, titres, immobilier, crédits, budget, objectifs et suivi de la SARL ALPEGA.</p>
+    </a>
+
+    <div class="card soon">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 3h7l5 5v13H6z"/><path d="M13 3v5h5"/></svg></span>
+      <h2>Documents</h2>
+      <p>Contrats, attestations, actes : à ranger ici quand vous le souhaiterez.</p>
+      <span class="tag">À venir</span>
+    </div>
+
+    <div class="card soon">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 4h14v16l-7-3-7 3z"/></svg></span>
+      <h2>Notes</h2>
+      <p>Mémos, idées et suivis personnels.</p>
+      <span class="tag">À venir</span>
+    </div>
+  </div>
+
+  <footer>
+    Cet espace est protégé par identifiant et mot de passe vérifiés côté serveur : sans connexion, aucune page n'est transmise.
+    Les données du patrimoine sont en plus chiffrées dans votre navigateur.
+  </footer>
+</div>
+</body>
+</html>

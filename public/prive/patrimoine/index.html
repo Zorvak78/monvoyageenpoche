@@ -1108,6 +1108,8 @@ const NAV = [
   { g: "Système", items: [{ k: "reglages", l: "Données & réglages", i: "db" }] },
 ];
 const NAV_FLAT = () => NAV.flatMap(g => g.items);
+/* l'application est-elle servie derrière la porte d'entrée de l'espace privé ? */
+const inPrivateSpace = () => location.pathname.indexOf("/prive/") === 0;
 const TABS = ["apercu", "comptes", "budget", "alpega"];
 
 function navItemHtml(n) {
@@ -1123,6 +1125,9 @@ function renderShell() {
     <div class="side-foot">
       Patrimoine net<span class="v">${money(t.net)}</span>
       <span class="sync-dot ${Supa.status()}"></span> ${P().snapshots.length} point(s) · ${Supa.label()}
+      ${inPrivateSpace() ? `<div style="margin-top:11px;display:flex;gap:14px">
+        <a href="/prive/" style="font-size:.75rem;text-decoration:none">← Espace privé</a>
+        <a href="/prive/logout" style="font-size:.75rem;text-decoration:none">Déconnexion</a></div>` : ""}
     </div>`;
   $("#tabbar").innerHTML = TABS.map(k => {
     const n = NAV_FLAT().find(x => x.k === k);
@@ -1135,7 +1140,12 @@ function navMoreModal() {
     const items = g.items.map(n => `<button class="nav-link${ui.view === n.k ? " on" : ""}" data-nav="${n.k}" style="padding-left:8px;border-radius:8px">${ico(n.i)}<span>${esc(n.l)}</span>${n.c && n.c() ? `<span class="cnt">${n.c()}</span>` : ""}</button>`).join("");
     return `<div class="nav-group" style="padding-left:0">${esc(g.g)}</div>${items}`;
   }).join("");
-  openModal({ title: "Sections", body });
+  openModal({
+    title: "Sections",
+    body: body + (inPrivateSpace() ? `<div class="nav-group" style="padding-left:0">Espace privé</div>
+      <a class="nav-link" href="/prive/" style="padding-left:8px;border-radius:8px;text-decoration:none">${ico("home")}<span>Accueil de l'espace</span></a>
+      <a class="nav-link" href="/prive/logout" style="padding-left:8px;border-radius:8px;text-decoration:none">${ico("lockic")}<span>Se déconnecter</span></a>` : ""),
+  });
 }
 function topbar(title, sub, actions = "") {
   $("#topbar").innerHTML = `<div style="min-width:0"><h1>${esc(title)}</h1>${sub ? `<div class="topbar-sub">${sub}</div>` : ""}</div>
