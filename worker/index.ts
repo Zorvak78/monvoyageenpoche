@@ -199,17 +199,48 @@ const PAGES: Record<string, string> = {
   "/prive/patrimoine/": appHtml,
 };
 
+/* page affichée quand les identifiants ne sont pas définis sur le Worker */
+function notConfiguredPage(missing: string[]) {
+  return `<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex, nofollow">
+<title>Espace non configuré</title><style>
+:root{color-scheme:light;--page:#f7f6f3;--surface:#fdfcfa;--ink:#1b1d21;--ink-2:#55575c;--muted:#8d8b85;--border:#e4e1da;--warn:#a8761a}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--page:#101215;--surface:#16181b;--ink:#f2f1ee;--ink-2:#b3b2ae;--muted:#8b8a86;--border:#262a2f;--warn:#d2a03c}}
+body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--page);color:var(--ink);
+ font:14.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:min(540px,100%)}
+h1{margin:0 0 6px;font-size:1.15rem}
+p{margin:0 0 14px;color:var(--ink-2)}
+ol{margin:0 0 14px;padding-left:20px;color:var(--ink-2)}
+code{background:var(--page);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:.85em}
+.tag{display:inline-block;font-size:.72rem;font-weight:650;text-transform:uppercase;letter-spacing:.08em;color:var(--warn);margin-bottom:10px}
+</style></head><body><div class="box">
+<span class="tag">Configuration incomplète</span>
+<h1>L'espace privé n'a pas ses identifiants</h1>
+<p>Le Worker fonctionne, mais ${missing.length === 2 ? "les deux variables sont absentes" : "la variable <code>" + missing[0] + "</code> est absente"}.
+C'est normalement le signe d'un déploiement qui les a effacées.</p>
+<ol>
+  <li>Cloudflare → votre Worker → <b>Settings → Variables and Secrets</b></li>
+  <li>Ajoutez <code>PRIVE_USER</code> (type <i>Text</i>) et <code>PRIVE_PASSWORD</code> (type <b>Secret</b>)</li>
+  <li>Enregistrez, puis vérifiez dans <b>Deployments</b> que la version créée devient bien la version <i>active</i></li>
+</ol>
+<p style="margin:0;font-size:.83rem;color:var(--muted)">Aucune donnée n'est accessible tant que cette configuration n'est pas faite.</p>
+</div></body></html>`;
+}
+
 async function handlePrive(request: Request, env: Env, url: URL): Promise<Response> {
   const user = env.PRIVE_USER || "";
   const password = env.PRIVE_PASSWORD || "";
-  if (!user || !password) {
-    return html(loginPage({
-      error: "Espace non configuré.",
-      notice: "Définissez PRIVE_USER et PRIVE_PASSWORD dans les variables du Worker (Settings → Variables and Secrets), puis redéployez.",
-    }), 503);
-  }
-
   const path = url.pathname;
+
+  /* diagnostic : indique seulement si les identifiants sont définis */
+  if (path === "/prive/status") {
+    return Response.json({ configured: !!(user && password) }, { headers: { "Cache-Control": "no-store" } });
+  }
+  if (!user || !password) {
+    const missing = [!user ? "PRIVE_USER" : "", !password ? "PRIVE_PASSWORD" : ""].filter(Boolean);
+    return html(notConfiguredPage(missing), 503);
+  }
 
   if (path === "/prive/logout") {
     return new Response(null, {
