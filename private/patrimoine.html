@@ -613,7 +613,7 @@ function lockScreen(opts) {
       state = migrate(obj);
       $("#lockroot").innerHTML = ""; document.body.style.overflow = "";
       if (onOpen) await onOpen();
-      applyTheme(); touchSnapshot(); save(false); render(); Lock.arm();
+      applyTheme(); touchSnapshot(); save(false); render(); Lock.arm(); maybeRefreshQuotes();
       const boot = document.getElementById("boot"); if (boot) boot.remove();
     } catch (ex) {
       err.style.display = "block"; err.textContent = "Mot de passe incorrect.";
@@ -637,6 +637,8 @@ const accClass = t => (ACC_TYPES.find(a => a.v === t) || { cls: "autres" }).cls;
 const holdValue = h => nb(h.qty) * nb(h.price);
 const holdCost = h => nb(h.qty) * nb(h.pru);
 const accHoldings = id => P().holdings.filter(h => h.accountId === id);
+const holdSymbol = h => String(h.symbol || h.ticker || "").trim();
+const quotableHoldings = () => P().holdings.filter(h => holdSymbol(h));
 const accTotal = a => nb(a.balance) + accHoldings(a.id).reduce((s, h) => s + holdValue(h), 0);
 
 function computePersonal() {
@@ -718,6 +720,9 @@ function invoiceStatus(i) {
   if (i.dateDue && i.dateDue < todayISO()) return { k: "retard", l: "En retard", cls: "crit" };
   return { k: "envoyee", l: "En attente", cls: "warn" };
 }
+/* dépenses réglées personnellement pour le compte de la société */
+const advancedExpenses = () => C().transactions.filter(t => t.paidBy === "associe" && nb(t.amount) < 0);
+const societyFlows = () => C().transactions.filter(t => t.paidBy !== "associe");
 function computeCompany() {
   const c = C();
   const cash = c.accounts.reduce((s, a) => s + nb(a.balance), 0);
@@ -728,12 +733,13 @@ function computeCompany() {
   const unpaid = c.invoices.filter(i => invoiceStatus(i).k === "envoyee" || invoiceStatus(i).k === "retard");
   const receivable = unpaid.reduce((s, i) => s + invoiceTTC(i), 0);
   const late = c.invoices.filter(i => invoiceStatus(i).k === "retard");
-  const ccaBal = c.cca.reduce((s, m) => s + nb(m.amount), 0);
+  const ccaAdvanced = advancedExpenses().reduce((s, t) => s - nb(t.amount), 0);   // avances = créance sur la société
+  const ccaBal = c.cca.reduce((s, m) => s + nb(m.amount), 0) + ccaAdvanced;
   const invCost = c.investments.reduce((s, i) => s + nb(i.cost || 0), 0);
   return {
     cash, inv, fa, faGross, amortAnnual, receivable, lateCount: late.length,
     lateAmount: late.reduce((s, i) => s + invoiceTTC(i), 0),
-    ccaBal, total: cash + inv + fa, invCost, invPv: inv - invCost,
+    ccaBal, ccaAdvanced, total: cash + inv + fa, invCost, invPv: inv - invCost,
   };
 }
 function vatPeriods(back = 6) {
@@ -1057,9 +1063,9 @@ function hbars(items, opts = {}) {
    ================================================================== */
 const listAt = path => { const [a, b] = path.split("."); return state[a][b]; };
 const ED = {};
-function editItem(path, id) {
+function editItem(path, id, presets) {
   const spec = ED[path]; if (!spec) return;
-  const list = listAt(path), item = id ? list.find(x => x.id === id) : {};
+  const list = listAt(path), item = id ? list.find(x => x.id === id) : Object.assign({}, presets || {});
   formModal({
     title: (id ? "Modifier — " : "Ajouter — ") + spec.title,
     fields: typeof spec.fields === "function" ? spec.fields(item) : spec.fields,
@@ -1360,8 +1366,11 @@ function viewComptes() {
     </div>` + patComptes());
 }
 function viewTitres() {
-  const t = computePersonal();
-  sectionView("Titres & enveloppes", `${P().holdings.length} ligne(s) · ${money(t.market)}`, "personal.holdings", "Ligne", patBourse(t));
+  const t = computePersonal(), q = quotableHoldings().length;
+  const age = quotesAge();
+  topbar("Titres & enveloppes", `${P().holdings.length} ligne(s) · ${money(t.market)}${age ? ` · cours mis à jour ${age}` : ""}`,
+    `${q ? `<button class="btn btn-sm" data-act="quotes">${ico("trend")}Actualiser les cours</button>` : ""}${addBtn("personal.holdings", "Ligne")}`);
+  $("#view").innerHTML = patBourse(t);
 }
 function viewImmobilier() {
   const t = computePersonal();
@@ -1457,11 +1466,11 @@ function patBourse(t) {
       { l: "Ligne", render: h => `<div class="t-main">${esc(h.name)}${h.ticker ? ` <span class="muted">${esc(h.ticker)}</span>` : ""}</div><div class="t-sub">${esc((HOLD_CLASSES.find(c => c.v === h.class) || {}).l || "")} · ${esc(accName(h.accountId))}</div>` },
       { l: "Qté", r: 1, render: h => num(nb(h.qty), 4) },
       { l: "PRU", r: 1, render: h => money(nb(h.pru), 2) },
-      { l: "Cours", r: 1, render: h => money(nb(h.price), 2) },
+      { l: "Cours", r: 1, render: h => `${money(nb(h.price), 2)}${holdSymbol(h) ? `<div class="t-sub">${esc(holdSymbol(h))}</div>` : '<div class="t-sub">saisi à la main</div>'}` },
       { l: "Valeur", r: 1, render: h => `<b>${money(holdValue(h))}</b>` },
       { l: "+/- value", r: 1, render: h => { const pv = holdValue(h) - holdCost(h), p = holdCost(h) ? (pv / holdCost(h)) * 100 : 0; return `<span class="${pv >= 0 ? "pos" : "neg"}">${moneyC(pv)}<div class="t-sub ${pv >= 0 ? "pos" : "neg"}">${pct(p)}</div></span>`; } },
     ], hs, { actions: true, empty: "Aucune ligne en portefeuille.", emptyAction: addBtn("personal.holdings", "Ajouter une ligne") })}
-      <div class="note" style="margin-top:12px">Les cours sont saisis manuellement (application 100 % hors-ligne). Mettez-les à jour quand vous le souhaitez : l'historique du patrimoine suivra.</div></div>`)}
+      <div class="note" style="margin-top:12px">Renseignez le <b>symbole boursier</b> d'une ligne (ex. <code>CW8.PA</code>, <code>IWDA.AS</code>, <code>BTC-EUR</code>) pour que son cours se mette à jour tout seul, à l'ouverture de l'application et via le bouton <b>Actualiser les cours</b>. Les lignes sans symbole restent en saisie manuelle. Les cours en devise étrangère sont convertis en euros.</div></div>`)}
       <div class="card"><div class="card-h"><h2>Répartition du portefeuille</h2></div>
         ${chart({ type: "donut", height: 220, items: byLine, centerLabel: "Portefeuille", centerValue: money(t.market) })}</div>
     </div>`;
@@ -1804,15 +1813,15 @@ function viewAlpega() {
 function cashSeries(n = 12) {
   const c = C(), months = ymRange(curYM(), n);
   const end = c.accounts.reduce((s, a) => s + nb(a.balance), 0);
-  const flows = Object.fromEntries(months.map(m => [m, c.transactions.filter(t => ymOf(t.date) === m).reduce((s, t) => s + nb(t.amount), 0)]));
+  const flows = Object.fromEntries(months.map(m => [m, societyFlows().filter(t => ymOf(t.date) === m).reduce((s, t) => s + nb(t.amount), 0)]));
   const out = []; let v = end;
   for (let i = months.length - 1; i >= 0; i--) { out.unshift({ x: months[i], y: Math.round(v) }); v -= flows[months[i]] || 0; }
   return out;
 }
 function bizTreso(c) {
-  const f = monthFlows(C().transactions, ui.period);
+  const f = monthFlows(societyFlows(), ui.period);
   const y = new Date().getFullYear();
-  const yearTx = C().transactions.filter(t => (t.date || "").startsWith(String(y)));
+  const yearTx = societyFlows().filter(t => (t.date || "").startsWith(String(y)));
   const yearIn = yearTx.filter(t => nb(t.amount) > 0).reduce((s, t) => s + nb(t.amount), 0);
   const yearOut = yearTx.filter(t => nb(t.amount) < 0).reduce((s, t) => s - nb(t.amount), 0);
   return `<div class="grid g-4" style="margin-bottom:14px">
@@ -1870,8 +1879,8 @@ function bizCharges() {
       ${tableHtml([
         { l: "Date", render: t => `<span class="num">${dLabel(t.date)}</span>` },
         { l: "Libellé", render: t => `<div class="t-main">${esc(t.label)}</div>${t.note ? `<div class="t-sub">${esc(t.note)}</div>` : ""}` },
-        { l: "Catégorie", render: t => `<span class="badge">${esc(t.category || "Non catégorisé")}</span>` },
-        { l: "Compte", render: t => `<span class="muted">${esc(accName(t.accountId))}</span>` },
+        { l: "Catégorie", render: t => `<span class="badge">${esc(t.category || "Non catégorisé")}</span>${t.paidBy === "associe" ? ' <span class="badge info">avancée</span>' : ""}` },
+        { l: "Compte", render: t => `<span class="muted">${t.paidBy === "associe" ? "compte courant d'associé" : esc(accName(t.accountId))}</span>` },
         { l: "TVA", r: 1, render: t => (nb(t.vatRate) ? num(nb(t.vatRate), 1) + " %" : '<span class="muted">—</span>') },
         { l: "Montant", r: 1, render: t => `<b class="${nb(t.amount) >= 0 ? "pos" : ""}">${moneyC(nb(t.amount), 2)}</b>` },
       ], list, { actions: true, empty: "Aucune opération sur ce mois.", emptyAction: addBtn("company.transactions", "Ajouter une opération") })}</div>`)}`;
@@ -1957,26 +1966,48 @@ function bizTva() {
     </div>`;
 }
 function bizCca(c) {
-  const mv = [...C().cca].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  let run = c.ccaBal; const withBal = mv.map(m => { const r = { ...m, bal: run }; run -= nb(m.amount); return r; });
-  const apports = C().cca.filter(m => nb(m.amount) > 0).reduce((s, m) => s + nb(m.amount), 0);
-  const retraits = C().cca.filter(m => nb(m.amount) < 0).reduce((s, m) => s - nb(m.amount), 0);
-  return `<div class="grid g-3" style="margin-bottom:14px">
+  const cat = id => (C().transactions.find(t => t.id === id) || {}).category || "";
+  const manual = C().cca.map(m => ({ id: m.id, date: m.date, label: m.label, amount: nb(m.amount), kind: "mouvement" }));
+  const avances = advancedExpenses().map(t => ({ id: t.id, date: t.date, label: t.label, amount: -nb(t.amount), kind: "avance", category: t.category }));
+  const rows = [...manual, ...avances].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  let run = c.ccaBal;
+  const withBal = rows.map(m => { const r = { ...m, bal: run }; run -= m.amount; return r; });
+  const apports = rows.filter(m => m.amount > 0).reduce((s, m) => s + m.amount, 0);
+  const retraits = rows.filter(m => m.amount < 0).reduce((s, m) => s - m.amount, 0);
+  const avancesTotal = avances.reduce((s, m) => s + m.amount, 0);
+  const presets = JSON.stringify({ paidBy: "associe", sens: "depense" });
+  return `<div class="grid g-4" style="margin-bottom:14px">
       ${statHtml("Solde du compte courant", `<span class="${c.ccaBal >= 0 ? "" : "neg"}">${money(c.ccaBal)}</span>`, `<span class="muted">${c.ccaBal >= 0 ? "la société vous doit" : "vous devez à la société"}</span>`)}
-      ${statHtml("Total des apports", money(apports))}
-      ${statHtml("Total des retraits", money(retraits))}
+      ${statHtml("Apports en numéraire", money(apports - avancesTotal))}
+      ${statHtml("Dépenses avancées", money(avancesTotal), `<span class="muted">${avances.length} règlement(s) personnel(s)</span>`)}
+      ${statHtml("Remboursements reçus", money(retraits))}
+    </div>
+    <div class="card" style="margin-bottom:14px"><div class="card-h"><h2>Enregistrer un mouvement</h2></div>
+      <div class="row">
+        <button class="btn btn-primary btn-sm" data-add="company.transactions" data-presets='${presets}'>${ico("plus")}J'ai payé une dépense pour la société</button>
+        <button class="btn btn-sm" data-add="company.cca">${ico("plus")}Apport ou remboursement en numéraire</button>
+      </div>
+      <div class="note" style="margin-top:12px"><b>Dépense avancée</b> : vous réglez un achat de la société avec votre argent personnel. Elle est comptée dans les charges (et la TVA déductible) sans toucher la trésorerie, et augmente d'autant ce que la société vous doit.
+        <br><b>Apport ou remboursement</b> : un virement réel entre votre compte personnel et le compte de la société.</div>
     </div>
     ${wrapList("company.cca", `<div class="card"><div class="card-h"><h2>Mouvements du compte courant d'associé</h2></div>
-      ${tableHtml([
-        { l: "Date", render: m => `<span class="num">${dLabel(m.date)}</span>` },
-        { l: "Libellé", render: m => `<div class="t-main">${esc(m.label)}</div>` },
-        { l: "Nature", render: m => (nb(m.amount) >= 0 ? '<span class="badge good">Apport</span>' : '<span class="badge warn">Retrait</span>') },
-        { l: "Montant", r: 1, render: m => `<b class="${nb(m.amount) >= 0 ? "pos" : ""}">${moneyC(nb(m.amount), 2)}</b>` },
-        { l: "Solde après", r: 1, render: m => `<span class="muted">${money(m.bal, 2)}</span>` },
-      ], withBal, { actions: true, empty: "Aucun mouvement. Enregistrez ici vos apports et retraits en compte courant.", emptyAction: addBtn("company.cca", "Ajouter un mouvement") })}
-      <div class="note" style="margin-top:12px">Un compte courant d'associé débiteur (solde négatif) est interdit pour un gérant de SARL : surveillez ce solde.</div></div>`)}`;
+      ${withBal.length ? `<div class="tw"><table><thead><tr><th>Date</th><th>Libellé</th><th>Nature</th><th class="r">Montant</th><th class="r">Solde après</th><th class="r"></th></tr></thead><tbody>
+        ${withBal.map(m => `<tr>
+          <td class="num">${dLabel(m.date)}</td>
+          <td><div class="t-main">${esc(m.label)}</div>${m.kind === "avance" ? `<div class="t-sub">${esc(m.category || "")}</div>` : ""}</td>
+          <td>${m.kind === "avance" ? '<span class="badge info">Dépense avancée</span>'
+        : m.amount >= 0 ? '<span class="badge good">Apport</span>' : '<span class="badge warn">Remboursement</span>'}</td>
+          <td class="r num"><b class="${m.amount >= 0 ? "pos" : ""}">${moneyC(m.amount, 2)}</b></td>
+          <td class="r num muted">${money(m.bal, 2)}</td>
+          <td class="actions">${m.kind === "avance"
+        ? `<span class="muted" style="font-size:.72rem">via Dépenses</span>`
+        : `<button class="btn btn-sm btn-ghost btn-icon" data-act="edit" data-id="${m.id}">${ico("edit")}</button>
+             <button class="btn btn-sm btn-ghost btn-icon" data-act="del" data-id="${m.id}">${ico("trash")}</button>`}</td>
+        </tr>`).join("")}
+      </tbody></table></div>` : emptyHtml("Aucun mouvement pour l'instant.")}
+      <div class="note" style="margin-top:12px">Les dépenses avancées se modifient depuis l'onglet <b>Dépenses & charges</b> : elles y figurent comme des charges normales, marquées « avancée ».
+        Un compte courant débiteur (solde négatif) est interdit pour un gérant de SARL : surveillez ce solde.</div></div>`)}`;
 }
-
 /* ==================================================================
    VUE — RÉGLAGES
    ================================================================== */
@@ -1995,6 +2026,8 @@ function viewReglages() {
           <option value="light"${s.theme === "light" ? " selected" : ""}>Clair</option>
           <option value="dark"${s.theme === "dark" ? " selected" : ""}>Sombre</option></select></div>
         <div class="field"><label class="check"><input type="checkbox" id="hideamt"${s.hideAmounts ? " checked" : ""}> Masquer les montants (mode discrétion)</label></div>
+        <div class="field"><label class="check"><input type="checkbox" id="autoq"${s.autoQuotes === false ? "" : " checked"}> Actualiser les cours de bourse à l'ouverture</label>
+          <div class="hint">${quotableHoldings().length} ligne(s) avec un symbole boursier${quotesAge() ? ` · dernière mise à jour ${quotesAge()}` : ""}</div></div>
         <div class="field"><label>Nom de la société</label><input id="cname" value="${esc(C().name)}"></div>
       </div>
       <div class="card"><div class="card-h"><h2>Mes données</h2><div class="right"><span class="badge">${(size / 1024).toFixed(0)} Ko</span></div></div>
@@ -2076,6 +2109,7 @@ function viewReglages() {
   bind("#own", e => { state.settings.ownerName = e.target.value.trim(); save(); render(); });
   bind("#cname", e => { C().name = e.target.value.trim() || "SARL ALPEGA"; save(); render(); });
   bind("#hideamt", e => { state.settings.hideAmounts = e.target.checked; save(); render(); });
+  bind("#autoq", e => { state.settings.autoQuotes = e.target.checked; save(false); });
   bind("#sb-auto", e => { state.settings.supabase.auto = e.target.checked; save(false); });
 }
 
@@ -2108,7 +2142,8 @@ ED["personal.holdings"] = {
   title: "Ligne de portefeuille",
   fields: [
     { key: "name", label: "Nom", required: true, ph: "Ex. MSCI World" },
-    { key: "ticker", label: "Code / ISIN", ph: "Ex. IWDA" },
+    { key: "ticker", label: "Code / ISIN", ph: "Ex. IE00B4L5Y983" },
+    { key: "symbol", label: "Symbole boursier", ph: "Ex. CW8.PA", hint: "Symbole Yahoo Finance, pour la mise à jour automatique du cours : CW8.PA (Euronext Paris), IWDA.AS (Amsterdam), AAPL, BTC-EUR. Laisser vide pour saisir le cours à la main." },
     { key: "accountId", label: "Enveloppe", type: "select", options: accOptions },
     { key: "class", label: "Classe d'actif", type: "select", options: HOLD_CLASSES },
     { key: "qty", label: "Quantité", type: "number", required: true },
@@ -2193,6 +2228,7 @@ ED["company.transactions"] = {
     { key: "label", label: "Libellé", required: true },
     { key: "category", label: "Catégorie", type: "select", options: allBizCats },
     { key: "accountId", label: "Compte", type: "select", options: bizAccOptions },
+    { key: "paidBy", label: "Réglé par", type: "select", def: "societe", options: [{ v: "societe", l: "La société (compte pro)" }, { v: "associe", l: "Moi — avance en compte courant d'associé" }], hint: "Une avance n'affecte pas la trésorerie de la société : elle augmente ce qu'elle vous doit." },
     { key: "vatRate", label: "Taux de TVA (%)", type: "select", options: VAT_RATES.map(v => ({ v, l: v + " %" })), def: 20 },
     { key: "countVat", label: "Compter la TVA de cette recette comme TVA collectée", type: "check", hint: "À cocher uniquement pour une recette qui ne correspond pas à une facture déjà enregistrée (sinon la TVA serait comptée deux fois)." },
     { key: "note", label: "Note", type: "textarea" },
@@ -2568,6 +2604,48 @@ function lockOffModal() {
 }
 
 /* ==================================================================
+   COURS DE BOURSE (via l'espace privé en ligne)
+   ================================================================== */
+async function refreshQuotes(silent) {
+  const hs = quotableHoldings();
+  if (!hs.length) { if (!silent) toast("Renseignez le symbole boursier de vos lignes (ex. CW8.PA)", true); return; }
+  if (!inPrivateSpace()) {
+    if (!silent) toast("Mise à jour automatique disponible depuis l'espace en ligne uniquement", true);
+    return;
+  }
+  const syms = [...new Set(hs.map(holdSymbol))];
+  if (!silent) toast("Récupération des cours…");
+  try {
+    const r = await fetch("/prive/api/quotes?symbols=" + encodeURIComponent(syms.join(",")), { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error("service indisponible (" + r.status + ")");
+    const j = await r.json();
+    let n = 0;
+    hs.forEach(h => {
+      const q = j.quotes && j.quotes[holdSymbol(h)];
+      if (q && q.price > 0) { h.price = q.price; h.priceAt = j.at; n++; }
+    });
+    const failed = Object.keys(j.errors || {});
+    state.settings.quotesAt = j.at;
+    save(); render();
+    if (!silent) {
+      if (!n) toast("Aucun cours récupéré" + (failed.length ? " : " + failed.join(", ") : ""), true);
+      else toast(n + " cours mis à jour" + (failed.length ? " · échec : " + failed.join(", ") : ""));
+    }
+  } catch (e) {
+    if (!silent) toast("Mise à jour impossible : " + e.message, true);
+    else console.warn("cours", e);
+  }
+}
+const quotesAge = () => {
+  const at = state.settings.quotesAt;
+  if (!at) return null;
+  const h = (Date.now() - new Date(at).getTime()) / 3600000;
+  if (h < 1) return "il y a moins d'une heure";
+  if (h < 24) return `il y a ${Math.round(h)} h`;
+  return `le ${dLabel(String(at).slice(0, 10))}`;
+};
+
+/* ==================================================================
    EXPORT / IMPORT
    ================================================================== */
 function download(name, content, type = "application/json") {
@@ -2652,7 +2730,7 @@ document.addEventListener("click", e => {
   if (d.bizsub) { ui.bizSub = d.bizsub; return render(); }
   if (d.range) { ui.range = +d.range; return render(); }
   if (d.per) { ui.period = ymAdd(ui.period, d.per === "next" ? 1 : -1); if (ui.period > curYM()) ui.period = curYM(); return render(); }
-  if (d.add) return editItem(d.add, null);
+  if (d.add) return editItem(d.add, null, d.presets ? JSON.parse(d.presets) : null);
   const listEl = el.closest("[data-list]"); const path = listEl ? listEl.dataset.list : "";
   switch (d.act) {
     case "edit": return editItem(path, d.id);
@@ -2661,6 +2739,7 @@ document.addEventListener("click", e => {
     case "theme": state.settings.theme = isDark() ? "light" : "dark"; save(); return render();
     case "hide": state.settings.hideAmounts = !state.settings.hideAmounts; save(); return render();
     case "budgets": return budgetsModal();
+    case "quotes": return void refreshQuotes(false);
     case "alloc": return allocModal();
     case "nav-more": return navMoreModal();
     case "hist-add": return histModal();
@@ -2758,6 +2837,14 @@ async function init() {
   render();
   const boot = document.getElementById("boot"); if (boot) boot.remove();
   if (Supa.enabled()) Supa.pull(true);
+  maybeRefreshQuotes();
+}
+/* cours rafraîchis au plus une fois toutes les 6 heures */
+function maybeRefreshQuotes() {
+  if (state.settings.autoQuotes === false || !inPrivateSpace() || !quotableHoldings().length) return;
+  const at = state.settings.quotesAt;
+  if (at && Date.now() - new Date(at).getTime() < 6 * 3600000) return;
+  setTimeout(() => refreshQuotes(true), 1200);
 }
 /* verrouillage automatique : toute interaction repousse l'échéance */
 ["pointerdown", "keydown"].forEach(ev => addEventListener(ev, () => { if (Lock.active()) Lock.arm(); }, { passive: true }));

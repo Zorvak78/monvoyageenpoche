@@ -132,6 +132,65 @@ button:hover{filter:brightness(1.1)}
 </form></body></html>`;
 }
 
+/* ---------- cours de bourse ---------- */
+/**
+ * Récupère les cours auprès de Yahoo Finance depuis le Worker : le navigateur
+ * ne peut pas interroger ce service directement (politique d'origine croisée).
+ * Les valeurs sont mises en cache 15 minutes et converties en euros au besoin.
+ */
+const QUOTE_TTL = 900; // secondes
+const UA = "Mozilla/5.0 (compatible; EspacePrive/1.0)";
+
+async function yahooPrice(symbol: string): Promise<{ price: number; currency: string; time: number }> {
+  const url = "https://query1.finance.yahoo.com/v8/finance/chart/" +
+    encodeURIComponent(symbol) + "?interval=1d&range=1d";
+  const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" }, cf: { cacheTtl: QUOTE_TTL, cacheEverything: true } } as RequestInit);
+  if (!r.ok) throw new Error("service indisponible (" + r.status + ")");
+  const j: any = await r.json();
+  const meta = j && j.chart && j.chart.result && j.chart.result[0] && j.chart.result[0].meta;
+  if (!meta || typeof meta.regularMarketPrice !== "number") throw new Error("symbole inconnu");
+  let price = meta.regularMarketPrice;
+  let currency = String(meta.currency || "EUR").toUpperCase();
+  if (currency === "GBP" && String(meta.currency) === "GBp") { price = price / 100; }
+  if (String(meta.currency) === "GBp") currency = "GBP";
+  return { price, currency, time: (meta.regularMarketTime || Math.floor(Date.now() / 1000)) * 1000 };
+}
+const fxCache = new Map<string, number>();
+async function toEur(amount: number, currency: string): Promise<{ value: number; rate: number }> {
+  if (!currency || currency === "EUR") return { value: amount, rate: 1 };
+  let rate = fxCache.get(currency);
+  if (!rate) {
+    const fx = await yahooPrice(currency + "EUR=X");
+    rate = fx.price;
+    fxCache.set(currency, rate);
+  }
+  return { value: amount * rate, rate };
+}
+async function handleQuotes(url: URL): Promise<Response> {
+  const symbols = (url.searchParams.get("symbols") || "")
+    .split(",").map((x) => x.trim()).filter(Boolean).slice(0, 30);
+  if (!symbols.length) return Response.json({ ok: false, error: "Aucun symbole demandé." }, { status: 400 });
+
+  const quotes: Record<string, unknown> = {};
+  const errors: Record<string, string> = {};
+  await Promise.all(symbols.map(async (sym) => {
+    try {
+      const q = await yahooPrice(sym);
+      const conv = await toEur(q.price, q.currency);
+      quotes[sym] = {
+        price: Math.round(conv.value * 10000) / 10000,
+        currency: "EUR",
+        source: { price: q.price, currency: q.currency, rate: conv.rate },
+        time: q.time,
+      };
+    } catch (e: any) {
+      errors[sym] = (e && e.message) || "échec";
+    }
+  }));
+  return Response.json({ ok: true, at: new Date().toISOString(), quotes, errors },
+    { headers: { "Cache-Control": "no-store" } });
+}
+
 /* ---------- espace privé ---------- */
 const PAGES: Record<string, string> = {
   "/prive": hubHtml,
@@ -191,6 +250,8 @@ async function handlePrive(request: Request, env: Env, url: URL): Promise<Respon
     back.searchParams.set("next", path + url.search);
     return Response.redirect(back.toString(), 302);
   }
+
+  if (path === "/prive/api/quotes") return handleQuotes(url);
 
   const page = PAGES[path];
   if (page) return html(page);
