@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /patrimoine/
 
 Sitemap: https://monvoyageenpoche.fr/sitemap-index.xml

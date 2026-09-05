@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Patrimoine — Gestion personnelle & SARL ALPEGA</title>
+<meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Application autonome de gestion de patrimoine personnel et de suivi d'entreprise (SARL ALPEGA). Données locales, export JSON/CSV, synchronisation Supabase optionnelle.">
 <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101215" media="(prefers-color-scheme: dark)">
@@ -250,6 +251,12 @@ tr:hover td.actions .btn{opacity:1}
 .field .hint{font-size:.74rem;color:var(--muted);margin-top:4px}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .check{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--ink)}
+/* ============================== VERROU ============================== */
+.lockwrap{position:fixed;inset:0;z-index:300;background:var(--page);display:flex;align-items:center;justify-content:center;padding:22px}
+.lockbox{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);
+  padding:28px 26px;width:min(400px,100%);text-align:center}
+.lockbox input{margin-top:6px;text-align:center}
+.lockbox .brand-mark{margin:0 auto;display:grid}
 /* ============================== TOAST ============================== */
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
 .toast{background:var(--ink);color:var(--page);padding:9px 15px;border-radius:var(--r);font-size:.83rem;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:pop .16s ease-out;max-width:88vw}
@@ -336,6 +343,7 @@ pre.sql{background:var(--surface-2);border:1px solid var(--border);border-radius
   </main>
 </div>
 <nav class="tabbar" id="tabbar"></nav>
+<div id="lockroot"></div>
 <div id="modal-root"></div>
 <div id="toast"></div>
 <script>
@@ -409,6 +417,9 @@ const IC = {
   trend: '<path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v5h-5"/>',
   db: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  lockic: '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 118 0v3"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 5H6a2 2 0 00-2 2v9"/>',
+  check: '<path d="M4 12l5 5L20 6"/>',
   eye: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="3"/>',
   eyeoff: '<path d="M4 4l16 16"/><path d="M9.9 5.2A9.6 9.6 0 0112 5c6.5 0 10 6 10 6a17 17 0 01-3.3 3.9M6.3 7.1A16.6 16.6 0 002 11s3.5 6 10 6a9.7 9.7 0 004-.8"/>',
   target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>',
@@ -467,6 +478,7 @@ const blank = () => ({
   updatedAt: new Date().toISOString(),
   settings: {
     theme: "auto", ownerName: "", hideAmounts: false,
+    lockEnabled: false, lockTimeout: 15,
     catExp: [...CAT_EXP], catInc: [...CAT_INC],
     catBizExp: [...CAT_BIZ_EXP], catBizInc: [...CAT_BIZ_INC],
     rules: [], // { kw, cat, scope:'perso'|'pro' }
@@ -494,22 +506,130 @@ function migrate(s) {
   out.company = { ...d.company, ...(s.company || {}) };
   return out;
 }
+/* ---------------------------------------------------------------
+   VERROU & CHIFFREMENT (AES-256-GCM, clé dérivée par PBKDF2)
+   Le mot de passe n'est jamais stocké : seule la clé dérivée vit
+   en mémoire, le temps de la session.
+   --------------------------------------------------------------- */
+const B64 = {
+  enc(buf) { const b = new Uint8Array(buf); let s = ""; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); },
+  dec(str) { const s = atob(str), b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; },
+};
+const Lock = {
+  key: null, salt: null, iter: 310000, timer: null,
+  available() { try { return !!(window.crypto && crypto.subtle && crypto.subtle.deriveKey); } catch (e) { return false; } },
+  active() { return !!Lock.key; },
+  async derive(pass, salt, iter) {
+    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" }, base,
+      { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+  },
+  async wrap(obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, Lock.key, new TextEncoder().encode(JSON.stringify(obj)));
+    return { enc: 1, v: 1, kdf: "PBKDF2-SHA256", iter: Lock.iter, salt: B64.enc(Lock.salt), iv: B64.enc(iv), ct: B64.enc(ct) };
+  },
+  async unwrap(env, key) {
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: B64.dec(env.iv) }, key || Lock.key, B64.dec(env.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  },
+  /* déverrouille une enveloppe avec un mot de passe ; mémorise la clé si ok */
+  async open(env, pass) {
+    const salt = B64.dec(env.salt), iter = env.iter || 310000;
+    const key = await Lock.derive(pass, salt, iter);
+    const obj = await Lock.unwrap(env, key);   // lève une exception si mot de passe erroné
+    Lock.key = key; Lock.salt = salt; Lock.iter = iter;
+    return obj;
+  },
+  async create(pass) {
+    Lock.salt = crypto.getRandomValues(new Uint8Array(16)); Lock.iter = 310000;
+    Lock.key = await Lock.derive(pass, Lock.salt, Lock.iter);
+  },
+  clear() { Lock.key = null; Lock.salt = null; },
+  /* verrouillage automatique après inactivité */
+  arm() {
+    clearTimeout(Lock.timer);
+    const min = nb(state.settings.lockTimeout);
+    if (!Lock.active() || !min) return;
+    Lock.timer = setTimeout(lockNow, min * 60000);
+  },
+};
+function readRaw() { try { return localStorage.getItem(LS_KEY); } catch (e) { return null; } }
+/* renvoie l'enveloppe chiffrée si le stockage local est verrouillé, sinon null */
 function load() {
+  const raw = readRaw();
+  if (!raw) return null;
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch (e) { console.warn("Données illisibles", e); return null; }
+  if (parsed && parsed.enc) return parsed;
+  state = migrate(parsed);
+  return null;
+}
+async function persist() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) state = migrate(JSON.parse(raw));
-  } catch (e) { console.warn("Lecture impossible", e); }
+    const raw = Lock.active() ? JSON.stringify(await Lock.wrap(state)) : JSON.stringify(state);
+    localStorage.setItem(LS_KEY, raw);
+  } catch (e) { toast("Sauvegarde impossible : " + e.message, true); }
 }
 let saveT = null;
 function save(sync = true) {
   state.updatedAt = new Date().toISOString();
-  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-  catch (e) { toast("Sauvegarde impossible (stockage plein ?)", true); }
+  persist();
+  Lock.arm();
   if (sync && Supa.enabled() && state.settings.supabase.auto) {
     clearTimeout(saveT); saveT = setTimeout(() => Supa.push(true), 2500);
   }
 }
+function lockNow() {
+  if (!Lock.active()) return;
+  clearTimeout(Lock.timer);
+  Lock.clear();
+  state = blank();
+  closeModal();
+  lockScreen({ env: JSON.parse(readRaw() || "null"), reason: "Session verrouillée" });
+}
+/* écran plein écran de déverrouillage */
+function lockScreen(opts) {
+  const env = opts.env, onOpen = opts.onOpen;
+  $("#lockroot").innerHTML = `<div class="lockwrap">
+    <form class="lockbox" id="lockform">
+      <span class="brand-mark" style="width:34px;height:34px">${ico("dash")}</span>
+      <h1 style="font-size:1.05rem;margin-top:14px">${esc(opts.title || "Patrimoine")}</h1>
+      <p class="muted" style="font-size:.83rem;margin:6px 0 18px">${esc(opts.reason || "Saisissez votre mot de passe pour accéder à vos données.")}</p>
+      <input type="password" id="lockpass" placeholder="Mot de passe" autocomplete="current-password" required>
+      <div id="lockerr" class="neg" style="font-size:.8rem;margin-top:8px;display:none"></div>
+      <button class="btn btn-primary" type="submit" style="width:100%;margin-top:14px;justify-content:center">Déverrouiller</button>
+      <p class="muted" style="font-size:.75rem;margin-top:16px">Vos données sont chiffrées sur cet appareil (AES-256).
+        Sans ce mot de passe, elles sont illisibles — y compris pour nous.</p>
+    </form></div>`;
+  document.body.style.overflow = "hidden";
+  const f = $("#lockform"), err = $("#lockerr");
+  setTimeout(() => { const i = $("#lockpass"); if (i) i.focus(); }, 80);
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const btn = f.querySelector("button"); btn.disabled = true; btn.textContent = "Déchiffrement…";
+    try {
+      const obj = await Lock.open(env, $("#lockpass").value);
+      state = migrate(obj);
+      $("#lockroot").innerHTML = ""; document.body.style.overflow = "";
+      if (onOpen) await onOpen();
+      applyTheme(); touchSnapshot(); save(false); render(); Lock.arm();
+      const boot = document.getElementById("boot"); if (boot) boot.remove();
+    } catch (ex) {
+      err.style.display = "block"; err.textContent = "Mot de passe incorrect.";
+      btn.disabled = false; btn.textContent = "Déverrouiller";
+      $("#lockpass").select();
+    }
+  };
+}
 const P = () => state.personal;
+/* aucun contenu saisi : un appareil neuf doit accepter la sauvegarde distante */
+function isEmptyState() {
+  const p = state.personal, c = state.company;
+  return (p.accounts.length + p.holdings.length + p.properties.length + p.loans.length + p.others.length +
+    p.transactions.length + p.goals.length + c.accounts.length + c.transactions.length + c.investments.length +
+    c.fixedAssets.length + c.invoices.length + c.cca.length) === 0;
+}
 const C = () => state.company;
 
 /* ---------------------------- CALCULS PATRIMOINE ---------------------------- */
@@ -1020,6 +1140,7 @@ function navMoreModal() {
 function topbar(title, sub, actions = "") {
   $("#topbar").innerHTML = `<div style="min-width:0"><h1>${esc(title)}</h1>${sub ? `<div class="topbar-sub">${sub}</div>` : ""}</div>
     <div class="topbar-actions">${actions}
+      ${Lock.active() ? `<button class="btn btn-icon btn-ghost" data-act="lock-now" aria-label="Verrouiller" title="Verrouiller l'application">${ico("lockic")}</button>` : ""}
       <button class="btn btn-icon btn-ghost" data-act="hide" aria-label="Masquer les montants" title="Masquer les montants">${ico(state.settings.hideAmounts ? "eyeoff" : "eye")}</button>
       <button class="btn btn-icon btn-ghost" data-act="theme" aria-label="Changer de thème" title="Thème clair / sombre">${ico(isDark() ? "sun" : "moon")}</button>
     </div>`;
@@ -1888,33 +2009,44 @@ function viewReglages() {
       </div>
     </div>
     <div class="stack">
-      <div class="card"><div class="card-h"><h2>Synchronisation cloud (Supabase)</h2>
-        <div class="right"><span class="badge ${sess ? "good" : ""}">${sess ? "Connecté" : "Hors ligne"}</span></div></div>
-        <div class="note" style="margin-bottom:14px">Optionnel. Créez un projet gratuit sur <b>supabase.com</b>, exécutez le script SQL ci-dessous dans l'onglet <i>SQL Editor</i>, puis collez l'URL et la clé <b>anon/public</b> du projet (Settings → API). Vos données restent chiffrées en transit et protégées par votre compte.</div>
-        <div class="field"><label>URL du projet</label><input id="sb-url" value="${esc(sup.url)}" placeholder="https://xxxx.supabase.co"></div>
-        <div class="field"><label>Clé anon (public)</label><input id="sb-key" value="${esc(sup.anonKey)}" placeholder="eyJhbGciOi..."></div>
-        ${sess ? `<div class="kv"><span class="k">Compte</span><span class="v">${esc(sup.email)}</span></div>
-          <div class="kv"><span class="k">Dernière synchro</span><span class="v">${sup.lastSync ? new Date(sup.lastSync).toLocaleString("fr-FR") : "—"}</span></div>
+      <div class="card"><div class="card-h"><h2>Sécurité & confidentialité</h2>
+        <div class="right"><span class="badge ${s.lockEnabled ? "good" : "warn"}">${s.lockEnabled ? "Chiffré" : "Non chiffré"}</span></div></div>
+        ${s.lockEnabled ? `
+          <div class="kv"><span class="k">Chiffrement local</span><span class="v">AES-256-GCM</span></div>
+          <div class="kv"><span class="k">Dérivation du mot de passe</span><span class="v">PBKDF2-SHA256 · 310 000 tours</span></div>
+          <div class="kv"><span class="k">Sauvegarde en ligne</span><span class="v">Chiffrée de bout en bout</span></div>
+          <div class="field" style="margin-top:14px"><label>Verrouillage automatique après inactivité</label>
+            <select data-set="settings.lockTimeout">
+              ${[{ v: 0, l: "Jamais" }, { v: 5, l: "5 minutes" }, { v: 15, l: "15 minutes" }, { v: 30, l: "30 minutes" }, { v: 60, l: "1 heure" }]
+        .map(o => `<option value="${o.v}"${nb(s.lockTimeout) === o.v ? " selected" : ""}>${o.l}</option>`).join("")}
+            </select></div>
+          <div class="row">
+            <button class="btn btn-sm" data-act="lock-now">${ico("lockic")}Verrouiller maintenant</button>
+            <button class="btn btn-sm" data-act="lock-change">Changer le mot de passe</button>
+            <button class="btn btn-sm btn-danger" data-act="lock-off">Désactiver</button>
+          </div>`
+      : `<div class="note" style="margin-bottom:14px">Activez le verrouillage pour <b>chiffrer vos données sur cet appareil</b> et, si la synchronisation est active, <b>chiffrer aussi la sauvegarde en ligne de bout en bout</b>. L'application demandera ce mot de passe à chaque ouverture.</div>
+         <button class="btn btn-primary btn-sm" data-act="lock-on">${ico("lockic")}Activer le verrouillage</button>
+         ${Lock.available() ? "" : '<div class="note" style="margin-top:12px;color:var(--neg)">Chiffrement indisponible : ouvrez l\'application via une adresse https (ou en local), pas depuis un aperçu d\'application.</div>'}`}
+      </div>
+
+      <div class="card"><div class="card-h"><h2>Synchronisation (Supabase)</h2>
+        <div class="right"><span class="badge ${sess ? "good" : ""}">${sess ? "Connecté" : Supa.configured() ? "Non connecté" : "Inactive"}</span></div></div>
+        ${sess ? `
+          <div class="kv"><span class="k">Compte</span><span class="v">${esc(sup.email)}</span></div>
+          <div class="kv"><span class="k">Projet</span><span class="v" style="font-weight:500;font-size:.8rem">${esc(sup.url.replace("https://", ""))}</span></div>
+          <div class="kv"><span class="k">Dernière synchronisation</span><span class="v">${sup.lastSync ? new Date(sup.lastSync).toLocaleString("fr-FR") : "—"}</span></div>
+          <div class="kv"><span class="k">Contenu envoyé</span><span class="v">${s.lockEnabled ? "Chiffré (illisible côté serveur)" : "En clair (protégé par votre compte)"}</span></div>
           <div class="row" style="margin-top:14px">
             <button class="btn btn-primary btn-sm" data-act="supa-push">${ico("up_a")}Envoyer</button>
             <button class="btn btn-sm" data-act="supa-pull">${ico("down_a")}Récupérer</button>
             <button class="btn btn-sm btn-ghost" data-act="supa-signout">Déconnexion</button>
           </div>
           <div class="field" style="margin-top:12px"><label class="check"><input type="checkbox" id="sb-auto"${sup.auto ? " checked" : ""}> Synchroniser automatiquement à chaque modification</label></div>`
-      : `<div class="fgrid"><div class="field"><label>E-mail</label><input id="sb-mail" type="email" value="${esc(sup.email)}"></div>
-           <div class="field"><label>Mot de passe</label><input id="sb-pwd" type="password" placeholder="••••••••"></div></div>
-         <div class="row"><button class="btn btn-primary btn-sm" data-act="supa-signin">Se connecter</button>
-           <button class="btn btn-sm" data-act="supa-signup">Créer un compte</button></div>`}
-        <h3 style="margin:18px 0 8px">Script SQL à exécuter une fois</h3>
-        <pre class="sql">create table if not exists public.patrimoine (
-  user_id uuid primary key references auth.users on delete cascade,
-  data jsonb not null default '{}'::jsonb,
-  updated_at timestamptz not null default now()
-);
-alter table public.patrimoine enable row level security;
-create policy "patrimoine_owner" on public.patrimoine
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);</pre>
+      : `<div class="note" style="margin-bottom:14px">Retrouvez vos données sur tous vos appareils. Supabase est gratuit pour cet usage ; l'assistant vous guide en trois étapes (2 à 3 minutes).</div>
+         <button class="btn btn-primary btn-sm" data-act="supa-wizard">${ico("cloud")}${Supa.configured() ? "Reprendre la configuration" : "Configurer la synchronisation"}</button>`}
       </div>
+
       <div class="card"><div class="card-h"><h2>Catégorisation automatique</h2>
         <div class="right"><button class="btn btn-sm btn-primary" data-act="rule-add">${ico("plus")}Règle</button></div></div>
         <div class="note" style="margin-bottom:12px">À l'import CSV, si le libellé contient le mot-clé, la catégorie est appliquée automatiquement.</div>
@@ -1934,8 +2066,6 @@ create policy "patrimoine_owner" on public.patrimoine
   bind("#own", e => { state.settings.ownerName = e.target.value.trim(); save(); render(); });
   bind("#cname", e => { C().name = e.target.value.trim() || "SARL ALPEGA"; save(); render(); });
   bind("#hideamt", e => { state.settings.hideAmounts = e.target.checked; save(); render(); });
-  bind("#sb-url", e => { state.settings.supabase.url = e.target.value.trim().replace(/\/$/, ""); save(false); });
-  bind("#sb-key", e => { state.settings.supabase.anonKey = e.target.value.trim(); save(false); });
   bind("#sb-auto", e => { state.settings.supabase.auto = e.target.checked; save(false); });
 }
 
@@ -2126,71 +2256,306 @@ const Supa = {
   },
   async auth(path, body) {
     const c = Supa.cfg();
-    const r = await fetch(`${c.url}/auth/v1/${path}`, { method: "POST", headers: Supa.headers(false), body: JSON.stringify(body) });
+    const r = await fetch(c.url + "/auth/v1/" + path, { method: "POST", headers: Supa.headers(false), body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error_description || j.msg || j.message || j.error || "Erreur d'authentification");
+    if (!r.ok) {
+      const m = j.error_description || j.msg || j.message || j.error || ("Erreur " + r.status);
+      if (/invalid login/i.test(m)) throw new Error("E-mail ou mot de passe incorrect.");
+      if (/not confirmed/i.test(m)) throw new Error("Compte non confirmé : ouvrez l'e-mail de confirmation envoyé par Supabase.");
+      if (/already registered/i.test(m)) throw new Error("Ce compte existe déjà : utilisez « Se connecter ».");
+      throw new Error(m);
+    }
     return j;
+  },
+  /* vérifie l'URL, la clé et la présence de la table */
+  async test() {
+    const c = Supa.cfg();
+    if (!/^https:\/\/.+/.test(c.url)) throw new Error("L'URL doit commencer par https:// et se terminer par .supabase.co");
+    if (!c.anonKey || c.anonKey.length < 30) throw new Error("La clé anon semble incomplète.");
+    let r;
+    try { r = await fetch(c.url + "/rest/v1/patrimoine?select=user_id&limit=1", { headers: Supa.headers(false) }); }
+    catch (e) { throw new Error("Projet injoignable : vérifiez l'URL (et votre connexion)."); }
+    if (r.status === 401 || r.status === 403) throw new Error("Clé anon refusée : recopiez la clé « anon public » (Settings → API).");
+    if (r.status === 404) throw new Error("Table absente : exécutez le script SQL de l'étape 2 dans le SQL Editor.");
+    if (!r.ok) throw new Error("Réponse inattendue du projet (" + r.status + ").");
+    return true;
   },
   async signIn(email, password) {
     const j = await Supa.auth("token?grant_type=password", { email, password });
     Supa.setSession({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id });
     state.settings.supabase.email = email; save(false);
     await Supa.pull(true);
-    toast("Connecté — données synchronisées");
   },
   async signUp(email, password) {
-    await Supa.auth("signup", { email, password });
-    try { await Supa.signIn(email, password); }
-    catch (e) { toast("Compte créé. Confirmez votre e-mail puis connectez-vous."); }
+    const j = await Supa.auth("signup", { email, password });
+    if (j.access_token) {
+      Supa.setSession({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id });
+      state.settings.supabase.email = email; save(false);
+      await Supa.push(true);
+      return "Compte créé et connecté.";
+    }
+    return "Compte créé : confirmez l'e-mail reçu, puis connectez-vous.";
+  },
+  async recover(email) {
+    await Supa.auth("recover", { email });
+    return "E-mail de réinitialisation envoyé (il concerne le compte Supabase, pas le mot de passe de chiffrement).";
   },
   async refresh() {
     const s = Supa.session(); if (!s) throw new Error("Session absente");
     const j = await Supa.auth("token?grant_type=refresh_token", { refresh_token: s.refresh_token });
     Supa.setSession({ access_token: j.access_token, refresh_token: j.refresh_token, user_id: j.user.id });
   },
-  signOut() { Supa.setSession(null); render(); toast("Déconnecté"); },
+  signOut() { Supa.setSession(null); render(); toast("Déconnecté de la synchronisation"); },
   async rest(url, opts, retry = true) {
     const r = await fetch(url, opts);
     if (r.status === 401 && retry) { await Supa.refresh(); opts.headers = Supa.headers(); return Supa.rest(url, opts, false); }
-    if (!r.ok) throw new Error("Supabase : " + r.status + " " + (await r.text()).slice(0, 140));
+    if (!r.ok) {
+      const txt = (await r.text()).slice(0, 160);
+      if (r.status === 404 || /PGRST205|does not exist/i.test(txt)) throw new Error("Table « patrimoine » absente : exécutez le script SQL.");
+      throw new Error("Supabase " + r.status + " : " + txt);
+    }
     return r;
   },
   async push(silent = false) {
-    if (!Supa.enabled()) { if (!silent) toast("Configurez la synchronisation d'abord", true); return; }
+    if (!Supa.enabled()) { if (!silent) toast("Connectez-vous à la synchronisation d'abord", true); return; }
     const c = Supa.cfg(), s = Supa.session();
     try {
-      await Supa.rest(`${c.url}/rest/v1/patrimoine`, {
-        method: "POST", headers: { ...Supa.headers(), Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify({ user_id: s.user_id, data: state, updated_at: state.updatedAt }),
+      const payload = Lock.active() ? await Lock.wrap(state) : state;
+      await Supa.rest(c.url + "/rest/v1/patrimoine", {
+        method: "POST", headers: Object.assign({}, Supa.headers(), { Prefer: "resolution=merge-duplicates,return=minimal" }),
+        body: JSON.stringify({ user_id: s.user_id, data: payload, updated_at: state.updatedAt }),
       });
       state.settings.supabase.lastSync = new Date().toISOString();
-      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { }
-      if (!silent) { render(); toast("Données envoyées"); }
+      persist();
+      if (!silent) { render(); toast("Sauvegarde envoyée" + (Lock.active() ? " (chiffrée)" : "")); }
     } catch (e) { if (!silent) toast(e.message, true); else console.warn(e); }
   },
   async pull(silent = false) {
-    if (!Supa.enabled()) { if (!silent) toast("Configurez la synchronisation d'abord", true); return; }
+    if (!Supa.enabled()) { if (!silent) toast("Connectez-vous à la synchronisation d'abord", true); return; }
     const c = Supa.cfg(), s = Supa.session();
     try {
-      const r = await Supa.rest(`${c.url}/rest/v1/patrimoine?select=data,updated_at&user_id=eq.${s.user_id}`, { headers: Supa.headers() });
+      const r = await Supa.rest(c.url + "/rest/v1/patrimoine?select=data,updated_at&user_id=eq." + s.user_id, { headers: Supa.headers() });
       const rows = await r.json();
       if (!rows.length) { await Supa.push(true); return; }
       const remote = rows[0];
-      if (!remote.data || !remote.data.version) return;
-      if (!silent && new Date(remote.data.updatedAt || 0) < new Date(state.updatedAt || 0)) {
-        confirmDialog("Données locales plus récentes", "La sauvegarde en ligne est plus ancienne que vos données locales. Voulez-vous quand même la restaurer (vos modifications locales seront perdues) ?", () => {
-          state = migrate(remote.data); save(false); render(); toast("Données restaurées");
-        }, "Restaurer");
-        return;
+      if (!remote.data) return;
+      if (isEmptyState()) return void await Supa.apply(remote.data, silent);   // appareil neuf
+      const rAt = new Date(remote.updated_at || 0), lAt = new Date(state.updatedAt || 0);
+      if (rAt <= lAt) {
+        if (silent) return;
+        if (rAt.getTime() === lAt.getTime()) return toast("Déjà à jour");
+        return confirmDialog("Sauvegarde en ligne plus ancienne",
+          "Vos données locales sont plus récentes que la sauvegarde en ligne. Voulez-vous quand même restaurer la version en ligne ? Les modifications locales seront perdues.",
+          () => Supa.apply(remote.data), "Restaurer");
       }
-      if (new Date(remote.data.updatedAt || 0) > new Date(state.updatedAt || 0)) {
-        state = migrate(remote.data);
-        state.settings.supabase.lastSync = new Date().toISOString();
-        save(false); render(); toast("Données récupérées depuis le cloud");
-      } else if (!silent) toast("Déjà à jour");
+      await Supa.apply(remote.data, silent);
     } catch (e) { if (!silent) toast(e.message, true); else console.warn(e); }
   },
+  /* applique une charge distante, chiffrée ou non */
+  async apply(data, silent) {
+    if (data && data.enc) {
+      if (Lock.active()) {
+        try { state = migrate(await Lock.unwrap(data)); }
+        catch (e) { return toast("Sauvegarde chiffrée avec un autre mot de passe.", true); }
+      } else {
+        state.settings.lockEnabled = true;
+        return lockScreen({ env: data, reason: "Sauvegarde chiffrée : saisissez votre mot de passe de chiffrement." });
+      }
+    } else {
+      if (!data.version) return;
+      state = migrate(data);
+    }
+    state.settings.supabase.lastSync = new Date().toISOString();
+    save(false); render();
+    if (!silent) toast("Données récupérées");
+  },
 };
+
+/* ==================================================================
+   ASSISTANT DE SYNCHRONISATION
+   ================================================================== */
+const SQL_SCRIPT = `create table if not exists public.patrimoine (
+  user_id uuid primary key references auth.users on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.patrimoine enable row level security;
+create policy "patrimoine_owner" on public.patrimoine
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
+
+function copyText(txt, okMsg) {
+  const done = () => toast(okMsg || "Copié");
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt).then(done, () => fallback());
+  } catch (e) { }
+  fallback();
+  function fallback() {
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { toast("Copie impossible : sélectionnez le texte manuellement", true); }
+    ta.remove();
+  }
+}
+function supaWizard() {
+  const c = Supa.cfg();
+  openModal({
+    title: "Configurer la synchronisation", wide: true,
+    body: `
+      <div class="eyebrow" style="margin-bottom:8px">Étape 1 — créer le projet</div>
+      <div class="note" style="margin-bottom:12px">Créez un compte gratuit sur <b>supabase.com</b>, puis un projet (région Europe de préférence).
+        Ouvrez ensuite <b>Settings → API</b> et recopiez les deux valeurs ci-dessous.</div>
+      <div class="field"><label>URL du projet</label><input id="w-url" value="${esc(c.url)}" placeholder="https://xxxxxxxx.supabase.co" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><label>Clé anon (public)</label><input id="w-key" value="${esc(c.anonKey)}" placeholder="eyJhbGciOi…" autocapitalize="off" spellcheck="false">
+        <div class="hint">Cette clé est publique par conception : l'accès aux données est verrouillé par votre compte et les règles RLS créées à l'étape 2.</div></div>
+
+      <div class="eyebrow" style="margin:20px 0 8px">Étape 2 — créer la table</div>
+      <div class="note" style="margin-bottom:10px">Dans Supabase, ouvrez <b>SQL Editor → New query</b>, collez ce script et cliquez sur <b>Run</b>. Il crée la table et interdit à quiconque d'autre d'y accéder.</div>
+      <pre class="sql" id="w-sql">${esc(SQL_SCRIPT)}</pre>
+      <button class="btn btn-sm" id="w-copy" style="margin-top:8px">${ico("copy")}Copier le script</button>
+      <button class="btn btn-sm" id="w-test" style="margin-top:8px">${ico("check")}Tester la connexion</button>
+      <div id="w-status" style="margin-top:10px;font-size:.82rem"></div>
+
+      <div class="eyebrow" style="margin:20px 0 8px">Étape 3 — votre compte</div>
+      <div class="fgrid">
+        <div class="field"><label>E-mail</label><input id="w-mail" type="email" value="${esc(c.email)}" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label>Mot de passe du compte</label><input id="w-pwd" type="password" autocomplete="new-password"></div>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary btn-sm" id="w-signin">Se connecter</button>
+        <button class="btn btn-sm" id="w-signup">Créer le compte</button>
+        <button class="btn-link" id="w-forgot" style="margin-left:auto">Mot de passe oublié</button>
+      </div>
+      <div class="note" style="margin-top:14px">${state.settings.lockEnabled
+        ? "Le verrouillage étant actif, la sauvegarde envoyée sera <b>chiffrée de bout en bout</b> : Supabase n'en verra qu'un bloc illisible."
+        : "Pensez à activer le verrouillage (carte Sécurité) pour chiffrer aussi la sauvegarde en ligne de bout en bout."}</div>`,
+    footer: `<button class="btn" data-close="1">Fermer</button>`,
+    onMount: r => {
+      const st = r.querySelector("#w-status");
+      const say = (msg, cls) => { st.innerHTML = `<span class="${cls || ""}">${esc(msg)}</span>`; };
+      const readCfg = () => {
+        state.settings.supabase.url = r.querySelector("#w-url").value.trim().replace(/\/+$/, "");
+        state.settings.supabase.anonKey = r.querySelector("#w-key").value.trim();
+        save(false);
+      };
+      r.querySelector("#w-copy").onclick = () => copyText(SQL_SCRIPT, "Script SQL copié");
+      r.querySelector("#w-test").onclick = async () => {
+        readCfg(); say("Test en cours…", "muted");
+        try { await Supa.test(); say("✓ Projet joignable, clé valide, table présente.", "pos"); }
+        catch (e) { say("✗ " + e.message, "neg"); }
+      };
+      const run = async (fn, btn) => {
+        readCfg();
+        const mail = r.querySelector("#w-mail").value.trim(), pwd = r.querySelector("#w-pwd").value;
+        if (!Supa.configured()) return say("Renseignez d'abord l'URL et la clé anon.", "neg");
+        if (!mail || !pwd) return say("E-mail et mot de passe requis.", "neg");
+        if (pwd.length < 6) return say("Le mot de passe du compte doit faire au moins 6 caractères.", "neg");
+        btn.disabled = true; say("Connexion…", "muted");
+        try { const m = await fn(mail, pwd); closeModal(); render(); toast(m || "Synchronisation activée"); }
+        catch (e) { say("✗ " + e.message, "neg"); }
+        finally { btn.disabled = false; }
+      };
+      r.querySelector("#w-signin").onclick = e => run(async (m, p) => { await Supa.signIn(m, p); return "Connecté — données synchronisées"; }, e.target);
+      r.querySelector("#w-signup").onclick = e => run((m, p) => Supa.signUp(m, p), e.target);
+      r.querySelector("#w-forgot").onclick = async () => {
+        readCfg();
+        const mail = r.querySelector("#w-mail").value.trim();
+        if (!Supa.configured() || !mail) return say("Renseignez l'URL, la clé et votre e-mail.", "neg");
+        try { say(await Supa.recover(mail), "pos"); } catch (e) { say("✗ " + e.message, "neg"); }
+      };
+    },
+  });
+}
+
+/* ==================================================================
+   VERROU : activation, changement, désactivation
+   ================================================================== */
+function lockOnModal() {
+  if (!Lock.available()) return toast("Chiffrement indisponible ici : ouvrez l'application via https ou en local.", true);
+  openModal({
+    title: "Activer le verrouillage",
+    body: `<div class="note" style="margin-bottom:14px">Vos données seront <b>chiffrées sur cet appareil</b> (AES-256-GCM) et, si la synchronisation est active, la sauvegarde en ligne le sera aussi de bout en bout.
+      <br><br><b>Ce mot de passe ne peut pas être réinitialisé.</b> Perdu, vos données sont définitivement illisibles : exportez une sauvegarde JSON avant d'activer.</div>
+      <form id="lf">
+        <div class="field"><label>Mot de passe de chiffrement</label><input type="password" id="p1" autocomplete="new-password" required>
+          <div class="hint">12 caractères minimum recommandés. Ne réutilisez pas le mot de passe de votre compte Supabase.</div></div>
+        <div class="field"><label>Confirmation</label><input type="password" id="p2" autocomplete="new-password" required></div>
+        <div class="field"><label class="check"><input type="checkbox" id="ack"> J'ai noté ce mot de passe en lieu sûr et compris qu'il est irrécupérable.</label></div>
+        <div id="lerr" class="neg" style="font-size:.8rem;display:none"></div>
+      </form>`,
+    footer: `<button class="btn" data-close="1">Annuler</button>
+      <button class="btn" id="l-export">${ico("up_a")}Exporter d'abord</button>
+      <button class="btn btn-primary" type="submit" form="lf">Activer</button>`,
+    onMount: r => {
+      r.querySelector("#l-export").onclick = exportJson;
+      r.querySelector("#lf").onsubmit = async e => {
+        e.preventDefault();
+        const p1 = r.querySelector("#p1").value, p2 = r.querySelector("#p2").value, err = r.querySelector("#lerr");
+        const fail = m => { err.style.display = "block"; err.textContent = m; };
+        if (p1.length < 8) return fail("Le mot de passe doit faire au moins 8 caractères.");
+        if (p1 !== p2) return fail("Les deux saisies ne correspondent pas.");
+        if (!r.querySelector("#ack").checked) return fail("Confirmez que le mot de passe est conservé en lieu sûr.");
+        err.style.display = "none";
+        await Lock.create(p1);
+        state.settings.lockEnabled = true;
+        if (!nb(state.settings.lockTimeout)) state.settings.lockTimeout = 15;
+        save(false); await persist();
+        if (Supa.enabled()) await Supa.push(true);
+        closeModal(); render(); Lock.arm();
+        toast("Verrouillage activé — données chiffrées");
+      };
+    },
+  });
+}
+function lockChangeModal() {
+  openModal({
+    title: "Changer le mot de passe de chiffrement",
+    body: `<form id="lf">
+        <div class="field"><label>Mot de passe actuel</label><input type="password" id="p0" autocomplete="current-password" required></div>
+        <div class="field"><label>Nouveau mot de passe</label><input type="password" id="p1" autocomplete="new-password" required></div>
+        <div class="field"><label>Confirmation</label><input type="password" id="p2" autocomplete="new-password" required></div>
+        <div id="lerr" class="neg" style="font-size:.8rem;display:none"></div>
+      </form>
+      <div class="note" style="margin-top:12px">Les autres appareils devront saisir le nouveau mot de passe à leur prochaine synchronisation.</div>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-primary" type="submit" form="lf">Changer</button>`,
+    onMount: r => {
+      r.querySelector("#lf").onsubmit = async e => {
+        e.preventDefault();
+        const err = r.querySelector("#lerr"), fail = m => { err.style.display = "block"; err.textContent = m; };
+        const p0 = r.querySelector("#p0").value, p1 = r.querySelector("#p1").value, p2 = r.querySelector("#p2").value;
+        if (p1.length < 8) return fail("Le nouveau mot de passe doit faire au moins 8 caractères.");
+        if (p1 !== p2) return fail("Les deux saisies ne correspondent pas.");
+        try { await Lock.open(JSON.parse(readRaw()), p0); } catch (ex) { return fail("Mot de passe actuel incorrect."); }
+        await Lock.create(p1);
+        save(false); await persist();
+        if (Supa.enabled()) await Supa.push(true);
+        closeModal(); render(); toast("Mot de passe modifié");
+      };
+    },
+  });
+}
+function lockOffModal() {
+  openModal({
+    title: "Désactiver le verrouillage",
+    body: `<div class="note" style="margin-bottom:14px">Vos données seront de nouveau stockées <b>en clair</b> dans ce navigateur, et la sauvegarde en ligne cessera d'être chiffrée de bout en bout.</div>
+      <form id="lf"><div class="field"><label>Mot de passe actuel</label><input type="password" id="p0" required></div>
+      <div id="lerr" class="neg" style="font-size:.8rem;display:none"></div></form>`,
+    footer: `<button class="btn" data-close="1">Annuler</button><button class="btn btn-danger" type="submit" form="lf">Désactiver</button>`,
+    onMount: r => {
+      r.querySelector("#lf").onsubmit = async e => {
+        e.preventDefault();
+        const err = r.querySelector("#lerr");
+        try { await Lock.open(JSON.parse(readRaw()), r.querySelector("#p0").value); }
+        catch (ex) { err.style.display = "block"; err.textContent = "Mot de passe incorrect."; return; }
+        Lock.clear();
+        state.settings.lockEnabled = false;
+        save(false); await persist();
+        if (Supa.enabled()) await Supa.push(true);
+        closeModal(); render(); toast("Verrouillage désactivé");
+      };
+    },
+  });
+}
 
 /* ==================================================================
    EXPORT / IMPORT
@@ -2303,19 +2668,11 @@ document.addEventListener("click", e => {
       onSubmit(v) { state.settings.rules.push(v); save(); render(); toast("Règle ajoutée"); },
     });
     case "rule-del": state.settings.rules.splice(+d.i, 1); save(); render(); return toast("Règle supprimée");
-    case "supa-signin": case "supa-signup": {
-      const mailEl = $("#sb-mail"), pwdEl = $("#sb-pwd");
-      const email = mailEl ? mailEl.value.trim() : "", pwd = pwdEl ? pwdEl.value : "";
-      state.settings.supabase.url = ($("#sb-url").value || "").trim().replace(/\/$/, "");
-      state.settings.supabase.anonKey = ($("#sb-key").value || "").trim();
-      save(false);
-      if (!Supa.configured()) return toast("Renseignez l'URL et la clé anon du projet", true);
-      if (!email || !pwd) return toast("E-mail et mot de passe requis", true);
-      el.disabled = true;
-      (d.act === "supa-signin" ? Supa.signIn(email, pwd) : Supa.signUp(email, pwd))
-        .then(() => render()).catch(err => toast(err.message, true)).finally(() => { el.disabled = false; });
-      return;
-    }
+    case "supa-wizard": return supaWizard();
+    case "lock-on": return lockOnModal();
+    case "lock-off": return lockOffModal();
+    case "lock-change": return lockChangeModal();
+    case "lock-now": return lockNow();
     case "supa-push": return void Supa.push();
     case "supa-pull": return void Supa.pull();
     case "supa-signout": return Supa.signOut();
@@ -2362,18 +2719,26 @@ function fatal(msg) {
   }
 }
 addEventListener("error", e => fatal((e && e.message) || "Erreur inconnue"));
-function init() {
-  load();
+async function init() {
   installManifest();
+  const env = load();                       // enveloppe chiffrée le cas échéant
   const h = resolveView(location.hash.slice(1)); if (h) ui.view = h;
   applyTheme();
+  if (env) {                                // stockage verrouillé : rien n'est affiché avant déverrouillage
+    const boot = document.getElementById("boot"); if (boot) boot.remove();
+    return lockScreen({ env, reason: "Application verrouillée. Saisissez votre mot de passe de chiffrement." });
+  }
   touchSnapshot();
   save(false);
   render();
   const boot = document.getElementById("boot"); if (boot) boot.remove();
   if (Supa.enabled()) Supa.pull(true);
 }
-try { init(); } catch (e) { fatal((e && e.stack) || e); }
+/* verrouillage automatique : toute interaction repousse l'échéance */
+["pointerdown", "keydown"].forEach(ev => addEventListener(ev, () => { if (Lock.active()) Lock.arm(); }, { passive: true }));
+addEventListener("visibilitychange", () => { if (!document.hidden && Lock.active()) Lock.arm(); });
+try { const boot0 = init(); if (boot0 && boot0.catch) boot0.catch(e => fatal((e && e.stack) || e)); }
+catch (e) { fatal((e && e.stack) || e); }
 </script>
 </body>
 </html>
