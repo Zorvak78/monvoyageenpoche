@@ -229,8 +229,10 @@ C'est normalement le signe d'un déploiement qui les a effacées.</p>
 }
 
 async function handlePrive(request: Request, env: Env, url: URL): Promise<Response> {
-  const user = env.PRIVE_USER || "";
-  const password = env.PRIVE_PASSWORD || "";
+  /* les valeurs saisies dans le tableau de bord peuvent contenir une espace
+     ou un retour à la ligne invisible : on les neutralise des deux côtés */
+  const user = (env.PRIVE_USER || "").trim();
+  const password = (env.PRIVE_PASSWORD || "").trim();
   const path = url.pathname;
 
   /* diagnostic : indique seulement si les identifiants sont définis */
@@ -260,7 +262,10 @@ async function handlePrive(request: Request, env: Env, url: URL): Promise<Respon
     if (request.method === "POST") {
       const form = await request.formData();
       const dest = safeNext(String(form.get("next") || ""));
-      const ok = safeEqual(String(form.get("user") || ""), user) && safeEqual(String(form.get("password") || ""), password);
+      const givenUser = String(form.get("user") || "").trim();
+      const givenPass = String(form.get("password") || "").trim();
+      /* l'identifiant est insensible à la casse, le mot de passe reste exact */
+      const ok = safeEqual(givenUser.toLowerCase(), user.toLowerCase()) && safeEqual(givenPass, password);
       if (!ok) {
         await new Promise((r) => setTimeout(r, 700));           // ralentit les essais répétés
         return html(loginPage({ error: "Identifiant ou mot de passe incorrect.", next: dest }), 401);
