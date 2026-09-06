@@ -201,6 +201,16 @@ label{font-size:.78rem;color:var(--ink-2);font-weight:520}
 .meter-l span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .meter-v{font-size:.83rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .meter-f{display:flex;justify-content:space-between;gap:10px;font-size:.72rem;color:var(--muted);margin-top:5px}
+.goal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px 16px}
+.goal-h{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.goal-name{font-weight:600;font-size:.94rem;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.goal-sub{font-size:.74rem;color:var(--muted);margin-top:2px}
+.goal-act{margin-left:auto;display:flex;gap:2px;flex:0 0 auto;opacity:.45}
+.goal:hover .goal-act{opacity:1}
+.goal-v{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:8px;font-variant-numeric:tabular-nums}
+.goal-v b{font-size:1.22rem;font-weight:640;letter-spacing:-.01em}
+.goal-v .of{color:var(--muted);font-size:.85rem}
+.goal-f{display:flex;justify-content:space-between;gap:10px;font-size:.74rem;color:var(--muted);margin-top:7px;flex-wrap:wrap}
 /* ============================== TABLES ============================== */
 .tw{overflow-x:auto;margin:0 -18px;padding:0 18px}
 table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:420px}
@@ -1331,6 +1341,51 @@ function goalCurrent(g) {
   if (g.accountIds && g.accountIds.length) return P().accounts.filter(a => g.accountIds.includes(a.id)).reduce((s, a) => s + accTotal(a), 0);
   return nb(g.current);
 }
+/* tout ce qu'on sait dire d'un objectif : avancement, rythme, échéance */
+function goalStats(g) {
+  const cur = goalCurrent(g), target = nb(g.target);
+  const left = Math.max(0, target - cur);
+  const p = target > 0 ? clamp((cur / target) * 100, 0, 100) : 0;
+  const done = target > 0 && cur >= target;
+  const days = g.deadline ? daysBetween(todayISO(), g.deadline) : null;
+  const months = days === null ? null : Math.max(0, days / 30.44);
+  const required = months && months > 0 && left > 0 ? left / months : null;
+  const planned = nb(g.monthly);
+  const monthsNeeded = planned > 0 && left > 0 ? Math.ceil(left / planned) : null;
+  const eta = monthsNeeded === null ? null : ymAdd(curYM(), monthsNeeded);
+  let verdict = null;
+  if (done) verdict = { l: "Objectif atteint", cls: "good" };
+  else if (g.status === "pause") verdict = { l: "En pause", cls: "" };
+  else if (days !== null && days < 0) verdict = { l: "Échéance dépassée", cls: "crit" };
+  else if (planned > 0 && g.deadline) verdict = eta && eta <= ymOf(g.deadline)
+    ? { l: "Dans les temps", cls: "good" } : { l: "Rythme insuffisant", cls: "warn" };
+  else if (planned > 0) verdict = { l: "En cours", cls: "" };
+  else if (required) verdict = { l: "Aucun versement prévu", cls: "warn" };
+  return { cur, target, left, p, done, days, months, required, planned, eta, verdict };
+}
+function goalCard(g) {
+  const st = goalStats(g);
+  return `<div class="goal">
+    <div class="goal-h">
+      <div style="min-width:0">
+        <div class="goal-name">${esc(g.name)}</div>
+        <div class="goal-sub">${g.deadline ? "échéance " + dLabel(g.deadline) : "sans échéance"}${g.accountIds && g.accountIds.length ? " · suivi automatique" : ""}</div>
+      </div>
+      <span class="goal-act">
+        <button class="btn btn-sm btn-ghost btn-icon" data-act="edit" data-id="${g.id}" aria-label="Modifier">${ico("edit")}</button>
+        <button class="btn btn-sm btn-ghost btn-icon" data-act="del" data-id="${g.id}" aria-label="Supprimer">${ico("trash")}</button>
+      </span>
+    </div>
+    <div class="goal-v"><b>${money(st.cur)}</b><span class="of">sur ${money(st.target)}</span>
+      ${st.verdict ? `<span class="badge ${st.verdict.cls}" style="margin-left:auto">${esc(st.verdict.l)}</span>` : ""}</div>
+    <div class="bar"><span style="width:${st.p}%;background:${st.done ? "var(--pos)" : "var(--accent)"}"></span></div>
+    <div class="goal-f"><span>${st.p.toFixed(0)} % · ${st.done ? "objectif atteint" : money(st.left) + " restants"}</span>
+      <span>${st.done ? "" : st.required ? `${money(st.required)} / mois requis` : st.eta ? `atteint en ${ymLabel(st.eta)}` : "définissez un versement mensuel"}</span></div>
+    ${st.planned > 0 && !st.done ? `<div class="goal-f" style="margin-top:3px"><span>versement prévu ${money(st.planned)} / mois</span>
+      <span>${st.eta && st.required ? "atteint en " + ymLabel(st.eta) : ""}</span></div>` : ""}
+    ${g.note ? `<div class="goal-f"><span>${esc(g.note)}</span></div>` : ""}
+  </div>`;
+}
 function goalRow(g) {
   const cur = goalCurrent(g), tgt = nb(g.target), p = tgt > 0 ? clamp((cur / tgt) * 100, 0, 100) : 0;
   const left = tgt - cur, days = g.deadline ? daysBetween(todayISO(), g.deadline) : null;
@@ -1727,14 +1782,31 @@ function viewObjectifs() {
 
   topbar("Objectifs & projections", `${goals.length} objectif(s) · épargne moyenne ${money(avgSave)}/mois`, addBtn("personal.goals", "Objectif"));
   $("#view").innerHTML = `
-  ${wrapList("personal.goals", `<div class="card"><div class="card-h"><h2>Mes objectifs</h2></div>
-    ${goals.length ? `<div class="grid g-2" style="gap:18px 24px">${goals.map(g => `<div style="position:relative">
-        <div style="position:absolute;top:-4px;right:0">
-          <button class="btn btn-sm btn-ghost btn-icon" data-act="edit" data-id="${g.id}">${ico("edit")}</button>
-          <button class="btn btn-sm btn-ghost btn-icon" data-act="del" data-id="${g.id}">${ico("trash")}</button>
-        </div>${goalRow(g)}</div>`).join("")}</div>`
+  ${(() => {
+    const list = [...goals].sort((a, b) => {
+      const sa = goalStats(a), sb = goalStats(b);
+      if (sa.done !== sb.done) return sa.done ? 1 : -1;
+      return (nb(b.priority) || 2) - (nb(a.priority) || 2) || (a.deadline || "9999").localeCompare(b.deadline || "9999");
+    });
+    const active = list.filter(g => !goalStats(g).done && g.status !== "pause");
+    const effort = active.reduce((s, g) => { const st = goalStats(g); return s + Math.max(nb(g.monthly), st.required || 0); }, 0);
+    const cible = list.reduce((s, g) => s + nb(g.target), 0);
+    const atteint = list.reduce((s, g) => s + Math.min(goalCurrent(g), nb(g.target)), 0);
+    const couverture = effort > 0 ? clamp((avgSave / effort) * 100, 0, 100) : 100;
+    return `
+    <div class="grid g-4" style="margin-bottom:14px">
+      ${statHtml("Objectifs actifs", String(active.length), `${list.length - active.length} atteint(s) ou en pause`)}
+      ${statHtml("Total visé", money(cible), `${cible ? ((atteint / cible) * 100).toFixed(0) : 0} % déjà constitué`)}
+      ${statHtml("Effort mensuel requis", money(effort), "somme des versements nécessaires")}
+      ${statHtml("Capacité d'épargne", money(avgSave), `<div class="bar" style="margin-top:6px"><span style="width:${couverture}%;background:${couverture >= 100 ? "var(--pos)" : couverture >= 70 ? "var(--warn)" : "var(--neg)"}"></span></div>
+        <span>${effort > 0 ? (avgSave >= effort ? "vos objectifs sont finançables" : `il manque ${money(effort - avgSave)} / mois`) : "moyenne des 6 derniers mois"}</span>`)}
+    </div>
+    ${wrapList("personal.goals", `<div class="card"><div class="card-h"><h2>Mes objectifs</h2>
+      <div class="right"><span class="badge">${list.length} objectif(s)</span></div></div>
+      ${list.length ? `<div class="grid g-2">${list.map(goalCard).join("")}</div>`
       : emptyHtml("Définissez un objectif : apport immobilier, épargne de précaution, achat…", addBtn("personal.goals", "Créer un objectif"))}
-  </div>`)}
+    </div>`)}`;
+  })()}
 
   <div class="card" style="margin-top:14px">
     <div class="card-h"><h2>Simulateur d'épargne (intérêts composés)</h2></div>
@@ -2207,8 +2279,12 @@ ED["personal.goals"] = {
     { key: "current", label: "Montant déjà atteint (€)", type: "number", hint: "Ignoré si un compte est associé" },
     { key: "accountId", label: "Compte associé", type: "select", options: accOptions, hint: "Le montant sera lu automatiquement" },
     { key: "deadline", label: "Échéance", type: "date" },
+    { key: "monthly", label: "Versement mensuel prévu (€)", type: "number", hint: "Sert à projeter la date d'atteinte et à vérifier que le rythme suffit" },
+    { key: "priority", label: "Priorité", type: "select", def: 2, options: [{ v: 3, l: "Haute" }, { v: 2, l: "Normale" }, { v: 1, l: "Basse" }] },
+    { key: "status", label: "Suivi", type: "select", def: "actif", options: [{ v: "actif", l: "Actif" }, { v: "pause", l: "En pause" }] },
+    { key: "note", label: "Note", type: "textarea" },
   ],
-  clean: v => { v.accountIds = v.accountId ? [v.accountId] : []; return v; },
+  clean: v => { v.accountIds = v.accountId ? [v.accountId] : []; v.priority = nb(v.priority); return v; },
 };
 ED["company.accounts"] = {
   title: "Compte professionnel",
